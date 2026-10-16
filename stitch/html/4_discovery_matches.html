@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Barkat Nikah - Discovery Feed</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed-dim": "#a5d0b9",
+            "on-secondary-container": "#00734d",
+            "privacy-scrim": "#1E293BCC",
+            "on-tertiary-fixed": "#261a00",
+            "primary-container": "#1b4332",
+            "inverse-on-surface": "#f2f0ed",
+            "tertiary-fixed-dim": "#ebc165",
+            "surface-container-lowest": "#ffffff",
+            "outline-variant": "#c1c8c2",
+            "surface-tint": "#3f6653",
+            "outline": "#717973",
+            "secondary-fixed-dim": "#75daa8",
+            "tertiary-fixed": "#ffdf9e",
+            "surface-warm-container": "#F4EFE6",
+            "background": "#fbf9f5",
+            "on-primary-fixed-variant": "#274e3d",
+            "tertiary-container": "#4d3800",
+            "on-error": "#ffffff",
+            "secondary-container": "#92f7c3",
+            "inverse-primary": "#a5d0b9",
+            "on-surface": "#1b1c1a",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005235",
+            "surface-container-high": "#eae8e4",
+            "surface": "#fbf9f5",
+            "on-primary-container": "#86af99",
+            "primary": "#012d1d",
+            "inverse-surface": "#30312e",
+            "gold-light": "#F7E7B4",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "slate-text": "#1E293B",
+            "surface-container": "#efeeea",
+            "tertiary": "#322400",
+            "on-background": "#1b1c1a",
+            "emerald-deep": "#0D2318",
+            "on-tertiary-container": "#c8a149",
+            "surface-dim": "#dbdad6",
+            "surface-ivory": "#FDFBF7",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "surface-container-highest": "#e4e2de",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#002113",
+            "sage-soft": "#74C69D",
+            "error": "#ba1a1a",
+            "surface-bright": "#fbf9f5",
+            "on-primary": "#ffffff",
+            "surface-container-low": "#f5f3ef",
+            "secondary-fixed": "#92f7c3",
+            "on-surface-variant": "#414844",
+            "surface-variant": "#e4e2de",
+            "secondary": "#006c48",
+            "primary-fixed": "#c1ecd4",
+            "on-primary-fixed": "#002114"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "margin": "1.25rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400"}],
+            "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700"}],
+            "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500"}],
+            "headline-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700"}],
+            "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}],
+            "title-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}],
+            "headline-md": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+            "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600"}],
+            "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400"}],
+            "headline-md-mobile": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-ivory text-on-surface antialiased min-h-screen flex flex-col items-center justify-start selection:bg-primary-container selection:text-surface-ivory">
+<!-- Mobile Viewport Container (Android Device Shell) -->
+<div class="w-full max-w-md bg-surface min-h-screen relative flex flex-col pb-28 shadow-2xl">
+<!-- Android Status Bar -->
+<div class="w-full bg-surface-ivory px-margin pt-2 pb-1 flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm select-none z-30">
+<span>09:41</span>
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+<span class="material-symbols-outlined text-[16px]">battery_full</span>
+</div>
+</div>
+<!-- TopAppBar (from Shared Components JSON) -->
+<header class="bg-surface-ivory docked full-width top-0 shadow-sm flex justify-between items-center w-full px-margin py-space-sm h-16 z-20 sticky">
+<!-- Leading Icon / Guardian Verification Indicator -->
+<div class="flex items-center space-x-2">
+<button aria-label="Wali Status" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-warm-container active:scale-95 transition-transform duration-150 text-primary">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">shield</span>
+</button>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm border border-on-tertiary-container/30">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Wali Linked
+        </span>
+</div>
+<!-- Headline / Brand Anchor -->
+<h1 class="font-title-lg text-title-lg text-primary tracking-tight font-bold select-none">
+        Barkat Nikah
+      </h1>
+<!-- Trailing Icon: Discovery Filters -->
+<button aria-label="Filters" class="flex items-center justify-center p-2 rounded-full hover:bg-surface-warm-container active:scale-95 transition-transform duration-150 text-primary">
+<span class="material-symbols-outlined text-primary">tune</span>
+</button>
+</header>
+<!-- Main Discovery Feed Container -->
+<main class="flex-1 px-margin pt-space-sm flex flex-col gap-space-lg">
+<!-- Dignified Match Profile Card (Elevation Level 1) -->
+<div class="bg-surface-container-lowest rounded-[20px] shadow-[0px_2px_8px_rgba(30,41,59,0.04),0px_1px_2px_rgba(27,67,50,0.03)] border border-primary/10 overflow-hidden flex flex-col">
+<!-- Photo & Privacy Banner Frame -->
+<div class="relative w-full aspect-[4/4.5] overflow-hidden bg-surface-container">
+<img alt="Zayd profile photograph" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105" data-alt="Dignified portrait of a modern practicing Muslim professional male in his late 20s dressed in a tailored charcoal blazer with an open collar white shirt. The background features natural soft daylight inside a contemporary architectural study with warm ambient lighting. Deep forest emerald and soft parchment tones evoke serene tranquility and spiritual honor." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdKhOgSBUzOfVzFq2nSz1dEByeot1rM62DCo3gEX4i7eoIEwx6_XkhBXxNxSjx-53w1RTDBQMlyEi3JAgcLTMtqVP0ZKdRtYdesRZja1gVSLp79Wt940nWOk0FZjhR3ZtU1hckMNl6fhbjEGTGW0hv4w4UA4vO_MsdTh-4u0rFfqn4jcoBYqqskGfT3yjacJYAmTeCXQWSbgkraKoxFqpRp4nfoolHyBT-fXAZ1rJ49W8ZT1umB5aE2g"/>
+<!-- Top Scrim Gradient & Privacy Pill -->
+<div class="absolute inset-x-0 top-0 p-3 bg-gradient-to-b from-black/50 via-black/20 to-transparent flex items-center justify-between">
+<!-- Modesty Status Pill -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-ivory/95 backdrop-blur-md text-primary font-label-md text-label-md shadow-sm border border-primary/10">
+<span class="material-symbols-outlined text-[15px] text-secondary" style="font-variation-settings: 'FILL' 1;">visibility</span>
+<span>Photo Visible (Unblurred)</span>
+</div>
+<!-- Chaperone Oversight Badge -->
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-deep/80 backdrop-blur-md text-gold-light font-label-sm text-label-sm border border-gold-light/20">
+<span class="material-symbols-outlined text-[14px]">family_restroom</span>
+<span>Father Monitored</span>
+</div>
+</div>
+<!-- Bottom Gradient overlay with Key Demographics -->
+<div class="absolute inset-x-0 bottom-0 p-space-md bg-gradient-to-t from-emerald-deep/90 via-emerald-deep/40 to-transparent flex flex-col justify-end text-surface-container-lowest">
+<div class="flex items-baseline gap-2">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tight text-white drop-shadow-sm">
+                Zayd, 29
+              </h2>
+<span class="material-symbols-outlined text-secondary-fixed text-[20px]" style="font-variation-settings: 'FILL' 1;" title="ID &amp; Wali Verified">verified</span>
+</div>
+<p class="font-body-md text-body-md text-surface-warm-container/90 flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-secondary-container">work</span>
+              Software Architect
+              <span class="text-white/40">•</span>
+<span class="material-symbols-outlined text-[16px] text-secondary-container">location_on</span>
+              London, UK
+            </p>
+</div>
+</div>
+<!-- Details & Modesty Content Section -->
+<div class="p-space-md flex flex-col gap-space-md">
+<!-- Islamic Lifestyle & Practice Chips (Gutter Grid) -->
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-2 uppercase tracking-wider font-semibold">
+              Faith &amp; Practice Alignment
+            </span>
+<div class="flex flex-wrap gap-2">
+<!-- Practice Chip 1 -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-fixed/30 text-primary font-label-md text-label-md border border-primary/10">
+<span class="material-symbols-outlined text-[15px] text-secondary">mosque</span>
+<span>Prays 5x daily</span>
+</div>
+<!-- Practice Chip 2 -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-fixed/30 text-primary font-label-md text-label-md border border-primary/10">
+<span class="material-symbols-outlined text-[15px] text-secondary">restaurant</span>
+<span>Halal Only</span>
+</div>
+<!-- Practice Chip 3 -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-warm-container text-tertiary font-label-md text-label-md border border-tertiary-fixed-dim/40">
+<span class="material-symbols-outlined text-[15px] text-tertiary-container">schedule</span>
+<span>Marriage Timeline: 6-12 months</span>
+</div>
+<!-- Practice Chip 4 -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-fixed/30 text-primary font-label-md text-label-md border border-primary/10">
+<span class="material-symbols-outlined text-[15px] text-secondary">menu_book</span>
+<span>Sunni / Practicing</span>
+</div>
+</div>
+</div>
+<!-- Modesty Values Card / Personal Prompt Bento Tile -->
+<div class="bg-surface-warm-container rounded-xl p-space-md border border-outline-variant/30 relative">
+<span class="material-symbols-outlined absolute right-3 top-3 text-on-tertiary-container/30 text-3xl">format_quote</span>
+<p class="font-label-md text-label-md text-on-tertiary-container font-semibold uppercase tracking-wider mb-1">
+              What marriage means to me
+            </p>
+<p class="font-body-md text-body-md text-slate-text leading-relaxed italic pr-6">
+              "Building a tranquil home grounded in mutual mercy (Rahmah), steady companionship, and Islamic values that inspire us both toward Jannah."
+            </p>
+</div>
+<!-- Wali Guarantee Banner -->
+<div class="bg-surface-container-low rounded-xl px-3.5 py-2.5 flex items-center justify-between border border-outline-variant/20">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-primary font-semibold">Chaperone Active</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Conversations include Tariq (Father)</p>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container text-primary font-label-sm text-label-sm hover:bg-surface-warm-container transition-colors">
+              Details
+            </button>
+</div>
+</div>
+</div>
+<!-- Respectful Action Bar -->
+<div class="flex items-center justify-between gap-3 pt-space-xs pb-space-sm">
+<!-- Pass / Respectfully Decline Button -->
+<button aria-label="Respectfully Pass" class="flex-1 h-12 rounded-[12px] border-[1.5px] border-outline text-on-surface-variant font-label-lg text-label-lg flex items-center justify-center gap-1.5 bg-surface-container-lowest hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px] text-outline">close</span>
+<span>Pass</span>
+</button>
+<!-- View Wali Profile Button -->
+<button aria-label="Guardian Details" class="h-12 px-4 rounded-[12px] bg-surface-warm-container text-tertiary border border-tertiary-fixed-dim/40 font-label-lg text-label-lg flex items-center justify-center gap-1.5 hover:bg-surface-container-high active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px] text-on-tertiary-container">shield_with_heart</span>
+<span class="hidden sm:inline">Wali Details</span>
+</button>
+<!-- Primary: Send Halal Interest Button -->
+<button aria-label="Send Halal Interest" class="flex-[1.5] h-12 rounded-[12px] bg-primary text-surface-container-lowest font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm hover:bg-primary-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px] text-gold-light" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-semibold text-white">Express Interest</span>
+</button>
+</div>
+<!-- Modesty Prompt Suggestion Bar -->
+<div class="bg-surface-container-low/70 border border-outline-variant/30 rounded-xl p-3 flex items-center justify-between mb-4">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">quiz</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ask introductory question with Wali present</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</main>
+<!-- BottomNavBar (from Shared Components JSON) -->
+<!-- Destination Count: 4 | Labels: Explore, Matches, Messages, Wali & You -->
+<!-- Active State: 'Explore' matches discovery context strictly -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-space-xs h-20 bg-surface-ivory shadow-md">
+<!-- Tab 1: Explore (Active) -->
+<a aria-current="page" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-fixed rounded-full px-space-md py-space-xs transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px] text-primary-fixed" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary-fixed mt-0.5">Explore</span>
+</a>
+<!-- Tab 2: Matches (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container rounded-full transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]">favorite</span>
+<span class="font-label-sm text-label-sm mt-0.5">Matches</span>
+</a>
+<!-- Tab 3: Messages (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container rounded-full transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]">forum</span>
+<span class="font-label-sm text-label-sm mt-0.5">Messages</span>
+</a>
+<!-- Tab 4: Wali & You (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container rounded-full transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+<span class="font-label-sm text-label-sm mt-0.5">Wali &amp; You</span>
+</a>
+</nav>
+</div>
+</body></html>

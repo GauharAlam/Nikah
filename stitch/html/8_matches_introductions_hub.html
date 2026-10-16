@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Matches &amp; Introductions Hub - Barkat Nikah</title>
+<!-- Material Symbols Outlined font -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-primary": "#a5d0b9",
+            "surface-container-high": "#eae8e4",
+            "on-tertiary-container": "#c8a149",
+            "surface-container-highest": "#e4e2de",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary": "#012d1d",
+            "on-surface-variant": "#414844",
+            "surface": "#fbf9f5",
+            "slate-text": "#1E293B",
+            "secondary-fixed": "#92f7c3",
+            "surface-container": "#efeeea",
+            "secondary-fixed-dim": "#75daa8",
+            "surface-bright": "#fbf9f5",
+            "on-secondary-fixed": "#002113",
+            "on-background": "#1b1c1a",
+            "secondary-container": "#92f7c3",
+            "on-secondary-container": "#00734d",
+            "surface-container-lowest": "#ffffff",
+            "privacy-scrim": "#1E293BCC",
+            "inverse-on-surface": "#f2f0ed",
+            "surface-ivory": "#FDFBF7",
+            "tertiary-container": "#4d3800",
+            "on-primary": "#ffffff",
+            "outline-variant": "#c1c8c2",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "outline": "#717973",
+            "background": "#fbf9f5",
+            "gold-light": "#F7E7B4",
+            "primary-fixed": "#c1ecd4",
+            "on-surface": "#1b1c1a",
+            "tertiary": "#322400",
+            "on-secondary-fixed-variant": "#005235",
+            "surface-tint": "#3f6653",
+            "primary-container": "#1b4332",
+            "surface-container-low": "#f5f3ef",
+            "surface-dim": "#dbdad6",
+            "on-primary-fixed": "#002114",
+            "inverse-surface": "#30312e",
+            "tertiary-fixed": "#ffdf9e",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "sage-soft": "#74C69D",
+            "tertiary-fixed-dim": "#ebc165",
+            "primary-fixed-dim": "#a5d0b9",
+            "surface-warm-container": "#F4EFE6",
+            "on-primary-fixed-variant": "#274e3d",
+            "surface-variant": "#e4e2de",
+            "on-primary-container": "#86af99",
+            "emerald-deep": "#0D2318",
+            "secondary": "#006c48",
+            "on-tertiary-fixed": "#261a00",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.25rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400" }],
+            "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700" }],
+            "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "headline-md-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+            "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="sticky top-0 z-40 bg-surface-ivory shadow-sm w-full">
+<div class="flex justify-between items-center w-full px-margin py-space-sm h-16">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Wali Protection Active" class="flex items-center justify-center w-10 h-10 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="shield">shield</span>
+</button>
+<div>
+<h1 class="font-title-lg text-title-lg text-primary tracking-tight font-bold">Barkat Nikah</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span>Matches &amp; Inquiries</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Search candidates" class="flex items-center justify-center w-10 h-10 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[22px]" data-icon="search">search</span>
+</button>
+<button aria-label="Refine filters" class="flex items-center justify-center w-10 h-10 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[22px]" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- TABS / SEGMENTED CONTROL -->
+<div class="px-margin pb-space-sm pt-space-xs">
+<nav aria-label="Match Hub Sections" class="flex items-center p-1 bg-surface-container rounded-xl gap-1">
+<!-- Active Tab: Mutual Matches (4) -->
+<button class="flex-1 py-2 px-1 text-center rounded-lg bg-surface-container-lowest text-primary shadow-sm font-label-md text-label-md transition-all font-semibold flex items-center justify-center gap-1.5" type="button">
+<span>Mutual Matches</span>
+<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-secondary-fixed text-on-secondary-fixed">4</span>
+</button>
+<!-- Intro Requests (3) -->
+<button class="flex-1 py-2 px-1 text-center rounded-lg text-on-surface-variant hover:text-primary font-label-md text-label-md transition-all flex items-center justify-center gap-1.5" type="button">
+<span>Intro Requests</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-surface-container-high text-on-surface-variant">3</span>
+</button>
+<!-- Family Inquiries (1) -->
+<button class="flex-1 py-2 px-1 text-center rounded-lg text-on-surface-variant hover:text-primary font-label-md text-label-md transition-all flex items-center justify-center gap-1.5" type="button">
+<span>Family</span>
+<span class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-surface-warm-container text-tertiary">1</span>
+</button>
+</nav>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS -->
+<main class="flex-1 w-full max-w-md mx-auto px-margin pt-space-md pb-28 space-y-space-lg">
+<!-- SECTION 1: ACTIVE INQUIRIES & APPROVALS (High Priority Halal Workflow Banner) -->
+<section aria-labelledby="inquiry-heading" class="rounded-2xl p-space-md bg-surface-warm-container border border-[rgba(201,162,74,0.35)] shadow-sm relative overflow-hidden">
+<!-- Background subtle decorative halo -->
+<div class="absolute -right-6 -bottom-6 w-28 h-28 bg-gold-light/25 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-space-sm relative z-10">
+<div class="w-10 h-10 rounded-full bg-gold-light/50 border border-[rgba(201,162,74,0.6)] flex items-center justify-center text-tertiary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[22px]" data-icon="hourglass_top">hourglass_top</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-tertiary font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+              Wali Approval Pending
+            </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">10m ago</span>
+</div>
+<h2 class="font-title-sm text-title-sm text-slate-text leading-snug font-bold" id="inquiry-heading">
+            New Marriage Inquiry: Hamza, 29
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Civil Engineer • Manchester, UK • Seeking family introduction
+          </p>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-space-md pt-space-xs grid grid-cols-2 gap-space-sm relative z-10">
+<button class="h-10 px-space-sm rounded-xl bg-surface-container-lowest border border-outline-variant text-slate-text font-label-md text-label-md hover:bg-surface-container active:scale-95 transition-all flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline" data-icon="visibility">visibility</span>
+<span>Review Profile</span>
+</button>
+<button class="h-10 px-space-sm rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px] text-gold-light" data-icon="supervisor_account">supervisor_account</span>
+<span>Consult Wali</span>
+</button>
+</div>
+</section>
+<!-- SECTION 3 (PLACED IN ELEVATED HIERARCHY): FAMILY-TO-FAMILY MEETINGS / MILESTONES -->
+<section aria-labelledby="milestone-heading" class="rounded-2xl p-space-md bg-surface-container-lowest border border-[rgba(27,67,50,0.08)] shadow-sm">
+<div class="flex items-center justify-between pb-space-xs mb-space-sm border-b border-surface-container">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="event_upcoming">event_upcoming</span>
+<h2 class="font-title-sm text-title-sm text-primary font-bold" id="milestone-heading">Upcoming Chaperone Milestone</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed/50 text-on-secondary-fixed text-[11px] font-semibold">Confirmed</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-sm space-y-2">
+<div class="flex items-start justify-between">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Scheduled Video Ta'aruf</p>
+<p class="font-title-sm text-title-sm text-slate-text font-semibold">Farhan &amp; Tariq (Father)</p>
+</div>
+<!-- Time Badge -->
+<div class="text-right">
+<span class="inline-block px-2 py-1 rounded-lg bg-surface-container-highest text-primary font-label-md text-label-md font-bold">
+              Sun • After Asr
+            </span>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">5:30 PM BST</p>
+</div>
+</div>
+<!-- Countdown Bar -->
+<div class="flex items-center gap-2 pt-1">
+<div class="flex-1 bg-surface-variant rounded-full h-1.5 overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 72%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">In 2 days, 4 hrs</span>
+</div>
+</div>
+<!-- Video preview and preparation status -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-warm-container flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]" data-icon="videocam">videocam</span>
+</div>
+<div class="leading-tight">
+<p class="font-label-md text-label-md text-slate-text font-semibold">Private Encrypted Room</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Host: Guardian Tariq</p>
+</div>
+</div>
+<button class="h-9 px-3 rounded-lg bg-surface-warm-container text-tertiary border border-[rgba(201,162,74,0.3)] font-label-md text-label-md hover:bg-gold-light/40 active:scale-95 transition-all flex items-center gap-1 font-semibold" type="button">
+<span>Test Link</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+</section>
+<!-- SECTION 2: MUTUAL MATCHES LIST -->
+<section aria-labelledby="matches-heading" class="space-y-space-md">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold" id="matches-heading">
+          Mutual Matches
+        </h2>
+<span class="font-label-md text-label-md text-on-surface-variant">4 Profiles Active</span>
+</div>
+<!-- MATCH CARD 1: Farhan, 30 -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md border border-[rgba(27,67,50,0.06)] shadow-sm space-y-space-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-space-md">
+<!-- Thumbnail with verified checkmark -->
+<div class="relative shrink-0">
+<img alt="Farhan's profile photo" class="w-20 h-20 rounded-2xl object-cover border border-surface-container-high" data-alt="A dignified and modest professional portrait of a 30-year-old South Asian British Muslim gentleman wearing an elegant navy sweater with a clean groomed beard. The shot is captured in soft natural window lighting within an architectural London interior, radiating warmth and sincerity. Modern warm organic minimalist tone with deep forest emerald and neutral ivory highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZpvnqvnInQ5XbgmSwWnMKaygsYwUuQOfCcx5cVoelmQawfyNpld2OFmZ16mmPbR_tbHHxj3DLI4iG0uRK36gmCeqb3K1z5WjWvLRo679u_nT-1cRg7pvmkE-QO2WFDrx0le2Avzn3RG2soPehBlsJLZ-ls4KUnoNqhmD7a9Z_PL4gbxmeaD8B2wOABaKJ9g-pPBkwLzHyl5p3uWqW9o7vJE8OfTZpxcXRXv0qBmDPA9HaEOosK9UxKg"/>
+<span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm" title="Verified Halal Identity">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</span>
+</div>
+<!-- Profile Details -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-slate-text truncate font-bold">Farhan, 30</h3>
+<!-- Chaperone Status Badge -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-warm-container text-tertiary border border-[rgba(201,162,74,0.4)] text-[11px] font-semibold shrink-0">
+<span class="material-symbols-outlined text-[13px]" data-icon="shield" style="font-variation-settings: 'FILL' 1;">shield</span>
+                Father Connected
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              London, UK • Software Lead
+            </p>
+<div class="mt-2 flex items-center gap-1.5 text-secondary font-label-sm text-label-sm font-medium bg-secondary-fixed/30 px-2 py-1 rounded-md w-fit">
+<span class="material-symbols-outlined text-[14px]" data-icon="forum">forum</span>
+<span>Chaperoned Chat Active • 4:18 PM</span>
+</div>
+</div>
+</div>
+<!-- Religious Practice Chips -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Prays 5x Daily</span>
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Strict Halal Food</span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Marriage in 6-12 mos</span>
+</div>
+<!-- Card Footer Action -->
+<div class="pt-space-xs flex items-center justify-between border-t border-surface-container">
+<span class="font-label-sm text-label-sm text-on-surface-variant italic">Tariq (Wali) is included in thread</span>
+<button class="h-10 px-space-lg rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container active:scale-95 transition-all flex items-center gap-1.5 shadow-sm" type="button">
+<span>Open Chat</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- MATCH CARD 2: Bilal, 28 -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md border border-[rgba(27,67,50,0.06)] shadow-sm space-y-space-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-space-md">
+<!-- Thumbnail unblurred -->
+<div class="relative shrink-0">
+<img alt="Bilal's profile photo" class="w-20 h-20 rounded-2xl object-cover border border-surface-container-high" data-alt="Warm and respectful headshot of a 28-year-old Arab Muslim man with spectacles and a kind smile, dressed in a tailored charcoal blazer with an open collar. Shot in gentle warm ambient lighting in an upscale library setting. The atmosphere reflects composure, educational refinement, and high spiritual intentionality adhering to serene organic minimalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwbsHYqHSMdjAocLqf9CfH1g8HM2Clyqfq5JS2g89m0d7F5g2mu9MB_e22Ofmm0qDl6W7R6eJ7CZECI0AWhmljr2WKwPs04b-A__6VaiK7HCQ3gg8rwL5ejsIjfs9wV_iS3hovgUihlQAioQJMPeUnpSC4XoVHdznq0_F8ThmNGDsX0bwPkOX7BRB_7QrLHYpWsxaI2Ksa4rdUAJgIFbXKT87abZYVx8t-IgXoqwZvkSv5DEaTEUh6Ug"/>
+<span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm" title="Verified Candidate">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</span>
+</div>
+<!-- Profile Details -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-slate-text truncate font-bold">Bilal, 28</h3>
+<!-- Wali Call Pending Badge -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-semibold shrink-0">
+<span class="material-symbols-outlined text-[13px]" data-icon="phone_callback">phone_callback</span>
+                Wali Call Pending
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Birmingham, UK • Clinical Pharmacist
+            </p>
+<div class="mt-2 flex items-center gap-1.5 text-primary-container font-label-sm text-label-sm font-semibold bg-surface-container-low px-2 py-1 rounded-md w-fit">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Mutual Interest Confirmed</span>
+</div>
+</div>
+</div>
+<!-- Religious Practice Chips -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Practicing Sunni</span>
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Family-Oriented</span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Owns Home</span>
+</div>
+<!-- Card Footer Action -->
+<div class="pt-space-xs flex items-center justify-between border-t border-surface-container">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Families ready to speak</span>
+<button class="h-10 px-space-lg rounded-xl border border-primary text-primary font-label-md text-label-md font-semibold hover:bg-surface-warm-container active:scale-95 transition-all flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+<span>Schedule Call</span>
+</button>
+</div>
+</article>
+<!-- MATCH CARD 3: Zain, 31 -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md border border-[rgba(27,67,50,0.06)] shadow-sm space-y-space-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-space-md">
+<!-- Thumbnail with guardian badge -->
+<div class="relative shrink-0">
+<img alt="Zain's profile photo" class="w-20 h-20 rounded-2xl object-cover border border-surface-container-high" data-alt="Portrait of a composed 31-year-old British Pakistani Muslim management consultant dressed in formal olive blazer, sitting in a serene calm garden courtyard. Natural diffused daylight creating crisp, honorable details with warm stone and green foliage in background. High-trust, family-oriented atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7R50ivotnqab9Uyqe9tSVtwwbUoRR7WFtCKb4p4TyHwYsh8d6sHNv3zZ1EV7f-Z1tPm-xJJLlBGw_frYG4OpQGFC3OesSut5dtICkSHcEgIlitPNbPhyurhZW3RojMxuhxZ-ephXvlA2_wM-YemZo021j3lfJAvj7-VnWqseNXPmFP7sraUQWBsv6G5RmMmM_P3nv8PIkrwf9Xb5V4qimtyfDUHdRb4Pv6KEIDicd4A4w-6uWjlDv5Q"/>
+<span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm" title="Family Verified">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</span>
+</div>
+<!-- Profile Details -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-slate-text truncate font-bold">Zain, 31</h3>
+<!-- Family Verified Badge -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed/40 text-on-secondary-fixed text-[11px] font-semibold shrink-0">
+<span class="material-symbols-outlined text-[13px]" data-icon="how_to_reg">how_to_reg</span>
+                Family Verified
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Leeds, UK • Management Consultant
+            </p>
+<div class="mt-2 flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm bg-surface-container-low px-2 py-1 rounded-md w-fit">
+<span class="material-symbols-outlined text-[14px] text-tertiary" data-icon="groups">groups</span>
+<span>Introduced by Guardian</span>
+</div>
+</div>
+</div>
+<!-- Religious Practice Chips -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Memorized Juz Amma</span>
+<span class="px-2.5 py-1 rounded-md bg-[rgba(82,183,136,0.15)] text-primary-container font-label-sm text-label-sm font-semibold">Community Volunteer</span>
+</div>
+<!-- Card Footer Action -->
+<div class="pt-space-xs flex items-center justify-between border-t border-surface-container">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Mother sent compliments</span>
+<button class="h-10 px-space-lg rounded-xl bg-surface-warm-container text-tertiary border border-[rgba(201,162,74,0.3)] font-label-md text-label-md font-semibold hover:bg-gold-light/40 active:scale-95 transition-all flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="mail">mail</span>
+<span>Message</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Halal Assurance Notice -->
+<div class="text-center py-space-sm px-space-md bg-surface-container-low/70 rounded-xl border border-surface-container flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="lock">lock</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">
+        Conversations are chaperone-accessible to preserve dignity &amp; barakah.
+      </p>
+</div>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<!-- Active Destination determined strictly: 'Matches' tab matches page intent -->
+<nav aria-label="Bottom Global Navigation" class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-space-xs h-20 bg-surface-ivory shadow-md">
+<!-- 1. Explore (Inactive) -->
+<a aria-label="Explore destination" class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container active:scale-95 transition-transform duration-150 rounded-xl" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="explore">explore</span>
+<span class="font-label-sm text-label-sm mt-0.5">Explore</span>
+</a>
+<!-- 2. Matches (Active Destination per Intent) -->
+<a aria-current="page" aria-label="Matches destination active" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-fixed rounded-full px-space-md py-space-xs active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-label-sm text-label-sm font-semibold mt-0.5">Matches</span>
+</a>
+<!-- 3. Messages (Inactive) -->
+<a aria-label="Messages destination" class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container active:scale-95 transition-transform duration-150 rounded-xl" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="forum">forum</span>
+<span class="font-label-sm text-label-sm mt-0.5">Messages</span>
+</a>
+<!-- 4. Wali & You (Inactive) -->
+<a aria-label="Wali &amp; You destination" class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:bg-surface-warm-container active:scale-95 transition-transform duration-150 rounded-xl" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="verified_user">verified_user</span>
+<span class="font-label-sm text-label-sm mt-0.5">Wali &amp; You</span>
+</a>
+</nav>
+</body></html>

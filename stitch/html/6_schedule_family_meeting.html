@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Schedule Family Chaperone Call - Barkat Nikah</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-primary": "#a5d0b9",
+            "surface-container-high": "#eae8e4",
+            "on-tertiary-container": "#c8a149",
+            "surface-container-highest": "#e4e2de",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary": "#012d1d",
+            "on-surface-variant": "#414844",
+            "surface": "#fbf9f5",
+            "slate-text": "#1E293B",
+            "secondary-fixed": "#92f7c3",
+            "surface-container": "#efeeea",
+            "secondary-fixed-dim": "#75daa8",
+            "surface-bright": "#fbf9f5",
+            "on-secondary-fixed": "#002113",
+            "on-background": "#1b1c1a",
+            "secondary-container": "#92f7c3",
+            "on-secondary-container": "#00734d",
+            "surface-container-lowest": "#ffffff",
+            "privacy-scrim": "#1E293BCC",
+            "inverse-on-surface": "#f2f0ed",
+            "surface-ivory": "#FDFBF7",
+            "tertiary-container": "#4d3800",
+            "on-primary": "#ffffff",
+            "outline-variant": "#c1c8c2",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "outline": "#717973",
+            "background": "#fbf9f5",
+            "gold-light": "#F7E7B4",
+            "primary-fixed": "#c1ecd4",
+            "on-surface": "#1b1c1a",
+            "tertiary": "#322400",
+            "on-secondary-fixed-variant": "#005235",
+            "surface-tint": "#3f6653",
+            "primary-container": "#1b4332",
+            "surface-container-low": "#f5f3ef",
+            "surface-dim": "#dbdad6",
+            "on-primary-fixed": "#002114",
+            "inverse-surface": "#30312e",
+            "tertiary-fixed": "#ffdf9e",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "sage-soft": "#74C69D",
+            "tertiary-fixed-dim": "#ebc165",
+            "primary-fixed-dim": "#a5d0b9",
+            "surface-warm-container": "#F4EFE6",
+            "on-primary-fixed-variant": "#274e3d",
+            "surface-variant": "#e4e2de",
+            "on-primary-container": "#86af99",
+            "emerald-deep": "#0D2318",
+            "secondary": "#006c48",
+            "on-tertiary-fixed": "#261a00",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.25rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.25rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.15px", fontWeight: "700" }],
+            "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.4px", fontWeight: "400" }],
+            "display-lg": ["57px", { lineHeight: "64px", letterSpacing: "-0.25px", fontWeight: "700" }],
+            "title-lg": ["22px", { lineHeight: "28px", fontWeight: "600" }],
+            "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+            "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.25px", fontWeight: "400" }],
+            "title-md": ["16px", { lineHeight: "24px", letterSpacing: "0.15px", fontWeight: "600" }],
+            "title-sm": ["14px", { lineHeight: "20px", letterSpacing: "0.1px", fontWeight: "600" }],
+            "headline-md-mobile": ["22px", { lineHeight: "30px", fontWeight: "600" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.5px", fontWeight: "600" }],
+            "headline-md": ["28px", { lineHeight: "36px", fontWeight: "600" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.1px", fontWeight: "600" }],
+            "label-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.5px", fontWeight: "500" }],
+            "headline-lg-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.15px", fontWeight: "700" }],
+            "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0.15px", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #fbf9f5;
+      color: #1b1c1a;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex justify-center selection:bg-primary-fixed selection:text-primary">
+<main class="w-full max-w-md bg-surface min-h-screen flex flex-col relative pb-10">
+<!-- Header Section (Focused linear flow with back button, strictly adhering to task-focused shell suppression) -->
+<header class="sticky top-0 z-30 bg-surface-ivory/95 backdrop-blur-md px-margin pt-space-md pb-space-sm shadow-sm flex flex-col gap-space-xs border-b border-primary-container/5">
+<div class="flex items-center justify-between">
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="text-label-sm font-label-sm text-primary tracking-wide uppercase px-2 py-0.5 rounded-full bg-primary-fixed/30 border border-primary-fixed">Wali Protocol</span>
+<button aria-label="Adab Guidelines Info" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<div class="mt-1 px-1">
+<h1 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary tracking-tight">Schedule Family Chaperone Call</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">In adherence with Islamic Matrimonial Adab</p>
+</div>
+</header>
+<div class="px-margin pt-space-md flex flex-col gap-space-lg">
+<!-- Dignified Sacred Trust Banner -->
+<section class="bg-surface-container-lowest rounded-3xl p-space-md border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04),0px_1px_2px_rgba(27,67,50,0.03)] relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-gold-light/20 blur-xl pointer-events-none"></div>
+<div class="flex items-start gap-space-md relative z-10">
+<div class="w-11 h-11 rounded-2xl bg-surface-warm-container border border-on-tertiary-container/30 flex items-center justify-center flex-shrink-0 text-primary-container shadow-xs">
+<span class="material-symbols-outlined text-primary" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-amber-700 text-sm" data-icon="shield">shield</span>
+<h2 class="font-title-sm text-title-sm font-semibold text-primary">Safe &amp; Respectful Family Meeting</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+              All initial audio/video introductions involve designated guardians for mutual peace of mind, family barakah, and dignified communication.
+            </p>
+</div>
+</div>
+</section>
+<!-- Candidate & Guardians Involved Card -->
+<section class="bg-surface-container-lowest rounded-3xl p-space-md border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04)] flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-surface-container-high pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-lg" data-icon="handshake">handshake</span>
+<span class="font-label-md text-label-md font-bold text-primary">Participants &amp; Representation</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full font-medium">Both Walis Verified</span>
+</div>
+<!-- Candidate Portraits & Profiles -->
+<div class="flex items-center justify-between px-1 py-1">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20 shadow-sm" data-alt="Warm studio portrait of Farhan, a 30-year-old South Asian British software architect dressed in a smart navy linen shirt, warm natural rim lighting, poised expression evoking modesty and quiet confidence, clean organic light ivory minimalist backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuClEMpbOyjHNkAVNIypEcYttvipbVrQpvOLLWdPC-1WyPM9KkmlxNFET1MHyyJ82PdySurkJaSghXqSOcd5A5GseBAKMCvTo9NZGwfvqcLPa-CXxPhqcVeazGqnvXM2jHETpT3Owvy2LrNlYU4AnTmmtMp_ijvpW-BKeAuyT0PxnYuE-qEM7yKhwEBLWgLOun2rNXknkM3toXA714uXKdCqx7R0ZrQImMEioLIgB_cazMguDpPkP-6fTg"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 bg-primary-container text-white rounded-full flex items-center justify-center text-[10px] ring-2 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[13px]" data-icon="check">check</span>
+</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm font-bold text-slate-text">Farhan, 30</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Software Architect • London</p>
+</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-warm-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-base" data-icon="favorite">favorite</span>
+</div>
+<div class="flex items-center gap-3 text-right">
+<div>
+<h3 class="font-title-sm text-title-sm font-bold text-slate-text">Amina, 26</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Pediatric Resident</p>
+</div>
+<div class="relative">
+<img class="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20 shadow-sm" data-alt="Dignified soft-focus portrait of Amina, a 26-year-old pediatric resident wearing an elegant olive green hijab, gentle warm lighting, serene and modest demeanor, light parchment background with soft emerald accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBp8M6OGjVnEq5SQAhl__F1ZIe1o3gPppjgoGKs6bDMourNPWg2ddDtA0JoqJHEWinorLXeXWgq9s2srpzVBKkZs-J5UOXnQ1cD7oPw3hnEzlE0bZZZDFC25ApdfjaU_NSq_t__WzP8rpDagjaqwI3mNSXFuW6Q4Gu5X7JXiF_NZFQx1nvPDtfyl-F-d2RVMuWdIrCPb8nPumEtv_SgUhNrXqSsYMLRnyIlj_kp6UEWa5L8Gg-546Y9eg"/>
+<span class="absolute -bottom-1 -left-1 w-5 h-5 bg-primary-container text-white rounded-full flex items-center justify-center text-[10px] ring-2 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[13px]" data-icon="check">check</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Guardians Participation Pills -->
+<div class="bg-surface-warm-container/60 rounded-2xl p-space-sm flex flex-col gap-2 border border-surface-container-high">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Guardians Participating:</span>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-body-sm font-body-sm bg-surface-container-lowest px-2.5 py-1.5 rounded-xl border border-primary/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-700 text-base" data-icon="shield">shield</span>
+<span class="font-medium text-slate-text">Tariq Al-Mansoor</span>
+<span class="text-xs text-on-surface-variant">(Father of the Bride)</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Chaperone Host</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm bg-surface-container-lowest px-2.5 py-1.5 rounded-xl border border-primary/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-base" data-icon="account_balance">account_balance</span>
+<span class="font-medium text-slate-text">Dr. Kamal</span>
+<span class="text-xs text-on-surface-variant">(Candidate's Father / Rep)</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Confirmed</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Meeting Type Selection -->
+<section class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm font-bold text-primary">Meeting Format</label>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Step 1 of 3</span>
+</div>
+<div aria-label="Meeting Type Selection" class="flex flex-col gap-2.5" role="radiogroup">
+<!-- Selected Option: Virtual Video -->
+<div class="relative flex items-center p-3.5 rounded-2xl border-2 border-primary-container bg-primary-container/5 cursor-pointer shadow-xs transition-all">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-white flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="videocam" style="font-variation-settings: 'FILL' 1;">videocam</span>
+</div>
+<div class="ml-3 flex-1">
+<div class="flex items-center gap-2">
+<p class="font-title-sm text-title-sm font-semibold text-primary">Virtual Video Meeting</p>
+<span class="bg-primary text-white text-[10px] font-semibold px-2 py-0.5 rounded-full tracking-wide">Chaperoned</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">In-App secure encrypted video room with active Wali controls</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-white ml-2 flex-shrink-0">
+<span class="material-symbols-outlined text-sm font-bold" data-icon="check">check</span>
+</div>
+</div>
+<!-- Option 2: Virtual Audio -->
+<div class="relative flex items-center p-3.5 rounded-2xl border border-surface-container-high bg-surface-container-lowest hover:border-primary/40 cursor-pointer transition-all">
+<div class="w-10 h-10 rounded-xl bg-surface-warm-container text-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</div>
+<div class="ml-3 flex-1">
+<p class="font-title-sm text-title-sm font-semibold text-slate-text">Virtual Audio-Only Call</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Dial-in conference with automated Wali entry notification</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant ml-2 flex-shrink-0"></div>
+</div>
+<!-- Option 3: In-Person Family Introduction -->
+<div class="relative flex items-center p-3.5 rounded-2xl border border-surface-container-high bg-surface-container-lowest hover:border-primary/40 cursor-pointer transition-all">
+<div class="w-10 h-10 rounded-xl bg-surface-warm-container text-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+</div>
+<div class="ml-3 flex-1">
+<p class="font-title-sm text-title-sm font-semibold text-slate-text">In-Person Family Introduction</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Dignified meeting at agreed family home or public halal venue</p>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant ml-2 flex-shrink-0"></div>
+</div>
+</div>
+</section>
+<!-- Date & Prayer Time Alignment (Islamic Scheduling) -->
+<section class="flex flex-col gap-space-sm bg-surface-container-lowest rounded-3xl p-space-md border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="schedule">schedule</span>
+<label class="font-title-sm text-title-sm font-bold text-primary">Islamic Salah-Aligned Schedule</label>
+</div>
+<span class="font-label-sm text-label-sm text-on-tertiary-container font-semibold">UK (BST / GMT+1)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Meetings pause or align intentionally to honor daily Fard prayers without haste.</p>
+<!-- Date Pill Carousel -->
+<div class="flex items-center gap-2 overflow-x-auto pt-1 pb-2 no-scrollbar">
+<button class="flex-shrink-0 px-3.5 py-2.5 rounded-2xl border border-surface-container-high bg-surface-warm-container text-center flex flex-col items-center min-w-[76px] transition-colors" type="button">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase font-medium">Fri (Jummah)</span>
+<span class="text-title-sm font-title-sm font-bold text-slate-text mt-0.5">Oct 25</span>
+</button>
+<button class="flex-shrink-0 px-3.5 py-2.5 rounded-2xl border border-surface-container-high bg-surface-warm-container text-center flex flex-col items-center min-w-[76px] transition-colors" type="button">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase font-medium">Saturday</span>
+<span class="text-title-sm font-title-sm font-bold text-slate-text mt-0.5">Oct 26</span>
+</button>
+<!-- Active Sunday selection -->
+<button class="flex-shrink-0 px-4 py-2.5 rounded-2xl border-2 border-primary-container bg-primary-container text-white text-center flex flex-col items-center min-w-[84px] shadow-sm" type="button">
+<span class="text-label-sm font-label-sm text-primary-fixed uppercase font-semibold">This Sun</span>
+<span class="text-title-sm font-title-sm font-bold text-white mt-0.5">Oct 27</span>
+</button>
+<button class="flex-shrink-0 px-3.5 py-2.5 rounded-2xl border border-surface-container-high bg-surface-warm-container text-center flex flex-col items-center min-w-[76px] transition-colors" type="button">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase font-medium">Next Sun</span>
+<span class="text-title-sm font-title-sm font-bold text-slate-text mt-0.5">Nov 03</span>
+</button>
+</div>
+<!-- Salah Prayer Time Slots -->
+<div class="flex flex-col gap-2 pt-2">
+<label class="font-label-md text-label-md font-semibold text-slate-text">Select Salah Window:</label>
+<div class="grid grid-cols-1 gap-2">
+<!-- Slot 1 -->
+<label class="flex items-center justify-between p-3 rounded-2xl border border-surface-container-high bg-surface-container hover:bg-surface-warm-container/50 cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="wb_sunny">wb_sunny</span>
+<div>
+<p class="font-body-md text-body-md font-semibold text-slate-text">After Dhuhr (2:00 PM)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Post-Dhuhr calm before afternoon activities</p>
+</div>
+</div>
+<input class="text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" name="prayer_slot" type="radio"/>
+</label>
+<!-- Slot 2: Selected -->
+<label class="flex items-center justify-between p-3 rounded-2xl border-2 border-primary-container bg-primary-container/5 cursor-pointer shadow-xs">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="wb_twilight" style="font-variation-settings: 'FILL' 1;">wb_twilight</span>
+<div>
+<div class="flex items-center gap-2">
+<p class="font-body-md text-body-md font-bold text-primary">After Asr (5:30 PM)</p>
+<span class="font-label-sm text-label-sm text-primary-container font-semibold bg-primary-fixed/50 px-2 py-0.2 rounded-full">Preferred</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Concludes comfortably 45 mins prior to Maghrib adhan</p>
+</div>
+</div>
+<input checked="" class="text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" name="prayer_slot" type="radio"/>
+</label>
+<!-- Slot 3 -->
+<label class="flex items-center justify-between p-3 rounded-2xl border border-surface-container-high bg-surface-container hover:bg-surface-warm-container/50 cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="bedtime">bedtime</span>
+<div>
+<p class="font-body-md text-body-md font-semibold text-slate-text">After Maghrib (7:45 PM)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Evening family gathering prior to Isha</p>
+</div>
+</div>
+<input class="text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" name="prayer_slot" type="radio"/>
+</label>
+</div>
+</div>
+</section>
+<!-- Halal Topics Guide / Agenda Boundaries -->
+<section class="bg-surface-container-lowest rounded-3xl p-space-md border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04)] flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="checklist">checklist</span>
+<label class="font-title-sm text-title-sm font-bold text-primary">Agenda &amp; Discussion Boundaries</label>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full font-medium">Halal Adab Guide</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Agreed topics to ensure fruitful, dignified, and candid matrimonial exploration:</p>
+<div class="flex flex-col gap-2 mt-1">
+<!-- Item 1 -->
+<label class="flex items-start gap-3 p-2.5 rounded-xl bg-surface-container/60 cursor-pointer hover:bg-surface-container transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-body-md font-semibold text-slate-text">Living arrangements &amp; family vision</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Independence, extended family proximity, and housing outlook</p>
+</div>
+</label>
+<!-- Item 2 -->
+<label class="flex items-start gap-3 p-2.5 rounded-xl bg-surface-container/60 cursor-pointer hover:bg-surface-container transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-body-md font-semibold text-slate-text">Career &amp; relocation expectations</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Residency shifts, clinical commute, and balance in marriage</p>
+</div>
+</label>
+<!-- Item 3 -->
+<label class="flex items-start gap-3 p-2.5 rounded-xl bg-surface-container/60 cursor-pointer hover:bg-surface-container transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary-container focus:ring-primary h-4 w-4 border-outline-variant" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-body-md font-semibold text-slate-text">Mahr principles &amp; timeline for Nikah</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">General consensus on Sunnah guidelines and family timelines</p>
+</div>
+</label>
+</div>
+<!-- Optional Topic Addition Input -->
+<div class="mt-2">
+<label class="font-label-md text-label-md font-semibold text-slate-text block mb-1" for="custom_topic">Add custom discussion item (optional):</label>
+<div class="relative flex items-center">
+<input class="w-full bg-white border border-outline-variant rounded-2xl py-2.5 pl-3.5 pr-10 text-body-md font-body-md text-slate-text focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container placeholder:text-outline-variant" id="custom_topic" placeholder="e.g., Cultural traditions, financial contribution..." type="text"/>
+<button aria-label="Add topic" class="absolute right-2 p-1.5 rounded-xl text-primary hover:bg-surface-warm-container" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Guardian Consent & Attestation -->
+<section class="bg-surface-warm-container/70 rounded-3xl p-space-md border border-on-tertiary-container/20 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-800" data-icon="admin_panel_settings">admin_panel_settings</span>
+<h3 class="font-title-sm text-title-sm font-bold text-primary">Guardian Consent &amp; Attestation</h3>
+</div>
+<span class="material-symbols-outlined text-primary-container" data-icon="lock">lock</span>
+</div>
+<!-- Toggle Item -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-3 rounded-2xl border border-primary/5 shadow-2xs">
+<div class="pr-2">
+<p class="font-body-md text-body-md font-semibold text-slate-text leading-snug">Notify Tariq Al-Mansoor (Father) via SMS &amp; Calendar invite</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Automated SMS link with private one-tap join code</p>
+</div>
+<!-- Styled Switch Toggle -->
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Attestation Notice Box -->
+<div class="flex items-start gap-2.5 p-3 rounded-2xl bg-surface-ivory border border-primary/10">
+<span class="material-symbols-outlined text-primary text-lg flex-shrink-0 mt-0.5" data-icon="info">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+<strong class="text-primary font-semibold">Moderator Safeguard:</strong> Tariq Al-Mansoor and Dr. Kamal will each hold host privileges, allowing either party to mute audio, pause camera feeds, or conclude the meeting instantly.
+          </p>
+</div>
+</section>
+<!-- Primary Action Buttons -->
+<section class="flex flex-col gap-3 pt-space-xs">
+<button class="w-full bg-primary-container text-white py-3.5 px-6 rounded-2xl font-title-sm text-title-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:bg-emerald-deep active:scale-[0.99] transition-all" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="send">send</span>
+<span>Confirm &amp; Send Invitation to Candidate &amp; Wali</span>
+</button>
+<button class="w-full py-2.5 text-center font-label-lg text-label-lg font-semibold text-primary hover:text-primary-container hover:underline transition-colors flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-base" data-icon="chat">chat</span>
+<span>Reschedule or discuss with Wali first</span>
+</button>
+</section>
+<!-- Dignified Footer Note -->
+<footer class="text-center pt-2 pb-4">
+<p class="font-body-sm text-body-sm text-outline flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="verified">verified</span>
+          Barkat Nikah • Dedicated to Sacred Matrimonial Values
+        </p>
+</footer>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Wali &amp; Guardian Setup - Barkat Nikah</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-bright": "#fbf9f5",
+            "primary": "#012d1d",
+            "secondary-container": "#92f7c3",
+            "primary-fixed": "#c1ecd4",
+            "on-secondary-container": "#00734d",
+            "background": "#fbf9f5",
+            "outline": "#717973",
+            "surface-variant": "#e4e2de",
+            "secondary": "#006c48",
+            "inverse-primary": "#a5d0b9",
+            "on-tertiary": "#ffffff",
+            "surface-warm-container": "#F4EFE6",
+            "surface-container-low": "#f5f3ef",
+            "surface-container": "#efeeea",
+            "on-primary": "#ffffff",
+            "gold-light": "#F7E7B4",
+            "surface-container-lowest": "#ffffff",
+            "emerald-deep": "#0D2318",
+            "surface-container-high": "#eae8e4",
+            "outline-variant": "#ece7de",
+            "surface-ivory": "#FDFBF7",
+            "surface": "#fbf9f5",
+            "slate-text": "#1E293B",
+            "on-surface": "#1b1c1a",
+            "sage-soft": "#74C69D",
+            "privacy-scrim": "#1E293BCC",
+            "primary-container": "#1b4332",
+            "tertiary-container": "#4d3800"
+          },
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined.fill-1 {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#fbf9f5] text-[#1b1c1a] antialiased min-h-screen flex justify-center selection:bg-[#92f7c3] selection:text-[#00734d]">
+<!-- Mobile Frame Container (Max width 430px) -->
+<main class="w-full max-w-[430px] bg-[#fbf9f5] flex flex-col min-h-screen relative shadow-2xl overflow-x-hidden pb-44">
+<!-- Android Native Status Bar -->
+<header class="w-full bg-[#fbf9f5] pt-3 px-6 pb-1.5 flex justify-between items-center text-slate-700 text-xs select-none sticky top-0 z-40">
+<span class="font-bold text-[14px] text-[#1E293B]">09:41</span>
+<div class="flex items-center gap-1.5 text-[#1E293B]">
+<span class="material-symbols-outlined text-[17px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[17px]">wifi</span>
+<span class="material-symbols-outlined text-[18px]">battery_full</span>
+</div>
+</header>
+<!-- Top App Bar with Step Badge & Back / Info buttons -->
+<section class="bg-[#fbf9f5] px-4 pt-2 pb-3 sticky top-[34px] z-30 border-b border-[#ece7de]/60 backdrop-blur-md bg-[#fbf9f5]/95">
+<div class="flex items-center justify-between">
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center text-[#1b4332] hover:bg-[#efeeea] active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#1b4332]/10 text-[#1b4332] uppercase tracking-wider mb-0.5">
+            Step 3 of 4
+          </span>
+<h1 class="text-[17px] font-bold text-[#012d1d] tracking-tight">Guardian Oversight</h1>
+</div>
+<button aria-label="Learn about Wali" class="w-10 h-10 rounded-full flex items-center justify-center text-[#414844] hover:bg-[#efeeea] active:scale-95 transition-all" id="infoButton" type="button">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+</div>
+<!-- Linear Step Progress Bar (3/4 filled with deep emerald) -->
+<div class="w-full bg-[#e4e2de] h-1.5 rounded-full mt-3 overflow-hidden">
+<div class="bg-[#1b4332] h-full rounded-full transition-all duration-300 w-3/4"></div>
+</div>
+</section>
+<!-- Main Content Canvas -->
+<div class="px-4 flex flex-col gap-5 pt-4">
+<!-- Hero Explainer Banner -->
+<section class="bg-[#F4EFE6] rounded-2xl p-4 border border-[#e5dcce] shadow-sm relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-[#c9a24a]/10 rounded-full pointer-events-none blur-sm"></div>
+<div class="flex items-start gap-3.5 relative z-10">
+<div class="w-10 h-10 rounded-xl bg-[#1b4332] flex items-center justify-center text-[#F7E7B4] shrink-0 shadow-sm mt-0.5">
+<span class="material-symbols-outlined text-[22px] fill-1">verified_user</span>
+</div>
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#c9a24a]/20 text-[#4d3800] mb-1.5">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+              Islamic Matrimonial Protocol
+            </span>
+<h2 class="text-[16px] font-bold text-[#012d1d] leading-snug">
+              Honor &amp; Protection in Your Nikah Journey
+            </h2>
+<p class="text-[13px] text-[#414844] mt-1.5 leading-relaxed">
+              In Islam, guardian oversight ensures your interactions remain dignified, transparent, and enveloped in Barakah. Your Wali guards your interests while respecting your voice.
+            </p>
+</div>
+</div>
+</section>
+<!-- Section: Guardian Role Selection -->
+<section class="flex flex-col gap-2.5">
+<div>
+<h3 class="text-[16px] font-bold text-[#012d1d]">
+            Designate Your Primary Guardian (Wali)
+          </h3>
+<p class="text-[13px] text-[#717973] mt-0.5">
+            Select the family guardian who will oversee introductions.
+          </p>
+</div>
+<!-- 3 Clean Radio Option Cards -->
+<fieldset aria-label="Wali Relationship" class="flex flex-col gap-2.5" role="radiogroup">
+<!-- Option 1: Father (Selected Default) -->
+<label class="wali-radio-label relative flex items-center justify-between p-3.5 rounded-2xl bg-white border-2 border-[#1b4332] shadow-sm cursor-pointer transition-all active:scale-[0.99]">
+<input checked="" class="sr-only peer" name="wali_relationship" type="radio" value="father"/>
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-[#c1ecd4]/40 text-[#1b4332] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">elderly</span>
+</div>
+<div>
+<p class="text-[14px] font-bold text-[#012d1d]">Father (Primary Wali)</p>
+<p class="text-[12px] text-[#414844] leading-snug mt-0.5">Direct paternal guardian according to Sunnah</p>
+</div>
+</div>
+<div class="status-indicator w-6 h-6 rounded-full bg-[#1b4332] text-white flex items-center justify-center shrink-0 shadow-sm ml-2">
+<span class="material-symbols-outlined text-[16px] font-bold">check</span>
+</div>
+</label>
+<!-- Option 2: Brother / Uncle -->
+<label class="wali-radio-label relative flex items-center justify-between p-3.5 rounded-2xl bg-white border border-[#ece7de] hover:border-[#1b4332]/50 shadow-sm cursor-pointer transition-all active:scale-[0.99]">
+<input class="sr-only peer" name="wali_relationship" type="radio" value="brother_uncle"/>
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-[#f5f3ef] text-[#717973] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">supervisor_account</span>
+</div>
+<div>
+<p class="text-[14px] font-bold text-[#1b1c1a]">Brother or Paternal Uncle</p>
+<p class="text-[12px] text-[#717973] leading-snug mt-0.5">Secondary mahram acting with family consent</p>
+</div>
+</div>
+<div class="status-indicator w-6 h-6 rounded-full border-2 border-[#ece7de] flex items-center justify-center shrink-0 ml-2"></div>
+</label>
+<!-- Option 3: Imam / Chaperone -->
+<label class="wali-radio-label relative flex items-center justify-between p-3.5 rounded-2xl bg-white border border-[#ece7de] hover:border-[#1b4332]/50 shadow-sm cursor-pointer transition-all active:scale-[0.99]">
+<input class="sr-only peer" name="wali_relationship" type="radio" value="designated_imam"/>
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-[#f5f3ef] text-[#717973] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">account_balance</span>
+</div>
+<div>
+<p class="text-[14px] font-bold text-[#1b1c1a]">Imam / Islamic Chaperone (Wali Al-Hakim)</p>
+<p class="text-[12px] text-[#717973] leading-snug mt-0.5">For reverts or special circumstances</p>
+</div>
+</div>
+<div class="status-indicator w-6 h-6 rounded-full border-2 border-[#ece7de] flex items-center justify-center shrink-0 ml-2"></div>
+</label>
+</fieldset>
+</section>
+<!-- Section: Guardian Contact Details Form -->
+<section class="flex flex-col gap-3.5 bg-white p-4 rounded-2xl border border-[#ece7de] shadow-sm">
+<div>
+<h3 class="text-[16px] font-bold text-[#012d1d]">Guardian Contact Details</h3>
+<p class="text-[12px] text-[#717973] mt-0.5">
+            A secure invitation link with verification code will be sent via SMS.
+          </p>
+</div>
+<form class="flex flex-col gap-3.5" onsubmit="event.preventDefault();">
+<!-- Guardian Full Name Field -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[13px] font-semibold text-[#1E293B]" for="guardian-name">
+              Guardian's Full Legal Name <span class="text-rose-600">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-[#717973] text-[20px] pointer-events-none">person</span>
+<input class="w-full bg-[#fbf9f5] rounded-xl border border-[#ece7de] pl-11 pr-4 py-3 text-[14px] text-[#1E293B] font-medium focus:outline-none focus:border-[#1b4332] focus:ring-1 focus:ring-[#1b4332] transition-colors" id="guardian-name" placeholder="Enter guardian legal name" required="" type="text" value="Tariq Al-Mansoor"/>
+</div>
+</div>
+<!-- Mobile Phone Number with Country Selector -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[13px] font-semibold text-[#1E293B]" for="guardian-phone">
+              Guardian's Mobile Phone <span class="text-rose-600">*</span>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center gap-1.5 bg-[#fbf9f5] border border-[#ece7de] px-3 py-3 rounded-xl text-[14px] font-semibold text-[#1E293B] shrink-0 hover:bg-[#efeeea] transition-colors" type="button">
+<span class="text-base leading-none">🇬🇧</span>
+<span>+44</span>
+<span class="material-symbols-outlined text-[18px] text-[#717973]">arrow_drop_down</span>
+</button>
+<div class="relative flex-1 flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-[#717973] text-[20px] pointer-events-none">phone_iphone</span>
+<input class="w-full bg-[#fbf9f5] rounded-xl border border-[#ece7de] pl-11 pr-4 py-3 text-[14px] text-[#1E293B] font-medium focus:outline-none focus:border-[#1b4332] focus:ring-1 focus:ring-[#1b4332] transition-colors tracking-wide" id="guardian-phone" placeholder="7700 900189" required="" type="tel" value="7700 900189"/>
+</div>
+</div>
+<p class="text-[12px] text-[#006c48] flex items-center gap-1 mt-0.5 font-medium">
+<span class="material-symbols-outlined text-[14px]">sms</span>
+              A secure invitation link with verification code will be sent via SMS.
+            </p>
+</div>
+<!-- Guardian Email Address (Optional) -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<label class="text-[13px] font-semibold text-[#1E293B]" for="guardian-email">Guardian's Email Address</label>
+<span class="text-[11px] font-medium text-[#717973] bg-[#f5f3ef] px-2 py-0.5 rounded-full">Optional</span>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-[#717973] text-[20px] pointer-events-none">mail</span>
+<input class="w-full bg-[#fbf9f5] rounded-xl border border-[#ece7de] pl-11 pr-4 py-3 text-[14px] text-[#1E293B] focus:outline-none focus:border-[#1b4332] focus:ring-1 focus:ring-[#1b4332] transition-colors" id="guardian-email" placeholder="tariq.mansoor@example.com" type="email" value="tariq.mansoor@example.com"/>
+</div>
+</div>
+</form>
+</section>
+<!-- Section: Guardian Permissions toggles -->
+<section class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-[#ece7de] shadow-sm">
+<div class="mb-1">
+<h3 class="text-[16px] font-bold text-[#012d1d]">
+            Guardian Permissions &amp; Involvement
+          </h3>
+<p class="text-[12px] text-[#717973] mt-0.5">
+            Tailor chaperone visibility in accordance with your comfort level.
+          </p>
+</div>
+<div class="flex flex-col divide-y divide-[#ece7de]">
+<!-- Toggle 1: Instant Match Notifications -->
+<div class="flex items-center justify-between py-3">
+<div class="pr-3">
+<p class="text-[14px] font-bold text-[#1E293B]">Instant Match Notifications</p>
+<p class="text-[12px] text-[#717973] mt-0.5">SMS alert on new serious match and intro request.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#e4e2de] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#ece7de] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1b4332]"></div>
+</label>
+</div>
+<!-- Toggle 2: Chaperoned Chat Participation -->
+<div class="flex items-center justify-between py-3">
+<div class="pr-3">
+<p class="text-[14px] font-bold text-[#1E293B]">Chaperoned Chat Participation</p>
+<p class="text-[12px] text-[#717973] mt-0.5">Guardian is transparently visible in candidate dialogue.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#e4e2de] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#ece7de] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1b4332]"></div>
+</label>
+</div>
+<!-- Toggle 3: Photo Modesty Approval -->
+<div class="flex items-center justify-between py-3">
+<div class="pr-3">
+<p class="text-[14px] font-bold text-[#1E293B]">Photo Modesty Approval</p>
+<p class="text-[12px] text-[#717973] mt-0.5">Guardian permission required before revealing profile photos.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#e4e2de] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#ece7de] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1b4332]"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Verification Steps Card: How Verification Works -->
+<section class="bg-white rounded-2xl p-4 border border-[#ece7de] shadow-sm">
+<div class="flex items-center gap-2 mb-3.5">
+<div class="w-7 h-7 rounded-lg bg-[#1b4332]/10 text-[#1b4332] flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<h4 class="text-[15px] font-bold text-[#012d1d]">How Verification Works</h4>
+</div>
+<ol class="space-y-3.5 relative pl-4 border-l-2 border-[#ece7de] ml-2">
+<li class="relative pl-3">
+<span class="absolute -left-[23px] top-0.5 w-5 h-5 rounded-full bg-[#1b4332] text-white text-[11px] font-bold flex items-center justify-center shadow-xs">1</span>
+<p class="text-[13px] font-bold text-[#1E293B]">SMS Invite Link</p>
+<p class="text-[12px] text-[#717973] mt-0.5">We send your guardian a verified link with a dedicated passcode.</p>
+</li>
+<li class="relative pl-3">
+<span class="absolute -left-[23px] top-0.5 w-5 h-5 rounded-full bg-[#1b4332] text-white text-[11px] font-bold flex items-center justify-center shadow-xs">2</span>
+<p class="text-[13px] font-bold text-[#1E293B]">Secure ID Confirmation</p>
+<p class="text-[12px] text-[#717973] mt-0.5">They confirm their identity and consent to oversee your search.</p>
+</li>
+<li class="relative pl-3">
+<span class="absolute -left-[23px] top-0.5 w-5 h-5 rounded-full bg-[#1b4332] text-white text-[11px] font-bold flex items-center justify-center shadow-xs">3</span>
+<p class="text-[13px] font-bold text-[#1E293B]">Lightweight Dignified Oversight Portal</p>
+<p class="text-[12px] text-[#717973] mt-0.5">Access via private mobile portal without invading personal privacy.</p>
+</li>
+</ol>
+</section>
+<!-- Revert / Community Imam Banner -->
+<section class="bg-[#F4EFE6] rounded-2xl p-3.5 border border-[#c9a24a]/30 shadow-xs flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#c9a24a]/20 text-[#4d3800] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">mosque</span>
+</div>
+<div class="flex-1 text-[12px] leading-snug">
+<span class="text-[#012d1d] font-semibold">Are you a revert or need community assistance?</span>
+<span class="text-[#414844] block mt-0.5">Request a certified local Imam as your Wali.</span>
+</div>
+<button class="px-2.5 py-1.5 rounded-xl bg-white text-[#1b4332] border border-[#ece7de] text-[11px] font-bold hover:bg-[#1b4332] hover:text-white transition-colors shrink-0 shadow-xs" type="button">
+          Request
+        </button>
+</section>
+</div>
+<!-- Sticky Fixed Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#fbf9f5]/95 backdrop-blur-md px-4 pt-3 pb-6 border-t border-[#ece7de] shadow-xl z-40 flex flex-col gap-2.5">
+<button class="w-full h-13 py-3.5 bg-[#1b4332] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-[#1b4332]/25 hover:bg-[#0D2318] active:scale-[0.98] transition-all" type="button">
+<span>Send Invitation &amp; Continue</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full py-1.5 text-center text-[13px] font-semibold text-[#006c48] hover:text-[#012d1d] active:scale-[0.98] transition-all" type="button">
+        Need assistance or invite later
+      </button>
+<div class="flex items-center justify-center gap-1.5 text-center text-[11px] text-[#717973] pt-0.5">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span>End-to-end encrypted privacy guarantee. All inquiries guarded.</span>
+</div>
+</div>
+<!-- Modal Dialog / Bottom Sheet: Educational Tooltip on Wali in Islam -->
+<div class="hidden fixed inset-0 z-50 bg-[#1E293B]/70 flex items-end justify-center p-0 backdrop-blur-sm transition-opacity duration-200" id="infoModal">
+<div class="bg-[#FDFBF7] w-full max-w-[430px] rounded-t-3xl p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+<div class="w-12 h-1.5 bg-[#e4e2de] rounded-full mx-auto mb-1"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#F4EFE6] text-[#4d3800] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px] fill-1">menu_book</span>
+</div>
+<div>
+<h4 class="text-[17px] font-bold text-[#012d1d]">The Role of the Wali</h4>
+<p class="text-[12px] font-semibold text-[#006c48]">Sacred Islamic Guidance</p>
+</div>
+</div>
+<button aria-label="Close dialog" class="w-8 h-8 rounded-full flex items-center justify-center text-[#414844] hover:bg-[#efeeea]" id="closeModal" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="text-[13px] text-[#1E293B] space-y-3 leading-relaxed">
+<p class="bg-[#f5f3ef] p-3 rounded-xl border border-[#ece7de] italic text-[#012d1d]">
+            The Prophet ﷺ stated: <em>“There is no marriage without a guardian (Wali).”</em> <br/><span class="text-[11px] not-italic text-[#717973] font-sans font-medium">— Sunan Abi Dawud</span>
+</p>
+<p>
+            In Islamic jurisprudence, the Wali acts as a protective shield and an advocate for the bride’s best interests, ensuring the prospective partner possesses righteousness, integrity, and compatibility.
+          </p>
+<div class="bg-[#F4EFE6] p-3.5 rounded-xl border border-[#c9a24a]/30">
+<p class="text-[13px] text-[#012d1d] font-bold">
+              Are you a revert or without family mahram?
+            </p>
+<p class="text-[12px] text-[#414844] mt-1">
+              Under Sharia, the local Islamic Authority (Imam/Qadi) steps forward as your authorized Wali Al-Hakim to ensure you receive full dignified protection.
+            </p>
+</div>
+</div>
+<button class="w-full h-12 bg-[#1b4332] text-white rounded-full font-bold text-[14px] mt-1 shadow-md hover:bg-[#0D2318] transition-all" id="modalDismissBtn" type="button">
+          Understood, Close
+        </button>
+</div>
+</div>
+</main>
+<!-- Interactive Logic for Modal & Radio Selection Feedback -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const infoBtn = document.getElementById('infoButton');
+      const infoModal = document.getElementById('infoModal');
+      const closeModal = document.getElementById('closeModal');
+      const modalDismissBtn = document.getElementById('modalDismissBtn');
+
+      function openModal() {
+        if (infoModal) infoModal.classList.remove('hidden');
+      }
+
+      function hideModal() {
+        if (infoModal) infoModal.classList.add('hidden');
+      }
+
+      if (infoBtn) infoBtn.addEventListener('click', openModal);
+      if (closeModal) closeModal.addEventListener('click', hideModal);
+      if (modalDismissBtn) modalDismissBtn.addEventListener('click', hideModal);
+
+      if (infoModal) {
+        infoModal.addEventListener('click', (e) => {
+          if (e.target === infoModal) hideModal();
+        });
+      }
+
+      // Interactive UI feedback on Wali radio cards
+      const radioLabels = document.querySelectorAll('.wali-radio-label');
+      radioLabels.forEach(label => {
+        label.addEventListener('click', () => {
+          radioLabels.forEach(l => {
+            l.classList.remove('border-2', 'border-[#1b4332]');
+            l.classList.add('border', 'border-[#ece7de]');
+            const ind = l.querySelector('.status-indicator');
+            if (ind) {
+              ind.className = 'status-indicator w-6 h-6 rounded-full border-2 border-[#ece7de] flex items-center justify-center shrink-0 ml-2';
+              ind.innerHTML = '';
+            }
+            const iconBg = l.querySelector('.w-11.h-11');
+            if (iconBg) {
+              iconBg.className = 'w-11 h-11 rounded-xl bg-[#f5f3ef] text-[#717973] flex items-center justify-center shrink-0';
+            }
+          });
+
+          label.classList.remove('border', 'border-[#ece7de]');
+          label.classList.add('border-2', 'border-[#1b4332]');
+          const activeInd = label.querySelector('.status-indicator');
+          if (activeInd) {
+            activeInd.className = 'status-indicator w-6 h-6 rounded-full bg-[#1b4332] text-white flex items-center justify-center shrink-0 shadow-sm ml-2';
+            activeInd.innerHTML = '<span class="material-symbols-outlined text-[16px] font-bold">check</span>';
+          }
+          const activeIconBg = label.querySelector('.w-11.h-11');
+          if (activeIconBg) {
+            activeIconBg.className = 'w-11 h-11 rounded-xl bg-[#c1ecd4]/40 text-[#1b4332] flex items-center justify-center shrink-0';
+          }
+        });
+      });
+    });
+  </script>
+</body></html>
