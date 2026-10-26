@@ -22,19 +22,30 @@ class AppNetworkImage extends StatelessWidget {
   final FilterQuality? filterQuality;
   final Color? color;
 
+  /// Placeholder shown when there is no photo, or the photo fails to load.
+  Widget _placeholder() => Container(
+        color: AppTheme.emeraldDeep,
+        alignment: Alignment.center,
+        child: Icon(errorIcon, color: AppTheme.gold.withValues(alpha: 0.8), size: 30),
+      );
+
   @override
   Widget build(BuildContext context) {
+    if (url.trim().isEmpty) {
+      final Widget empty = _placeholder();
+      if (borderRadius == null) return empty;
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius!),
+        child: empty,
+      );
+    }
     final Widget image = Image.network(
       url,
       fit: fit,
       color: color,
       colorBlendMode: color != null ? BlendMode.srcATop : null,
       filterQuality: filterQuality ?? FilterQuality.low,
-      errorBuilder: (_, _, _) => Container(
-        color: AppTheme.emeraldDeep,
-        alignment: Alignment.center,
-        child: Icon(errorIcon, color: AppTheme.gold.withValues(alpha: 0.8), size: 30),
-      ),
+      errorBuilder: (_, _, _) => _placeholder(),
       frameBuilder: (_, Widget child, int? frame, bool wasSync) {
         if (wasSync || frame != null) return child;
         return Container(

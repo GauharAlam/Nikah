@@ -115,7 +115,7 @@ class PremiumScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Renews 12 Nov 2026 · billed monthly',
+                  'No active plan · you are on the free tier',
                   style:
                       AppTheme.ts(12, FontWeight.w500, color: AppTheme.slate500),
                 ),
@@ -156,8 +156,8 @@ class PremiumScreen extends StatelessWidget {
                           InkWell(
                             onTap: () => showAppSnack(
                               context,
-                              'No purchases yet — checkout is disabled in '
-                              'this demo build.',
+                              'In-app purchases are not available in this '
+                              'build. No plan has been purchased.',
                               icon: Icons.receipt_long_outlined,
                             ),
                             borderRadius: BorderRadius.circular(6),

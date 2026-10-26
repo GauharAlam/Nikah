@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Barkat Nikah design tokens — reverse-engineered from the Barkat app
-/// (Play Store screenshots, pixel-sampled).
+/// Barkat Nikah design tokens.
+///
+/// PROVENANCE: these values originate from the Google Stitch design drafts in
+/// `stitch/` (see README.md). They are **not** sampled from the Barkat app —
+/// no Barkat screenshots were available when this palette was written, and the
+/// per-constant "sampled" annotations below were inherited from that incorrect
+/// claim. Treat every value as a placeholder pending real reference captures
+/// (`docs/REFERENCE_ANALYSIS.md` §6).
 ///
 /// All screens must read colors from this file instead of hardcoding hex
 /// values inline. [canvas] is the mint app background, [green] the brand
@@ -12,26 +18,26 @@ class AppTheme {
   AppTheme._();
 
   // ─── Brand: Forest Green ───────────────────────────────────────────────────
-  /// Darkest pine — dark hero/deck backgrounds (sampled #1A1A1A–#124836 mix).
+  /// Darkest pine — dark hero/deck backgrounds.
   static const Color emeraldDeep = Color(0xFF0D3327);
 
   /// Mid pine — elevated dark surfaces.
   static const Color emerald = Color(0xFF185A42);
 
-  /// Primary brand green — buttons, active states, links (sampled #185A42).
+  /// Primary brand green — buttons, active states, links.
   static const Color green = Color(0xFF185A42);
 
-  /// Bright leaf green — icons/text on dark surfaces (sampled from card rows).
+  /// Bright leaf green — icons/text on dark surfaces.
   static const Color mint = Color(0xFF8FE0B0);
 
   /// Soft sage — secondary green fills.
   static const Color sage = Color(0xFF8FD3AB);
 
   // ─── Accent: Gold ──────────────────────────────────────────────────────────
-  /// Light champagne — badge pills, light gold surfaces (sampled #F5E9C8).
+  /// Light champagne — badge pills, light gold surfaces.
   static const Color gold = Color(0xFFE9D9A0);
 
-  /// Metallic gold — Request Contact, borders, ratings (sampled #D9BA58).
+  /// Metallic gold — Request Contact, borders, ratings.
   static const Color goldAccent = Color(0xFFD9BA58);
 
   /// Deep bronze — text on gold surfaces.
@@ -44,16 +50,16 @@ class AppTheme {
   /// Pure white cards.
   static const Color ivory = Color(0xFFFFFFFF);
 
-  /// Warm cream — premium / marketing surfaces (sampled #FBF9F2).
+  /// Warm cream — premium / marketing surfaces.
   static const Color ivoryWarm = Color(0xFFF7F5EE);
 
-  /// Mint app background (sampled #F1FBF4).
+  /// Mint app background.
   static const Color canvas = Color(0xFFF1FBF4);
 
-  /// Marketing cream used on landing frames (sampled #EBEADE).
+  /// Marketing cream used on landing frames.
   static const Color cream = Color(0xFFEBEADE);
 
-  /// Near-black ink for text and dark chips (sampled #1A1A1A).
+  /// Near-black ink for text and dark chips.
   static const Color ink = Color(0xFF1A1A1A);
 
   /// Muted gray for outlines / neutral icons.

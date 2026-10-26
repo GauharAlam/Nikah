@@ -52,10 +52,9 @@ class _VerseHero extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          const AppNetworkImage(
-            url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a'
-                '?q=80&w=800&auto=format&fit=crop',
-          ),
+          // Decorative hero. Empty until a licensed asset is supplied; the
+          // gradient overlay below carries the composition either way.
+          const AppNetworkImage(url: ''),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

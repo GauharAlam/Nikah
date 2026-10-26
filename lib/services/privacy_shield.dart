@@ -3,8 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Best-effort screenshot / screen-recording protection (FLAG_SECURE on
-/// Android, secure text entry trick on iOS) for member photos and biodata.
+/// Best-effort screenshot / screen-recording protection for member photos and
+/// biodata.
+///
+/// Android: `FLAG_SECURE` on the activity window (`MainActivity.kt`).
+/// iOS: the secure-text-entry layer trick (`AppDelegate.swift`) — iOS exposes
+/// no true FLAG_SECURE equivalent, so this is best-effort and does not defeat
+/// a physical camera on either platform.
 ///
 /// Reference-counted so several screens can hold the shield at once.
 /// Silently no-ops on desktop and in widget tests where the native

@@ -165,8 +165,7 @@ class MatchProfile {
     age: 29,
     profession: 'Software Architect',
     location: 'London, UK',
-    imageUrl:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop',
+    imageUrl: '', // no licensed demo photo — renders the placeholder
     isWaliVerified: true,
     faithTags: [
       'Prays 5x daily',
@@ -209,8 +208,7 @@ class MatchProfile {
     age: 30,
     profession: 'Chartered Architect',
     location: 'Birmingham, UK',
-    imageUrl:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop',
+    imageUrl: '', // no licensed demo photo — renders the placeholder
     isWaliVerified: true,
     faithTags: ['Prays 5x daily', 'Maliki', 'Nikah: 3-6 mos', 'Quran fluent'],
     marriageQuote:
@@ -248,8 +246,7 @@ class MatchProfile {
     age: 27,
     profession: 'NHS Pharmacist',
     location: 'Manchester, UK',
-    imageUrl:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=800&auto=format&fit=crop',
+    imageUrl: '', // no licensed demo photo — renders the placeholder
     isWaliVerified: true,
     faithTags: ['Prays 5x daily', 'Hanafi', 'Nikah: 12 mos', 'Hafiz'],
     marriageQuote:
@@ -288,8 +285,7 @@ class MatchProfile {
     age: 32,
     profession: 'Secondary School Teacher',
     location: 'Leicester, UK',
-    imageUrl:
-        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=800&auto=format&fit=crop',
+    imageUrl: '', // no licensed demo photo — renders the placeholder
     isWaliVerified: false,
     faithTags: ['Prays 5x daily', 'Shafi\'i', 'Nikah: 6-12 mos', 'Deen mentor'],
     marriageQuote:
@@ -327,8 +323,7 @@ class MatchProfile {
     age: 31,
     profession: 'Chartered Accountant',
     location: 'Dubai, UAE',
-    imageUrl:
-        'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop',
+    imageUrl: '', // no licensed demo photo — renders the placeholder
     isWaliVerified: true,
     faithTags: ['Prays 5x daily', 'Hanafi', 'Nikah: 3-6 mos', 'Riba-free'],
     marriageQuote:

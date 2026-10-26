@@ -98,8 +98,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     final bool approved = store.isApproved(match.id);
     final bool requested = store.contactRequested(match.id);
     final bool proposed = store.hasProposed(match.id);
-    final bool incoming = store.incomingContactRequests
-        .any((MatchProfile p) => p.id == match.id);
+    final bool incoming = store.incomingProposal(match.id)?.isPending ?? false;
     final int activeDays = match.id.hashCode.abs() % 4 + 2;
 
     return Scaffold(
@@ -439,23 +438,27 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('detail_accept'),
-          title: 'Accept Request',
-          subtitle: 'They sent you an interest',
+          title: 'Accept Proposal',
+          subtitle: 'They sent you a proposal — accepting makes it a match',
           icon: Icons.check_rounded,
           onTap: () {
-            store.acceptContact(match.id);
-            showWaliSnack(context, 'Contact shared — barakallahu feekum');
+            if (store.acceptProposal(match.id)) {
+              showWaliSnack(
+                context,
+                'Proposal accepted — you are matched, barakallahu feekum',
+              );
+            }
           },
         ),
         const SizedBox(height: 10),
         _StepButton(
           title: 'Send Message',
-          subtitle: 'Opens once you accept the request',
+          subtitle: 'Opens once you accept the proposal',
           icon: Icons.chat_bubble_outline_rounded,
           ghost: true,
           onTap: () => showAppSnack(
             context,
-            'Accept their request to open the chaperoned chat.',
+            'Accept their proposal to open the chat.',
             icon: Icons.lock_outline_rounded,
           ),
         ),
@@ -464,11 +467,12 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           child: TextButton(
             key: const Key('detail_decline'),
             onPressed: () {
-              store.declineContact(match.id);
-              showAppSnack(context, 'Request declined respectfully.');
+              if (store.declineProposal(match.id)) {
+                showAppSnack(context, 'Proposal declined respectfully.');
+              }
             },
             child: Text(
-              'Decline request',
+              'Decline proposal',
               style: _t(12.5, FontWeight.w700, AppTheme.slate500),
             ),
           ),

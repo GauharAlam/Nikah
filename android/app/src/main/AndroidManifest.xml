@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required in release builds: remote profile imagery and all API traffic. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="nikah_app"
+        android:label="Barkat Nikah"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

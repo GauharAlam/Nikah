@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../app_router.dart';
 import '../models/match_profile.dart';
+import '../models/proposal.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_buttons.dart';
@@ -31,8 +32,8 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final List<MatchProfile> sent = store.proposalsSentList;
-    final List<MatchProfile> received = store.incomingContactRequests;
+    final List<Proposal> sent = store.sentProposals;
+    final List<Proposal> received = store.pendingIncomingProposals;
 
     return Scaffold(
       backgroundColor: AppTheme.canvas,
@@ -78,21 +79,27 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                     'proposal. You get five every day.',
               )
             else
-              for (final MatchProfile p in sent) ...<Widget>[
-                _SentProposalCard(profile: p),
+              for (final Proposal p in sent) ...<Widget>[
+                _SentProposalCard(
+                  profile: MatchProfile.byId(p.profileId),
+                  proposal: p,
+                ),
                 const SizedBox(height: 10),
               ],
           if (_tab == _ProposalTab.received)
             if (received.isEmpty)
               const EmptyState(
                 icon: Icons.mark_email_read_outlined,
-                title: 'No requests received',
-                body: 'When a family requests your contact details it will '
-                    'appear here for your approval.',
+                title: 'No proposals received',
+                body: 'When someone sends you a proposal it will appear here '
+                    'for you to accept or decline.',
               )
             else
-              for (final MatchProfile p in received) ...<Widget>[
-                _ReceivedRequestCard(profile: p),
+              for (final Proposal p in received) ...<Widget>[
+                _ReceivedProposalCard(
+                  profile: MatchProfile.byId(p.profileId),
+                  proposal: p,
+                ),
                 const SizedBox(height: 10),
               ],
         ],
@@ -207,14 +214,27 @@ class _ProposalAvatar extends StatelessWidget {
 }
 
 class _SentProposalCard extends StatelessWidget {
-  const _SentProposalCard({required this.profile});
+  const _SentProposalCard({required this.profile, required this.proposal});
 
   final MatchProfile profile;
+  final Proposal proposal;
+
+  /// Colour and icon follow the proposal's own status, not contact sharing.
+  (IconData, Color) get _statusStyle => switch (proposal.status) {
+        ProposalStatus.accepted => (
+            Icons.check_circle_rounded,
+            AppTheme.success,
+          ),
+        ProposalStatus.declined || ProposalStatus.expired => (
+            Icons.do_not_disturb_on_outlined,
+            AppTheme.slate500,
+          ),
+        _ => (Icons.hourglass_bottom_rounded, AppTheme.goldDeep),
+      };
 
   @override
   Widget build(BuildContext context) {
-    final AppStore store = context.read<AppStore>();
-    final bool shared = store.isContactShared(profile.id);
+    final (IconData icon, Color color) = _statusStyle;
     return AppCard(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -241,22 +261,12 @@ class _SentProposalCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: <Widget>[
-                    Icon(
-                      shared
-                          ? Icons.check_circle_rounded
-                          : Icons.hourglass_bottom_rounded,
-                      size: 13,
-                      color: shared ? AppTheme.success : AppTheme.goldDeep,
-                    ),
+                    Icon(icon, size: 13, color: color),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
-                        shared ? 'Contact shared' : 'Awaiting a reply',
-                        style: AppTheme.ts(
-                          11.5,
-                          FontWeight.w700,
-                          color: shared ? AppTheme.success : AppTheme.goldDeep,
-                        ),
+                        proposal.detail,
+                        style: AppTheme.ts(11.5, FontWeight.w700, color: color),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -280,10 +290,14 @@ class _SentProposalCard extends StatelessWidget {
   }
 }
 
-class _ReceivedRequestCard extends StatelessWidget {
-  const _ReceivedRequestCard({required this.profile});
+class _ReceivedProposalCard extends StatelessWidget {
+  const _ReceivedProposalCard({
+    required this.profile,
+    required this.proposal,
+  });
 
   final MatchProfile profile;
+  final Proposal proposal;
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +332,7 @@ class _ReceivedRequestCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Requested your contact details',
+                      proposal.detail,
                       style: AppTheme.ts(11.5, FontWeight.w700, color: AppTheme.green),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -333,10 +347,12 @@ class _ReceivedRequestCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: OutlinedButton(
+                  key: Key('decline_proposal_${profile.id}'),
                   onPressed: () {
-                    context.read<AppStore>().declineContact(profile.id);
-                    showAppSnack(context, 'Request declined politely.',
-                        icon: Icons.do_not_disturb_on_outlined);
+                    if (context.read<AppStore>().declineProposal(profile.id)) {
+                      showAppSnack(context, 'Proposal declined politely.',
+                          icon: Icons.do_not_disturb_on_outlined);
+                    }
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.slate700,
@@ -351,11 +367,16 @@ class _ReceivedRequestCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: PrimaryButton(
+                  key: Key('accept_proposal_${profile.id}'),
                   label: 'Accept',
                   onPressed: () {
-                    context.read<AppStore>().acceptContact(profile.id);
-                    showSuccessSnack(
-                        context, 'Contact shared with ${profile.firstName}.');
+                    if (context.read<AppStore>().acceptProposal(profile.id)) {
+                      showSuccessSnack(
+                        context,
+                        'Matched with ${profile.firstName} — interest is '
+                        'mutual.',
+                      );
+                    }
                   },
                 ),
               ),

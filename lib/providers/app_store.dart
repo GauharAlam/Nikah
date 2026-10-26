@@ -9,6 +9,7 @@ import '../models/filters.dart';
 import '../models/meeting.dart';
 import '../models/match_profile.dart';
 import '../models/notification_item.dart';
+import '../models/proposal.dart';
 import '../models/verification_doc.dart';
 import '../models/ward_profile.dart';
 import '../models/wali.dart';
@@ -51,6 +52,7 @@ class AppStore extends ChangeNotifier {
   static const String _kSettings = 'bk_settings';
   static const String _kSkipped = 'bk_skipped';
   static const String _kProposals = 'bk_proposals';
+  static const String _kProposalRecords = 'bk_proposal_records';
   static const String _kProposalDay = 'bk_proposal_day';
   static const String _kProposalCount = 'bk_proposal_count';
   static const String _kContactCredits = 'bk_contact_credits';
@@ -78,6 +80,12 @@ class AppStore extends ChangeNotifier {
   }
 
   /// Sign in using the demo account, optionally overriding credentials.
+  ///
+  /// NOTE: this performs **no authentication**. It accepts any input and opens
+  /// a local session against seeded demo data. Real credential verification
+  /// arrives with the Firebase `AuthRepository` (see
+  /// `docs/IMPLEMENTATION_PLAN.md` Stage 3); this method must not survive into
+  /// a release build.
   void signIn({String? email, String? phone}) {
     WardProfile? next = _profile;
     if (next == null || next.displayName.isEmpty) {
@@ -104,7 +112,7 @@ class AppStore extends ChangeNotifier {
       id: _nextId('log'),
       kind: ActivityKind.verification,
       title: 'Signed in',
-      detail: 'Session opened with 2-factor verification.',
+      detail: 'Session opened.',
       createdAt: DateTime.now(),
     ));
     notifyListeners();
@@ -298,10 +306,11 @@ class AppStore extends ChangeNotifier {
   /// Monthly gold («Request Contact») credits included with the plan.
   static const int monthlyContactCredits = 30;
 
-  Set<String> _proposals = <String>{};
+  /// One proposal per profile per direction. Replaces the former
+  /// `_proposals` / `_incomingRequests` string sets (G-04).
+  List<Proposal> _proposalRecords = <Proposal>[];
   Set<String> _skipped = <String>{};
   Set<String> _contactRequestsOut = <String>{};
-  Set<String> _incomingRequests = <String>{};
   Set<String> _sharedContacts = <String>{};
   Set<String> _unmatched = <String>{};
   String _proposalDay = '';
@@ -321,7 +330,31 @@ class AppStore extends ChangeNotifier {
     return left < 0 ? 0 : left;
   }
 
-  bool hasProposed(String matchId) => _proposals.contains(matchId);
+  // ─── Proposal lookups ─────────────────────────────────────────────────────
+
+  /// The proposal for [matchId] in [direction], if one exists.
+  Proposal? proposalFor(String matchId, ProposalDirection direction) {
+    for (final Proposal p in _proposalRecords) {
+      if (p.profileId == matchId && p.direction == direction) return p;
+    }
+    return null;
+  }
+
+  Proposal? outgoingProposal(String matchId) =>
+      proposalFor(matchId, ProposalDirection.outgoing);
+
+  Proposal? incomingProposal(String matchId) =>
+      proposalFor(matchId, ProposalDirection.incoming);
+
+  /// Whether this member has a live proposal out to [matchId]. A withdrawn or
+  /// declined proposal is not live, so the heart becomes available again.
+  bool hasProposed(String matchId) {
+    final Proposal? p = outgoingProposal(matchId);
+    return p != null &&
+        (p.status == ProposalStatus.pending ||
+            p.status == ProposalStatus.accepted);
+  }
+
   bool hasSkipped(String matchId) => _skipped.contains(matchId);
   bool hasUnmatched(String matchId) => _unmatched.contains(matchId);
   bool contactRequested(String matchId) => _contactRequestsOut.contains(matchId);
@@ -340,13 +373,31 @@ class AppStore extends ChangeNotifier {
       .where((p) => !_unmatched.contains(p.id))
       .toList();
 
-  List<MatchProfile> get proposalsSentList =>
-      MatchProfile.seeds.where((p) => _proposals.contains(p.id)).toList();
+  /// Proposals this member sent, newest first. A withdrawn proposal is
+  /// dropped from the list; declined and expired stay visible as outcomes.
+  List<Proposal> get sentProposals => (_proposalRecords
+          .where((Proposal p) => p.isOutgoing)
+          .where((Proposal p) => p.status != ProposalStatus.withdrawn)
+          .toList()
+        ..sort((Proposal a, Proposal b) => b.createdAt.compareTo(a.createdAt)));
 
-  List<MatchProfile> get incomingContactRequests =>
-      MatchProfile.seeds.where((p) => _incomingRequests.contains(p.id)).toList();
+  /// Proposals awaiting this member's accept/decline, newest first.
+  List<Proposal> get pendingIncomingProposals => (_proposalRecords
+          .where((Proposal p) => p.isIncoming && p.isPending)
+          .toList()
+        ..sort((Proposal a, Proposal b) => b.createdAt.compareTo(a.createdAt)));
 
-  int get pendingRequestCount => _incomingRequests.length;
+  List<MatchProfile> get proposalsSentList => sentProposals
+      .map((Proposal p) => MatchProfile.byId(p.profileId))
+      .toList();
+
+  /// Profiles whose proposal is waiting on this member — what the Proposals
+  /// «Received» tab lists.
+  List<MatchProfile> get incomingProposalProfiles => pendingIncomingProposals
+      .map((Proposal p) => MatchProfile.byId(p.profileId))
+      .toList();
+
+  int get pendingRequestCount => pendingIncomingProposals.length;
 
   int get contactCredits => _contactCredits;
 
@@ -372,14 +423,12 @@ class AppStore extends ChangeNotifier {
     unawaited(_prefs.setString(
         _kSkipped, _skipped.toList(growable: false).join(',')));
     unawaited(_prefs.setString(
-        _kProposals, _proposals.toList(growable: false).join(',')));
+        _kProposalRecords, Proposal.encodeList(_proposalRecords)));
     unawaited(_prefs.setString(_kProposalDay, _proposalDay));
     unawaited(_prefs.setInt(_kProposalCount, _proposalCount));
     unawaited(_prefs.setInt(_kContactCredits, _contactCredits));
     unawaited(_prefs.setString(_kContactRequests,
         _contactRequestsOut.toList(growable: false).join(',')));
-    unawaited(_prefs.setString(
-        _kIncoming, _incomingRequests.toList(growable: false).join(',')));
     unawaited(_prefs.setString(
         _kSharedContacts, _sharedContacts.toList(growable: false).join(',')));
     unawaited(_prefs.setString(
@@ -411,17 +460,34 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Send a heart proposal using one of the five daily slots.
-  /// Returns `false` when the quota is exhausted.
+  /// Send a heart proposal using one of the daily slots.
+  ///
+  /// Returns `false` when the quota is exhausted. Re-sending to a profile that
+  /// already has a live proposal is a no-op and does not spend a slot.
+  ///
+  /// Sending does NOT create a match: a match requires the recipient to accept
+  /// (see [acceptProposal]).
   bool sendProposal(String matchId) {
-    if (_proposals.contains(matchId)) return true;
+    if (hasProposed(matchId)) return true;
     if (proposalsSentToday >= proposalQuota) return false;
     if (_proposalDay != _todayKey) {
       _proposalDay = _todayKey;
       _proposalCount = 0;
     }
     _proposalCount++;
-    _proposals = <String>{..._proposals, matchId};
+    // Replace any prior terminal record for this direction, so history never
+    // holds two outgoing proposals for the same profile.
+    _proposalRecords = <Proposal>[
+      ..._proposalRecords.where((Proposal p) =>
+          !(p.profileId == matchId && p.isOutgoing)),
+      Proposal(
+        id: _nextId('prp'),
+        profileId: matchId,
+        direction: ProposalDirection.outgoing,
+        status: ProposalStatus.pending,
+        createdAt: DateTime.now(),
+      ),
+    ];
     _skipped = <String>{..._skipped..remove(matchId)};
     _saveBarkatState();
     final MatchProfile match = MatchProfile.byId(matchId);
@@ -464,20 +530,14 @@ class AppStore extends ChangeNotifier {
           '${match.firstName}\'s contact details.',
       createdAt: DateTime.now(),
     ));
-    // Demo backend: the other family accepts shortly after.
-    _timers.add(Timer(const Duration(milliseconds: 2400), () {
-      acceptContact(matchId);
-    }));
+    // The request stays pending until the recipient actually accepts it.
+    // Nothing on this device may accept on another member's behalf.
     notifyListeners();
     return true;
   }
 
   /// Approve an incoming contact request (from the profile-details screen).
   void acceptContact(String matchId) {
-    final bool wasIncoming = _incomingRequests.contains(matchId);
-    if (wasIncoming) {
-      _incomingRequests = <String>{..._incomingRequests..remove(matchId)};
-    }
     final bool firstShare = !_sharedContacts.contains(matchId);
     _sharedContacts = <String>{..._sharedContacts, matchId};
     if (!_approved.contains(matchId)) {
@@ -499,10 +559,102 @@ class AppStore extends ChangeNotifier {
   }
 
   void declineContact(String matchId) {
-    if (!_incomingRequests.contains(matchId)) return;
-    _incomingRequests = <String>{..._incomingRequests..remove(matchId)};
+    if (!_contactRequestsOut.contains(matchId)) return;
+    _contactRequestsOut = <String>{..._contactRequestsOut..remove(matchId)};
     _saveBarkatState();
     notifyListeners();
+  }
+
+  // ─── Proposal transitions ─────────────────────────────────────────────────
+
+  /// Applies [next] to the proposal for [matchId] in [direction], enforcing
+  /// [Proposal.canTransition] and [Proposal.isActorAllowed].
+  ///
+  /// Returns the updated proposal, or `null` when no such proposal exists or
+  /// the transition is not permitted. The caller decides how to report that.
+  Proposal? _transition(
+    String matchId,
+    ProposalDirection direction,
+    ProposalStatus next,
+  ) {
+    final Proposal? current = proposalFor(matchId, direction);
+    if (current == null) return null;
+    final Proposal? updated = current.tryTransition(next);
+    if (updated == null) return null;
+    _proposalRecords = _proposalRecords
+        .map((Proposal p) => p.id == updated.id ? updated : p)
+        .toList();
+    _saveBarkatState();
+    return updated;
+  }
+
+  /// Accept a proposal someone sent to this member.
+  ///
+  /// This is the ONLY path that creates a match: the sender declared interest
+  /// and the recipient has now accepted, so consent is mutual on both sides.
+  /// Returns `false` when there is no pending incoming proposal to accept.
+  bool acceptProposal(String matchId) {
+    final Proposal? updated = _transition(
+      matchId,
+      ProposalDirection.incoming,
+      ProposalStatus.accepted,
+    );
+    if (updated == null) return false;
+
+    final MatchProfile match = MatchProfile.byId(matchId);
+    approveIntro(matchId);
+    _addLog(ActivityLogEntry(
+      id: _nextId('log'),
+      kind: ActivityKind.intro,
+      title: 'Proposal accepted',
+      detail: 'You accepted ${match.firstName}\'s proposal — interest is '
+          'mutual, so you are now matched.',
+      createdAt: DateTime.now(),
+    ));
+    notifyListeners();
+    return true;
+  }
+
+  /// Decline a proposal someone sent to this member.
+  bool declineProposal(String matchId) {
+    final Proposal? updated = _transition(
+      matchId,
+      ProposalDirection.incoming,
+      ProposalStatus.declined,
+    );
+    if (updated == null) return false;
+    _addLog(ActivityLogEntry(
+      id: _nextId('log'),
+      kind: ActivityKind.intro,
+      title: 'Proposal declined',
+      detail: '${MatchProfile.byId(matchId).firstName}\'s proposal was '
+          'declined. No match was created.',
+      createdAt: DateTime.now(),
+    ));
+    notifyListeners();
+    return true;
+  }
+
+  /// Take back a proposal this member sent, before the other side replies.
+  ///
+  /// The spent daily slot is not refunded — the proposal was delivered.
+  bool withdrawProposal(String matchId) {
+    final Proposal? updated = _transition(
+      matchId,
+      ProposalDirection.outgoing,
+      ProposalStatus.withdrawn,
+    );
+    if (updated == null) return false;
+    _addLog(ActivityLogEntry(
+      id: _nextId('log'),
+      kind: ActivityKind.intro,
+      title: 'Proposal withdrawn',
+      detail: 'Your proposal to ${MatchProfile.byId(matchId).firstName} was '
+          'withdrawn.',
+      createdAt: DateTime.now(),
+    ));
+    notifyListeners();
+    return true;
   }
 
   /// Demo upload — moves a document from missing to under review.
@@ -677,68 +829,8 @@ class AppStore extends ChangeNotifier {
     };
     _saveChats();
     notifyListeners();
-
-    _timers.add(Timer(const Duration(milliseconds: 1400), () {
-      reply(matchId);
-    }));
-
-    _timers.add(Timer(const Duration(milliseconds: 3200), () {
-      appendChaperoneNote(matchId);
-    }));
-  }
-
-  static const List<String> _matchReplies = <String>[
-    'Wa alaykum as-salam, jazak Allah khayr. My Wali has reviewed your '
-        'biodata and would like to schedule a family call this weekend, in '
-        'sha Allah.',
-    'That is a beautiful perspective, alhamdulillah. I would be glad to '
-        'share more during the next chaperoned call, in sha Allah.',
-    'MashaAllah, noted with gratitude. Both Wali will coordinate the next '
-        'introduction step and follow up shortly.',
-  ];
-
-  void reply(String matchId) {
-    final DateTime t = DateTime.now();
-    final int poolIndex =
-        (_chats[matchId]?.length ?? 0) % _matchReplies.length;
-    final ChatMessage reply = ChatMessage(
-      id: _nextId('msg'),
-      text: _matchReplies[poolIndex],
-      time: _fmtTime(t),
-      createdAt: t,
-      sender: MessageSender.match,
-    );
-    _chats = <String, List<ChatMessage>>{
-      ..._chats,
-      matchId: <ChatMessage>[..._chats[matchId]!, reply],
-    };
-    _addLog(ActivityLogEntry(
-      id: _nextId('log'),
-      kind: ActivityKind.chat,
-      title: 'Chaperoned message received',
-      detail:
-          'A supervised reply arrived from ${MatchProfile.byId(matchId).firstName}.',
-      createdAt: t,
-    ));
-    _saveChats();
-    notifyListeners();
-  }
-
-  void appendChaperoneNote(String matchId) {
-    final DateTime t = DateTime.now();
-    final ChatMessage note = ChatMessage(
-      id: _nextId('msg'),
-      text: 'Chaperone: Message thread archived for guardian audit.',
-      time: _fmtTime(t),
-      createdAt: t,
-      sender: MessageSender.chaperone,
-    );
-    _chats = <String, List<ChatMessage>>{
-      ..._chats,
-      matchId: <ChatMessage>[..._chats[matchId]!, note],
-    };
-    _saveChats();
-    notifyListeners();
+    // Incoming messages arrive from the messaging backend, not from a local
+    // timer. Until that transport exists, a sent message simply stays sent.
   }
 
   // ─── Meeting requests ─────────────────────────────────────────────────────
@@ -983,9 +1075,8 @@ class AppStore extends ChangeNotifier {
     _approved = _decodeSet(_prefs.getString(_kApproved));
 
     _skipped = _decodeSet(_prefs.getString(_kSkipped));
-    _proposals = _decodeSet(_prefs.getString(_kProposals));
+    _proposalRecords = _loadProposalRecords();
     _contactRequestsOut = _decodeSet(_prefs.getString(_kContactRequests));
-    _incomingRequests = _decodeSet(_prefs.getString(_kIncoming));
     _sharedContacts = _decodeSet(_prefs.getString(_kSharedContacts));
     _unmatched = _decodeSet(_prefs.getString(_kUnmatched));
     _proposalDay = _prefs.getString(_kProposalDay) ?? '';
@@ -1040,27 +1131,80 @@ class AppStore extends ChangeNotifier {
       unawaited(
           _prefs.setString(_kIntros, _intros.toList(growable: false).join(',')));
     }
+    _seedDemoIncomingProposals();
+  }
+
+  /// Demo data: two members have proposed to this persona, so the Proposals
+  /// «Received» tab and the accept/decline path are reachable offline.
+  ///
+  /// These records are local demo seeds, exactly like [MatchProfile.seeds].
+  /// Real inbound proposals will come from the backend (Stage 6).
+  void _seedDemoIncomingProposals() {
+    if (!_onboarded && _stage != AuthStage.active) return;
+    if (_proposalRecords.any((Proposal p) => p.isIncoming)) return;
+    final DateTime now = DateTime.now();
+    _proposalRecords = <Proposal>[
+      ..._proposalRecords,
+      Proposal(
+        id: _nextId('prp'),
+        profileId: 'farhan-2',
+        direction: ProposalDirection.incoming,
+        status: ProposalStatus.pending,
+        createdAt: now.subtract(const Duration(hours: 6)),
+      ),
+      Proposal(
+        id: _nextId('prp'),
+        profileId: 'salman-5',
+        direction: ProposalDirection.incoming,
+        status: ProposalStatus.pending,
+        createdAt: now.subtract(const Duration(days: 1, hours: 2)),
+      ),
+    ];
+    unawaited(_prefs.setString(
+        _kProposalRecords, Proposal.encodeList(_proposalRecords)));
   }
 
   static Map<String, List<ChatMessage>> _decodeChatMap(String? raw) {
     if (raw == null || raw.isEmpty) return <String, List<ChatMessage>>{};
-    final dynamic decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic>) return <String, List<ChatMessage>>{};
-    return decoded.map<String, List<ChatMessage>>(
-      (String key, dynamic value) => MapEntry<String, List<ChatMessage>>(
-        key,
-        (value as List?)
-                ?.cast<Map<String, dynamic>>()
-                .map(ChatMessage.fromJson)
-                .toList() ??
-            const <ChatMessage>[],
-      ),
-    );
+    try {
+      final dynamic decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        return <String, List<ChatMessage>>{};
+      }
+      return decoded.map<String, List<ChatMessage>>(
+        (String key, dynamic value) => MapEntry<String, List<ChatMessage>>(
+          key,
+          _decodeThread(value),
+        ),
+      );
+    } catch (_) {
+      // A corrupt or outdated blob must never brick app start-up: `_load`
+      // runs from the constructor, so anything thrown here takes the app
+      // down before the first frame.
+      return <String, List<ChatMessage>>{};
+    }
+  }
+
+  /// Decodes one stored thread.
+  ///
+  /// Accepts both the correct JSON array and the legacy double-encoded string
+  /// written by earlier builds, so existing installs keep their history.
+  static List<ChatMessage> _decodeThread(dynamic value) {
+    final dynamic list = value is String ? jsonDecode(value) : value;
+    if (list is! List) return const <ChatMessage>[];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(ChatMessage.fromJson)
+        .toList();
   }
 
   void _saveChats() {
+    // Each thread is stored as a real JSON array. Writing
+    // `ChatMessage.encodeList` here would nest an already-encoded *string*
+    // inside the map, which `_decodeChatMap` could not read back.
     final Map<String, dynamic> encoded = <String, dynamic>{
-      for (final String id in _chats.keys) id: ChatMessage.encodeList(_chats[id]!),
+      for (final String id in _chats.keys)
+        id: _chats[id]!.map((ChatMessage m) => m.toJson()).toList(),
     };
     unawaited(_prefs.setString(_kChats, jsonEncode(encoded)));
   }
@@ -1088,11 +1232,53 @@ class AppStore extends ChangeNotifier {
     ));
   }
 
+  /// Reads the typed proposal records, migrating the legacy
+  /// comma-separated `bk_proposals` key written by earlier builds.
+  List<Proposal> _loadProposalRecords() {
+    final List<Proposal> stored =
+        Proposal.decodeList(_prefs.getString(_kProposalRecords));
+    if (stored.isNotEmpty) return stored;
+
+    final Set<String> legacy = _decodeSet(_prefs.getString(_kProposals));
+    if (legacy.isEmpty) return <Proposal>[];
+    // Legacy entries recorded only that a proposal had been sent.
+    final DateTime now = DateTime.now();
+    final List<Proposal> migrated = <Proposal>[
+      for (final String id in legacy)
+        Proposal(
+          id: _nextId('prp'),
+          profileId: id,
+          direction: ProposalDirection.outgoing,
+          status: ProposalStatus.pending,
+          createdAt: now,
+        ),
+    ];
+    unawaited(
+        _prefs.setString(_kProposalRecords, Proposal.encodeList(migrated)));
+    unawaited(_prefs.remove(_kProposals));
+    return migrated;
+  }
+
   static Set<String> _decodeSet(String? raw) {
     if (raw == null || raw.isEmpty) return <String>{};
-    final dynamic decoded = jsonDecode(raw);
-    if (decoded is List) return Set<String>.from(decoded.cast<String>());
-    return <String>{};
+    // These sets are written with `join(',')`, so `jsonDecode` would throw a
+    // FormatException on real stored data. `_load` runs from the constructor,
+    // which means anything thrown here crashes the app before its first
+    // frame. Accept the comma form, tolerate a JSON array, never throw.
+    final String trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        final dynamic decoded = jsonDecode(trimmed);
+        if (decoded is List) return decoded.whereType<String>().toSet();
+      } catch (_) {
+        // Fall through to the comma parser.
+      }
+    }
+    return trimmed
+        .split(',')
+        .map((String part) => part.trim())
+        .where((String part) => part.isNotEmpty)
+        .toSet();
   }
 
   static List<ActivityLogEntry> _decodeLogs(String? raw) {
@@ -1253,9 +1439,8 @@ class AppStore extends ChangeNotifier {
     _logs = <ActivityLogEntry>[];
     _notifications = <NotificationItem>[];
     _skipped = <String>{};
-    _proposals = <String>{};
+    _proposalRecords = <Proposal>[];
     _contactRequestsOut = <String>{};
-    _incomingRequests = <String>{};
     _sharedContacts = <String>{};
     _unmatched = <String>{};
     _proposalDay = '';
