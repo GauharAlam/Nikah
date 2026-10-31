@@ -44,7 +44,6 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final AppStore store = context.read<AppStore>();
-      store.seedThreadIfEmpty(widget.matchId);
       store.markThreadRead(widget.matchId);
       _scrollToBottom();
     });

@@ -72,50 +72,17 @@ class PremiumScreen extends StatelessWidget {
                         letterSpacing: 1.1,
                       ),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.gold,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppTheme.goldAccent.withValues(alpha: 0.8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.diamond_rounded,
-                            size: 11,
-                            color: AppTheme.goldInk,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Monthly',
-                            style: AppTheme.ts(
-                              10.5,
-                              FontWeight.w800,
-                              color: AppTheme.goldInk,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  'Barkat Premium',
+                  'Free plan',
                   style:
                       AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'No active plan · you are on the free tier',
+                  'No subscription active',
                   style:
                       AppTheme.ts(12, FontWeight.w500, color: AppTheme.slate500),
                 ),
@@ -214,12 +181,9 @@ class PremiumScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const _CheckRow('5 proposals every day'),
-                const _CheckRow(
-                  '${AppStore.monthlyContactCredits} contact requests per month',
-                ),
-                const _CheckRow('Advanced search filters'),
-                const _CheckRow('Fast-track verification review'),
+                const _CheckRow('Limited profile proposals.'),
+                const _CheckRow('Restricted Contact Requests.'),
+                const _CheckRow('Basic profile visibility'),
                 const SizedBox(height: 14),
 
                 // Daily quota info tiles.

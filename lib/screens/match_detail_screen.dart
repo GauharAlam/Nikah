@@ -60,6 +60,94 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     }
   }
 
+  static const List<String> _reportReasons = <String>[
+    'Fake profile',
+    'Asked for money',
+    'Inappropriate photos or messages',
+    'Harassment',
+    'Already married',
+  ];
+
+  Future<void> _showSafetyMenu(MatchProfile match) async {
+    final String? action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (BuildContext ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              key: const Key('detail_report'),
+              leading: const Icon(Icons.flag_outlined),
+              title: Text('Report ${match.firstName}'),
+              onTap: () => Navigator.of(ctx).pop('report'),
+            ),
+            ListTile(
+              key: const Key('detail_block'),
+              leading: const Icon(Icons.block_rounded),
+              title: Text('Block ${match.firstName}'),
+              onTap: () => Navigator.of(ctx).pop('block'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'report') await _report(match);
+    if (action == 'block') await _block(match);
+  }
+
+  Future<void> _report(MatchProfile match) async {
+    final String? reason = await showModalBottomSheet<String>(
+      context: context,
+      builder: (BuildContext ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final String r in _reportReasons)
+              ListTile(
+                title: Text(r),
+                onTap: () => Navigator.of(ctx).pop(r),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (reason == null || !mounted) return;
+    context.read<AppStore>().reportProfile(match.id, reason);
+    showAppSnack(
+      context,
+      'Report saved on this device. It is not sent to a reviewer yet.',
+      icon: Icons.flag_outlined,
+    );
+  }
+
+  Future<void> _block(MatchProfile match) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text('Block ${match.firstName}?'),
+        content: const Text(
+          'They will disappear from your discovery, proposals, matches and '
+          'messages on this device.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            key: const Key('detail_block_confirm'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    context.read<AppStore>().blockProfile(match.id);
+    context.go(AppRoutes.homeDiscovery);
+  }
+
   void _requestContact(MatchProfile match) {
     final bool ok = context.read<AppStore>().requestContact(match.id);
     if (ok) {
@@ -132,12 +220,9 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             icon: const Icon(Icons.ios_share_rounded, size: 21),
           ),
           IconButton(
+            key: const Key('detail_more'),
             tooltip: 'More options',
-            onPressed: () => showAppSnack(
-              context,
-              'Report or block options are reviewed by the trust team.',
-              icon: Icons.more_vert_rounded,
-            ),
+            onPressed: () => _showSafetyMenu(match),
             icon: const Icon(Icons.more_vert_rounded, size: 21),
           ),
           const SizedBox(width: 4),
@@ -438,8 +523,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('detail_accept'),
-          title: 'Accept Proposal',
-          subtitle: 'They sent you a proposal — accepting makes it a match',
+          title: 'Accept Request',
+          subtitle: 'They sent you an interest',
           icon: Icons.check_rounded,
           onTap: () {
             if (store.acceptProposal(match.id)) {

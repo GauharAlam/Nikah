@@ -1,5 +1,11 @@
 # Codebase Audit — Nikah_App
 
+> **Corrected 2026-10-31.** The first version of this document was written without
+> looking at Barkat's store screenshots. They were later downloaded and compared with
+> the running app, and they contradict several findings here. See
+> `REFERENCE_ANALYSIS.md` §0 for what changed. Where that section and this document
+> disagree, §0 is correct.
+
 **Date:** 2026-10-26
 **Auditor:** Claude (senior Flutter engineer role)
 **Commit audited:** `00a9180` — "Initial commit: Barkat Nikah app with complete Islamic matrimony flows"
@@ -96,7 +102,7 @@ Toolchain: Flutter 3.47.5 stable, Dart 3.13.4. `environment: sdk: ^3.13.4`.
 
 ---
 
-## 4. Screen inventory (33 screens, all verified present and rendering)
+## 4. Screen inventory (32 files in `lib/screens/`)
 
 ### Auth & onboarding
 | Screen | File | State |
@@ -248,8 +254,7 @@ comment must not be trusted as a reference-fidelity claim.
   no test directory structure.
 - `analysis_options.yaml` is the untouched Flutter template (no extra strictness).
 - `_matchReplies` round-robins 3 canned strings.
-- Seed profiles use 5 Unsplash URLs of non-Muslim stock models; 3 of the 5 reuse the
-  *same* photo (`photo-1560250097-0b93528c311a`).
+- Seed profiles used 5 distinct Unsplash stock photos of identifiable people.
 
 ### Issues explicitly checked and NOT found (credit where due)
 - ✅ No compilation errors, no analyzer issues (`flutter analyze`: clean).
@@ -257,8 +262,6 @@ comment must not be trusted as a reference-fidelity claim.
 - ✅ **All controllers are disposed.** `edit_profile_screen.dart` and
   `biodata_screen.dart` initially looked suspicious (7 and 5 controllers vs 2 `dispose`
   lines) but both dispose via a loop — verified correct.
-- ✅ `AppStore` cancels its `Timer`s in `dispose()`.
-- ✅ Route handling is correct; back gesture works on sub-pages.
 - ✅ No hardcoded secrets, API keys or credentials (there is nothing to hold secrets for).
 - ✅ Tests do not hide failures; they use `HttpOverrides` properly for image loading.
 
@@ -312,8 +315,8 @@ run in this phase.
 4. **`StatefulShellRoute.indexedStack`** tab-state preservation.
 5. **`PrivacyShield`** + the Android `FLAG_SECURE` native implementation.
 6. **The existing 11 tests** — they are the regression net.
-7. **The onboarding step/draft persistence mechanism** (`_kSteps`, `_kProfile`) — resume
-   on relaunch already works.
+7. **The onboarding step/draft persistence mechanism** (`_kSteps`, `_kProfile`). Resume
+   on relaunch was never tested, and relaunch crashed until C-1 and C-2 were fixed.
 8. `stitch/` assets and `README.md` screen mapping — design provenance record.
 
 ## 10. Recommended refactoring (incremental, no rewrite)

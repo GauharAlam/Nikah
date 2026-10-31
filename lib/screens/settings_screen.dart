@@ -124,7 +124,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 26),
           DangerButton(
-            label: 'Reset App Data',
+            label: 'Delete Account',
             onPressed: () => _confirmReset(context, store),
           ),
           const SizedBox(height: 26),
@@ -160,10 +160,11 @@ class SettingsScreen extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Reset everything?'),
+        title: const Text('Delete your account?'),
         content: const Text(
-          'This clears your biodata, chats, guardian settings and '
-          'notifications from this device. This cannot be undone.',
+          'Your profile, proposals, chats and guardian settings will be '
+          'deleted. Accounts are stored only on this device for now, so this '
+          'removes everything and cannot be undone.',
         ),
         actions: <Widget>[
           TextButton(
@@ -172,7 +173,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Reset'),
+            child: const Text('Delete'),
           ),
         ],
       ),

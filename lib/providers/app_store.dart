@@ -9,6 +9,7 @@ import '../models/filters.dart';
 import '../models/meeting.dart';
 import '../models/match_profile.dart';
 import '../models/notification_item.dart';
+import '../models/profile_report.dart';
 import '../models/proposal.dart';
 import '../models/verification_doc.dart';
 import '../models/ward_profile.dart';
@@ -61,6 +62,8 @@ class AppStore extends ChangeNotifier {
   static const String _kDocs = 'bk_docs';
   static const String _kSharedContacts = 'bk_shared_contacts';
   static const String _kUnmatched = 'bk_unmatched';
+  static const String _kBlocked = 'bk_blocked';
+  static const String _kReports = 'bk_reports';
 
   static const String _demoGuardianName = 'Khalid Al-Mansoor';
 
@@ -221,6 +224,7 @@ class AppStore extends ChangeNotifier {
   List<MatchProfile> get discoveredProfiles => MatchProfile.seeds
       .where((p) => !_approved.contains(p.id))
       .where((p) => !_skipped.contains(p.id))
+      .where((p) => !_blocked.contains(p.id))
       .where((p) => _filters.acceptsProfile(p))
       .toList();
 
@@ -265,27 +269,19 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void approveIntro(String matchId) {
+  /// Opens the match after mutual acceptance. Private so that no screen can
+  /// create a match directly; the conversation starts empty.
+  void _openMatch(String matchId) {
     if (_approved.contains(matchId)) return;
     _approved = <String>{..._approved, matchId};
     unawaited(_prefs.setString(
         _kApproved, _approved.toList(growable: false).join(',')));
-    seedThreadIfEmpty(matchId);
     final MatchProfile match = MatchProfile.byId(matchId);
-    _addLog(ActivityLogEntry(
-      id: _nextId('log'),
-      kind: ActivityKind.intro,
-      title: 'Ta\'aruf approved',
-      detail: 'Chaperoned chat with ${match.firstName} unlocked after both '
-          'Wali confirmed intent.',
-      createdAt: DateTime.now(),
-    ));
     _addNotification(NotificationItem(
       id: _nextId('ntf'),
       type: NotificationType.milestone,
-      title: 'Ta\'aruf approved',
-      body: 'Your introduction to ${match.firstName} is approved — chaperoned '
-          'chat is now open.',
+      title: 'New match',
+      body: 'You and ${match.firstName} are matched. Chat is now open.',
       createdAt: DateTime.now(),
       deepLink: '/chat/${match.id}',
     ));
@@ -313,6 +309,8 @@ class AppStore extends ChangeNotifier {
   Set<String> _contactRequestsOut = <String>{};
   Set<String> _sharedContacts = <String>{};
   Set<String> _unmatched = <String>{};
+  Set<String> _blocked = <String>{};
+  List<ProfileReport> _reports = <ProfileReport>[];
   String _proposalDay = '';
   int _proposalCount = 0;
   int _contactCredits = monthlyContactCredits;
@@ -365,12 +363,14 @@ class AppStore extends ChangeNotifier {
       .where((p) => _approved.contains(p.id))
       .where((p) => !_sharedContacts.contains(p.id))
       .where((p) => !_unmatched.contains(p.id))
+      .where((p) => !_blocked.contains(p.id))
       .toList();
 
   /// «Shared Contacts» deck — contact details exchanged.
   List<MatchProfile> get sharedContactProfiles => MatchProfile.seeds
       .where((p) => _sharedContacts.contains(p.id))
       .where((p) => !_unmatched.contains(p.id))
+      .where((p) => !_blocked.contains(p.id))
       .toList();
 
   /// Proposals this member sent, newest first. A withdrawn proposal is
@@ -378,6 +378,7 @@ class AppStore extends ChangeNotifier {
   List<Proposal> get sentProposals => (_proposalRecords
           .where((Proposal p) => p.isOutgoing)
           .where((Proposal p) => p.status != ProposalStatus.withdrawn)
+          .where((Proposal p) => !_blocked.contains(p.profileId))
           .toList()
         ..sort((Proposal a, Proposal b) => b.createdAt.compareTo(a.createdAt)));
 
@@ -433,6 +434,10 @@ class AppStore extends ChangeNotifier {
         _kSharedContacts, _sharedContacts.toList(growable: false).join(',')));
     unawaited(_prefs.setString(
         _kUnmatched, _unmatched.toList(growable: false).join(',')));
+    unawaited(_prefs.setString(
+        _kBlocked, _blocked.toList(growable: false).join(',')));
+    unawaited(
+        _prefs.setString(_kReports, ProfileReport.encodeList(_reports)));
     unawaited(_prefs.setString(_kDocs, VerificationDoc.encodeList(_docs)));
   }
 
@@ -449,6 +454,34 @@ class AppStore extends ChangeNotifier {
       detail: 'The connection with ${match.firstName} was closed.',
       createdAt: DateTime.now(),
     ));
+    notifyListeners();
+  }
+
+  bool isBlocked(String matchId) => _blocked.contains(matchId);
+  List<ProfileReport> get reports => List<ProfileReport>.unmodifiable(_reports);
+
+  /// Hides [matchId] from every list on this device and closes the
+  /// conversation. A pending proposal from them is declined.
+  void blockProfile(String matchId) {
+    if (_blocked.contains(matchId)) return;
+    _blocked = <String>{..._blocked, matchId};
+    _transition(matchId, ProposalDirection.incoming, ProposalStatus.declined);
+    _saveBarkatState();
+    notifyListeners();
+  }
+
+  /// Keeps the report on this device. Nothing reaches a reviewer until the
+  /// reporting backend exists, and the UI says so.
+  void reportProfile(String matchId, String reason) {
+    _reports = <ProfileReport>[
+      ..._reports,
+      ProfileReport(
+        profileId: matchId,
+        reason: reason,
+        createdAt: DateTime.now(),
+      ),
+    ];
+    _saveBarkatState();
     notifyListeners();
   }
 
@@ -536,33 +569,14 @@ class AppStore extends ChangeNotifier {
     return true;
   }
 
-  /// Approve an incoming contact request (from the profile-details screen).
-  void acceptContact(String matchId) {
-    final bool firstShare = !_sharedContacts.contains(matchId);
+  /// Records that contact details were exchanged with an existing match.
+  /// Sharing never creates a match: refused unless they are already matched.
+  bool acceptContact(String matchId) {
+    if (!_approved.contains(matchId)) return false;
     _sharedContacts = <String>{..._sharedContacts, matchId};
-    if (!_approved.contains(matchId)) {
-      approveIntro(matchId);
-      if (firstShare) {
-        _addNotification(NotificationItem(
-          id: _nextId('ntf'),
-          type: NotificationType.milestone,
-          title: 'Contact shared',
-          body: 'You can now see contact details for '
-              '${MatchProfile.byId(matchId).firstName}.',
-          createdAt: DateTime.now(),
-          deepLink: '/match/$matchId',
-        ));
-      }
-    }
     _saveBarkatState();
     notifyListeners();
-  }
-
-  void declineContact(String matchId) {
-    if (!_contactRequestsOut.contains(matchId)) return;
-    _contactRequestsOut = <String>{..._contactRequestsOut..remove(matchId)};
-    _saveBarkatState();
-    notifyListeners();
+    return true;
   }
 
   // ─── Proposal transitions ─────────────────────────────────────────────────
@@ -590,8 +604,8 @@ class AppStore extends ChangeNotifier {
 
   /// Accept a proposal someone sent to this member.
   ///
-  /// This is the ONLY path that creates a match: the sender declared interest
-  /// and the recipient has now accepted, so consent is mutual on both sides.
+  /// The sender declared interest and the recipient has now accepted, so
+  /// consent is mutual. [_openMatch] is private and this is its only caller.
   /// Returns `false` when there is no pending incoming proposal to accept.
   bool acceptProposal(String matchId) {
     final Proposal? updated = _transition(
@@ -602,7 +616,7 @@ class AppStore extends ChangeNotifier {
     if (updated == null) return false;
 
     final MatchProfile match = MatchProfile.byId(matchId);
-    approveIntro(matchId);
+    _openMatch(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
       kind: ActivityKind.intro,
@@ -676,17 +690,6 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Demo review — approves a pending document.
-  void approveVerificationDoc(String docId) {
-    _docs = _docs
-        .map((d) => d.id == docId && d.status == VerificationDocStatus.pending
-            ? d.copyWith(status: VerificationDocStatus.approved)
-            : d)
-        .toList();
-    _saveBarkatState();
-    notifyListeners();
-  }
-
   static Map<String, dynamic> _filtersMap(MatchFilters f) => <String, dynamic>{
     'minAge': f.minAge,
     'maxAge': f.maxAge,
@@ -728,11 +731,13 @@ class AppStore extends ChangeNotifier {
   Map<String, DateTime> _readAt = <String, DateTime>{};
 
   List<String> get chatThreadIds {
+    final Iterable<String> visible =
+        _chats.keys.where((String id) => !_blocked.contains(id));
     final Map<String, DateTime> lastByThread = <String, DateTime>{
-      for (final String id in _chats.keys)
+      for (final String id in visible)
         id: _chats[id]!.last.createdAt,
     };
-    final List<String> sorted = _chats.keys.toList()
+    final List<String> sorted = visible.toList()
       ..sort((a, b) =>
           (lastByThread[b] ?? DateTime(0)).compareTo(lastByThread[a] ?? DateTime(0)));
     return sorted;
@@ -814,7 +819,7 @@ class AppStore extends ChangeNotifier {
   }
 
   void sendMessage(String matchId, String text) {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || _blocked.contains(matchId)) return;
     final DateTime now = DateTime.now();
     final ChatMessage userMsg = ChatMessage(
       id: _nextId('msg'),
@@ -1079,6 +1084,8 @@ class AppStore extends ChangeNotifier {
     _contactRequestsOut = _decodeSet(_prefs.getString(_kContactRequests));
     _sharedContacts = _decodeSet(_prefs.getString(_kSharedContacts));
     _unmatched = _decodeSet(_prefs.getString(_kUnmatched));
+    _blocked = _decodeSet(_prefs.getString(_kBlocked));
+    _reports = ProfileReport.decodeList(_prefs.getString(_kReports));
     _proposalDay = _prefs.getString(_kProposalDay) ?? '';
     _proposalCount = _prefs.getInt(_kProposalCount) ?? 0;
     _contactCredits =
@@ -1417,6 +1424,7 @@ class AppStore extends ChangeNotifier {
       _kLogs, _kMeetings, _kNotifications, _kSettings, _kSkipped,
       _kProposals, _kProposalDay, _kProposalCount, _kContactCredits,
       _kContactRequests, _kIncoming, _kDocs, _kSharedContacts, _kUnmatched,
+      _kProposalRecords, _kBlocked, _kReports,
     ]) {
       unawaited(_prefs.remove(key));
     }
@@ -1443,6 +1451,8 @@ class AppStore extends ChangeNotifier {
     _contactRequestsOut = <String>{};
     _sharedContacts = <String>{};
     _unmatched = <String>{};
+    _blocked = <String>{};
+    _reports = <ProfileReport>[];
     _proposalDay = '';
     _proposalCount = 0;
     _contactCredits = monthlyContactCredits;

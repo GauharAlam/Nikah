@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -215,6 +217,43 @@ void main() {
 
     expect(store.isApproved('salman-5'), isFalse);
     expect(store.pendingRequestCount, 1);
+    await drain(tester);
+  });
+
+  testWidgets('blocking from the profile menu removes the profile', (
+    WidgetTester tester,
+  ) async {
+    final (AppStore store, GoRouter router) =
+        await pumpApp(tester, prefs: activePrefs);
+
+    unawaited(router.push(AppRoutes.matchDetail('imran-3')));
+    await tester.pumpAndSettle();
+
+    await tap(tester, find.byKey(const Key('detail_more')));
+    await tap(tester, find.byKey(const Key('detail_block')));
+    await tap(tester, find.byKey(const Key('detail_block_confirm')));
+
+    expect(store.isBlocked('imran-3'), isTrue);
+    expect(find.text('Discover'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('tapping a pending document does not approve it', (
+    WidgetTester tester,
+  ) async {
+    final (AppStore store, GoRouter router) =
+        await pumpApp(tester, prefs: activePrefs);
+
+    router.go(AppRoutes.verifyProfile);
+    await tester.pumpAndSettle();
+    await tap(tester, find.text('Education proof'));
+
+    expect(
+      store.verificationDocs
+          .firstWhere((VerificationDoc d) => d.id == 'education-proof')
+          .status,
+      VerificationDocStatus.pending,
+    );
     await drain(tester);
   });
 

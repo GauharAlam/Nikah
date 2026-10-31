@@ -1,5 +1,11 @@
 # Implementation Plan — Nikah_App → Barkat-grade product
 
+> **Corrected 2026-10-31.** The first version of this document was written without
+> looking at Barkat's store screenshots. They were later downloaded and compared with
+> the running app, and they contradict several findings here. See
+> `REFERENCE_ANALYSIS.md` §0 for what changed. Where that section and this document
+> disagree, §0 is correct.
+
 **Date:** 2026-10-27
 **Inputs:** `CODEBASE_AUDIT.md` · `REFERENCE_ANALYSIS.md` · `GAP_ANALYSIS.md`
 **Baseline to protect:** `flutter analyze` 0 issues · `flutter test` 11/11 passing

@@ -138,10 +138,10 @@ class VerificationScreen extends StatelessWidget {
                     '${doc.title} uploaded — our team will review it.',
                   );
                 } else if (doc.status == VerificationDocStatus.pending) {
-                  store.approveVerificationDoc(doc.id);
-                  showSuccessSnack(
+                  showAppSnack(
                     context,
-                    '${doc.title} approved. JazakAllah khayr!',
+                    '${doc.title} is waiting for review by the Barkat team.',
+                    icon: Icons.hourglass_bottom_rounded,
                   );
                 } else {
                   showAppSnack(

@@ -1,13 +1,20 @@
 # Gap Analysis — Nikah_App vs Barkat
 
+> **Corrected 2026-10-31.** The first version of this document was written without
+> looking at Barkat's store screenshots. They were later downloaded and compared with
+> the running app, and they contradict several findings here. See
+> `REFERENCE_ANALYSIS.md` §0 for what changed. Where that section and this document
+> disagree, §0 is correct.
+
 **Date:** 2026-10-26
 **Inputs:** `CODEBASE_AUDIT.md` (commit `00a9180`) · `REFERENCE_ANALYSIS.md`
 **Classification:** Complete · Partial · Broken · Missing · Unverified
 **Priority:** P0 blocks a core journey or is a security/integrity defect · P1 core product
 gap · P2 quality/completeness · P3 polish
 
-> **Status note (2026-10-27):** G-02 and G-04 are now **closed**; G-29 is partially
-> closed. Two launch-crash bugs not in this analysis (C-1 chat persistence, C-2 string-set
+> **Status note (2026-10-27):** G-02 is **closed**. G-04 is **partial**: only proposals
+> are typed; `_likes`, `_intros`, `_approved`, `_skipped`, `_contactRequestsOut`,
+> `_sharedContacts` and `_unmatched` are still untyped sets. G-29 is partial. Two launch-crash bugs not in this analysis (C-1 chat persistence, C-2 string-set
 > persistence) were found and fixed during Stage 6a — see `IMPLEMENTATION_PROGRESS.md`.
 
 ## Scoreboard
@@ -245,8 +252,8 @@ test-covered.
 - **Reference [D]:** "Curated profiles everyday"; server-side recommendations.
 - **Gap:** 5 hardcoded `static const` profiles filtered client-side — the exact
   anti-pattern the project rules forbid ("Avoid fetching the entire user database to
-  filter it locally"). Three of the five reuse the same Unsplash photo; all are unlicensed
-  stock images of non-Muslim models.
+  filter it locally"). Three of the five reuse the same Unsplash photo; all are stock images
+  of identifiable people.
 - **Dependencies:** Stage 0.
 - **Solution:** Repository + paginated server query. Keep the seeds behind an explicit
   demo data source for tests/offline.
@@ -373,7 +380,7 @@ test-covered.
 | G-30 | No unit tests; 11 widget tests in one 400-LOC file | `test/widget_test.dart` | **Partial** | Split into `test/unit/`, `test/widget/`; add unit coverage | Baseline 11 still pass; unit suite covers models, validators, state machines |
 | G-31 | No secure storage | `shared_preferences` only | **Missing** | `flutter_secure_storage` for tokens/session | No credential in plain prefs |
 | G-32 | Stray artefacts: 105 KB root `index.html`, `serve.py` | repo root | **Partial** | Move under `tools/` or delete after confirming unused | Repo root holds only project files |
-| G-33 | Seed photos: unlicensed Unsplash stock, 3 of 5 identical | `match_profile.dart` | **Broken** | Replace with original/licensed placeholders | No unlicensed third-party imagery ships |
+| G-33 | Seed photos: Unsplash stock of real people shown as members | `match_profile.dart` | **Broken** | Replace with original/licensed placeholders | No stock person is presented as a member |
 | G-34 | `analysis_options.yaml` is the untouched template | root | **Partial** | Enable stricter lints incrementally | Stricter set passes with 0 issues |
 
 ---

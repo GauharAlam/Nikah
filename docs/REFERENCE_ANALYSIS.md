@@ -15,9 +15,7 @@ Every claim below carries a grade. Nothing is asserted without one.
 | **[R]** Recommendation | My inference. Reasonable, **not** reference behaviour. |
 | **[U]** Unknown | Cannot be determined from available access. Requires user input. |
 
-**There are currently zero [O] claims in this document.** Store screenshots returned as
-image placeholders through text fetching, and no recording has been supplied. This is
-the single largest evidence gap in the project — see §6.
+Direct observations are in §0.
 
 ## Sources fetched
 
@@ -30,6 +28,57 @@ the single largest evidence gap in the project — see §6.
 | `https://www.barkatapp.com/help` | Low — support scope only |
 | App Store listing | **Highest** — IAP SKUs with real prices, privacy labels, version |
 | Play Store listing | **Nil** — description did not render to text |
+
+---
+
+## 0. Direct observation of the real app (added 2026-10-31)
+
+Barkat's store screenshots are public and can be downloaded. `§6` of the first version
+wrongly said they could not be obtained, and every "[O]: zero claims" statement below is
+out of date. Source: 10 App Store and 9 Play screenshots (v5.0.5), plus the app rendered
+in Chrome at 390 px. Screens seen: Discover, Profile details, Matches, Filters
+("Profile Settings"), Verification, Premium. Not seen: login, OTP, onboarding, Proposals,
+Activities, Profile, chat, settings.
+
+### Current app [O]
+
+| Area | Observed |
+|---|---|
+| Bottom tabs | Discover, Proposals, Matches, Activities, Premium, Profile |
+| Discover | "Assalamu Alaikum, Salman", "Introductions for you", 0/5 PROPOSALS SENT, gold-framed card, university crest, New Profile pill, 81% MATCH ring, Self managed, Beyond Caste, Marriage: Ready within 1 year, Incompatible / Send Proposal / Request Contact, Explore next profile |
+| Profile details | Share and ⋮ icons, bookmark, "Active 3d ago", TAKE THE NEXT STEP, Accept Request ("They sent you an interest"), Send Message |
+| Matches | Match Mode toggle, Shared Contacts / Chat Matches, Message / Unmatch |
+| Filters | Age, Marriage Status, Caste, Alma Mater, Education, Profession, Location, Contact Sharing (Manual approval). Diamonds on the last three of the first six. Clear all, Apply |
+| Verification | Name proof, Education proof, Good to know (10 MB, 24–48 hours, documents stay private) |
+| Premium | Barkat Premium, Monthly, renewal date, 29 remaining out of 50, Buy more, Purchase history. Up to 3 active accepted matches, Daily Proposals: Unlimited, Daily Contact Requests: 5 per day |
+| Privacy | "Screenshots are Not Allowed on Profiles" |
+
+Sampled colours: canvas #F1FBF3, primary about #1A5E45, cream #F9F6EF, New Profile pill
+#E4CD75. These match `lib/theme/app_theme.dart`.
+
+### Older layout [O, likely superseded]
+
+One App Store screenshot shows "Search Rishtey" with Suggestions / Nearby and tabs Home,
+Activity, Messages, Premium, Profile. `/how-to-use` describes this layout. The other
+screenshots, including one with a 2026 renewal date, show the six-tab layout, so this
+looks older. That is an inference. Check it against the installed app before building it.
+
+### First-version findings that were wrong
+
+| Finding | Correct position |
+|---|---|
+| The app was built from Stitch and not reverse-engineered from Barkat | Its screens, wording and palette closely follow the real app. Stitch was only an early stage |
+| The palette's "pixel-sampled" claim is unverified | The claim holds; the comment is restored |
+| G-07: Messages must be a tab, and Premium as a tab has no support | Premium is a real tab. The current app has no Messages tab, so **do not move it** |
+| `proposalQuota = 5` is invented | 0/5 is observed. `30` credits remains unverified (one user shows 50) |
+| Caste and Contact Sharing filters are invented | Both are observed |
+| G-09 / G-10: Search Rishtey and Nearby are missing P1 gaps | Probably superseded; deprioritised |
+| No screenshots obtainable; all visuals Unknown | G-40 to G-45 can now be assessed for the six screens above |
+| Barkat never says "wali" or "chaperone" on any page | Checked only in summaries of 5 pages, and stated for `/about` only |
+
+Wali, chaperoned chat and meeting features were not seen in these screenshots, which
+cover only part of the app. "Self managed" suggests profiles can also be managed by
+someone else.
 
 ---
 
@@ -98,7 +147,7 @@ Verbatim structure from `/how-to-use`.
 - **Link a parent or guardian phone during onboarding if they manage the search.**
 - `/about`: "Guardian and parent access so families can participate without turning nikah
   into a public feed."
-- Barkat **never uses the words "wali" or "chaperone"** on any page fetched.
+- `/about` does not use the words "wali" or "chaperone".
 - **[U] How guardian access actually works is not documented.** `/how-to-use` explicitly
   declines to explain the mechanics.
 
@@ -188,7 +237,7 @@ Other confirmed account/safety surfaces [D]:
 
 ---
 
-## 6. Visual reference analysis — NOT POSSIBLE AT THIS TIME
+## 6. Visual reference analysis — superseded by §0
 
 Phase 2.2 asked for screen dimensions, colours, typography, weights/sizes, spacing,
 radii, button states, app bar/bottom nav, icons, card layouts, scroll behaviour, and

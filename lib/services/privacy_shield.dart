@@ -7,7 +7,8 @@ import 'package:flutter/services.dart';
 /// biodata.
 ///
 /// Android: `FLAG_SECURE` on the activity window (`MainActivity.kt`).
-/// iOS: the secure-text-entry layer trick (`AppDelegate.swift`) — iOS exposes
+/// iOS: the secure-text-entry layer trick (`AppDelegate.swift`, not yet compiled
+/// or run on a device) — iOS exposes
 /// no true FLAG_SECURE equivalent, so this is best-effort and does not defeat
 /// a physical camera on either platform.
 ///

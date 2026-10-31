@@ -1,6 +1,6 @@
 # Implementation Progress
 
-**Last updated:** 2026-10-27
+**Last updated:** 2026-10-31
 
 ## Stage 0 — Decisions (RESOLVED)
 
@@ -8,21 +8,21 @@
 |---|---|---|
 | D1 | Backend | **Firebase** — Auth (phone OTP), Firestore, Storage, FCM, Cloud Functions |
 | D2 | The ~2,100 LOC of invented guardian/chaperone features | **Keep as a superset.** Fix their integrity defects; stop them gating flows the reference leaves ungated; build missing documented features first. No working code is deleted. |
-| D3 | Visual reference material | **User will supply** screenshots/recording. Stage 2 fidelity work stays parked until it arrives. |
+| D3 | Visual reference material | Public store screenshots now cover six screens. A recording is still needed for login, OTP, onboarding, Proposals, Activities, Profile, chat and settings. |
 
 ### Open external dependencies (blocking)
 
 | # | Blocker | Needed for | Owner |
 |---|---|---|---|
 | B-1 | **Firebase project** — `google-services.json` (Android) + `GoogleService-Info.plist` (iOS), or the FlutterFire CLI run against your project | Stages 3, 4, 5, 6, 7, 8, 9 — i.e. all backend work | User |
-| B-2 | **Barkat screenshots / recording** | Stage 2 visual fidelity; gaps G-40…G-45 | User |
+| B-2 | **Recording of the screens not in the store listings** | Fidelity of those screens | User |
 | B-3 | **Xcode is not installed** on this machine (Command Line Tools only; CocoaPods also missing). `flutter build ios` fails with "Application not configured for iOS". | Compiling/verifying any iOS code, incl. the new `AppDelegate.swift` handler | User |
 | B-4 | Apple Developer + Google Play Console accounts with IAP products configured | Stage 10 | User |
 | B-5 | Decision on the two real quota values (daily intro limit, pending limit) — Barkat does not publish them | Stage 6 | User / product |
 
 ---
 
-## Stage 1 — Stabilisation and honesty fixes · ✅ COMPLETE
+## Stage 1 — Stabilisation and honesty fixes · ⚠️ Mostly complete (iOS unverified; no device run)
 
 **Goal:** remove false claims from the UI and code, fix release blockers, and
 restructure the test suite — all without needing a backend.
@@ -37,13 +37,13 @@ restructure the test suite — all without needing a backend.
 | # | Task | Status | Files |
 |---|---|---|---|
 | 1.1 | `INTERNET` permission in the release manifest | ✅ Verified in the built APK | `android/app/src/main/AndroidManifest.xml` |
-| 1.2 | iOS `privacy_shield` method-channel handler | ⚠️ **Written, UNVERIFIED** — see note below | `ios/Runner/AppDelegate.swift`, `lib/services/privacy_shield.dart` |
+| 1.2 | iOS `privacy_shield` method-channel handler | ⚠️ **Rewritten 2026-10-31, never compiled.** The first version used an API that does not exist and would have failed to build | `ios/Runner/AppDelegate.swift`, `lib/services/privacy_shield.dart` |
 | 1.3 | Removed the false *"Session opened with 2-factor verification"* log; documented `signIn()` as performing no authentication | ✅ | `lib/providers/app_store.dart` |
 | 1.4 | Removed the fabricated `'Renews 12 Nov 2026 · billed monthly'`; renders "No active plan · you are on the free tier"; purchase-history copy no longer implies a disabled checkout exists | ✅ | `lib/screens/premium_screen.dart` |
-| 1.5 | Corrected the theme's disputed provenance claim; stripped nine misleading per-constant "sampled #…" annotations | ✅ | `lib/theme/app_theme.dart` |
+| 1.5 | ❌ **Reverted.** The original comment was right; pixel sampling confirmed it | ↩️ | `lib/theme/app_theme.dart` |
 | 1.6 | Unified the product name to **Barkat Nikah** across Android label, iOS `CFBundleDisplayName`/`CFBundleName`, and wrote a real pubspec description | ✅ | `AndroidManifest.xml`, `ios/Runner/Info.plist`, `pubspec.yaml` |
 | 1.7 | **Deleted every timer that fabricated another member's actions:** the 2.4 s contact auto-accept, the 1.4 s canned match reply, the 3.2 s "chaperone" note, the 3-string `_matchReplies` pool, and the now-dead `reply()` / `appendChaperoneNote()` methods | ✅ | `lib/providers/app_store.dart` |
-| 1.8 | Removed all 7 unlicensed Unsplash stock photos (5 seed profiles + 2 decorative heroes); `AppNetworkImage` now renders its placeholder for an empty URL instead of throwing | ✅ | `lib/models/match_profile.dart`, `lib/widgets/app_images.dart`, `landing_front_screen.dart`, `welcome_intentions_screen.dart` |
+| 1.8 | Removed 7 uses of Unsplash stock photos (5 seed profiles, 2 heroes). "Unlicensed" was never checked, and the photos were distinct. Restoring them is an open decision; `AppNetworkImage` now renders its placeholder for an empty URL instead of throwing | ✅ | `lib/models/match_profile.dart`, `lib/widgets/app_images.dart`, `landing_front_screen.dart`, `welcome_intentions_screen.dart` |
 | 1.9 | Moved stray artefacts out of the repo root → `tools/serve.py`, `tools/stitch_preview.html` | ✅ | repo root → `tools/` |
 | 1.10 | Split the single 434-LOC test file into `test/helpers/test_app.dart`, `test/widget/app_flows_test.dart` (8 tests), `test/unit/app_store_test.dart` (11 tests) | ✅ | `test/` |
 
@@ -152,11 +152,8 @@ tolerates a JSON array, and never throws.
 break construction; a legacy double-encoded thread is still readable; populated
 comma-separated sets reload without crashing; proposal records survive a reload.
 
-> Worth noting for the audit's credibility: `CODEBASE_AUDIT.md` §6 listed "unsafe token
-> storage" and "incorrect asynchronous state updates" among things checked, and reported
-> persistence as "works". That was wrong — it was based on reading the code and a green
-> test run, neither of which exercised a reload. Round-tripping persisted state is now
-> covered by tests.
+> `CODEBASE_AUDIT.md` reported persistence as working on the strength of reading the code
+> and a passing test run, neither of which exercised a reload. That was wrong.
 
 ### Test suite growth
 
@@ -164,11 +161,32 @@ comma-separated sets reload without crashing; proposal records survive a reload.
 |---|---|
 | Baseline (commit `00a9180`) | 11 |
 | After Stage 1 | 19 |
-| After Stage 6a | **50** |
+| After Stage 6a | 50 |
+| After 2026-10-31 repairs | **56** |
 
 `test/unit/proposal_test.dart` includes an exhaustive 5x5 transition matrix and
 actor-permission checks; `test/widget/app_flows_test.dart` now covers Journey D
 (receive → accept → matched, and receive → decline → not matched) through the real UI.
+
+---
+
+## 2026-10-31 — Screenshot comparison and repairs
+
+Verified: `flutter analyze` 0 issues, `flutter test` 56/56, release APK and web builds
+succeed. Not run on any device or simulator.
+
+- Matches now open only through `acceptProposal`. `_openMatch` is private.
+- Contact sharing can no longer create a match.
+- A new match starts with an empty chat. Accepting used to insert seeded messages,
+  including text attributed to the member.
+- Verification screen can no longer approve documents. `approveVerificationDoc` is deleted.
+- `resetAll` now clears `bk_proposal_records`, which the earlier refactor had missed.
+- Added block and report on the profile menu, and Delete Account in Settings.
+- Premium no longer shows "Barkat Premium · Monthly" over "No active plan".
+- "Accept Request" copy restored from the real app.
+
+Known demo data still ships in every build: 5 seed profiles, 2 seeded incoming proposals,
+a seeded Zayd match and conversation, and the demo sign-in.
 
 ---
 
@@ -197,17 +215,17 @@ See `IMPLEMENTATION_PLAN.md` for per-stage files, acceptance criteria and tests.
 
 ## Gaps closed so far
 
-Fully closed: **G-02** (incoming proposals), **G-04** (typed proposal state), **G-06**
-(INTERNET), **G-27** (branding), **G-28** (provenance), **G-32** (stray files), **G-33**
-(unlicensed imagery), plus **C-1** and **C-2** (two launch crashes found during this
-stage).
+Fully closed: **G-02**, **G-27**, **G-32**, **C-1**, **C-2**. **G-06** is verified in the
+APK manifest only, not on a device. **G-28** was not a real gap.
 
 Partially closed: **G-01** (false 2FA claim removed; real auth needs B-1), **G-05** (fake
 renewal removed; IAP needs B-1/B-4), **G-13** and **G-15** (fabrication removed; real
 transport needs B-1), **G-16** (iOS handler written, unverified — B-3), **G-30** (suite
 split and expanded; broader coverage ongoing).
 
-Partially closed also: **G-29** (`Proposal` entity added; `Match`, `Conversation`,
+Partially closed also: **G-04** (seven untyped sets remain), **G-08** (block is local, reports stay on the device), **G-17** (deletion is local), **G-29** (`Proposal` entity added; `Match`, `Conversation`,
 `Subscription`, `User` still missing).
 
-Untouched: G-03, G-07…G-12, G-14, G-17…G-26, G-31, G-34…G-45.
+Withdrawn: **G-07**. Deprioritised: **G-09**, **G-10**.
+
+Open: G-03 (client self-approval removed, but "upload" still sends no file), G-11, G-12, G-14, G-18…G-26, G-31, G-34…G-39.

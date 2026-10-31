@@ -83,12 +83,13 @@ void main() {
       );
     });
 
-    test('declining a contact request that was never sent is a no-op',
-        () async {
+    test('contact sharing cannot create a match', () async {
       final AppStore store = await _activeStore();
-      expect(store.contactRequested('imran-3'), isFalse);
-      store.declineContact('imran-3');
-      expect(store.contactRequested('imran-3'), isFalse);
+
+      expect(store.acceptContact('imran-3'), isFalse);
+
+      expect(store.isApproved('imran-3'), isFalse);
+      expect(store.isContactShared('imran-3'), isFalse);
     });
   });
 
@@ -161,6 +162,11 @@ void main() {
           ProposalStatus.accepted);
       expect(store.isApproved('farhan-2'), isTrue);
       expect(store.pendingRequestCount, 1);
+      expect(
+        store.messages('farhan-2'),
+        isEmpty,
+        reason: 'a new match starts with no invented conversation',
+      );
     });
 
     test('declining an incoming proposal creates no match', () async {
@@ -344,23 +350,83 @@ void main() {
     });
   });
 
-  group('verification', () {
-    test('required documents drive the verified badge and progress', () async {
+  group('block and report', () {
+    test('a blocked profile leaves every list and its proposal is declined',
+        () async {
       final AppStore store = await _activeStore();
+      store.sendProposal('imran-3');
+      store.blockProfile('imran-3');
+      store.blockProfile('farhan-2');
+      store.blockProfile('zayd-1');
 
-      expect(store.isBarkatVerified, isFalse);
+      bool listed(Iterable<MatchProfile> l, String id) =>
+          l.any((MatchProfile p) => p.id == id);
+      expect(listed(store.discoveredProfiles, 'imran-3'), isFalse);
+      expect(listed(store.proposalsSentList, 'imran-3'), isFalse);
+      expect(listed(store.incomingProposalProfiles, 'farhan-2'), isFalse);
+      expect(listed(store.chatMatches, 'zayd-1'), isFalse);
+      expect(store.chatThreadIds, isNot(contains('zayd-1')));
+      expect(store.incomingProposal('farhan-2')!.status,
+          ProposalStatus.declined);
+    });
 
-      store.submitVerificationDoc('education-proof');
-      expect(
-        store.verificationDocs
-            .firstWhere((VerificationDoc d) => d.id == 'education-proof')
-            .status,
-        VerificationDocStatus.pending,
-      );
-      store.approveVerificationDoc('education-proof');
+    test('a blocked conversation accepts no new messages', () async {
+      final AppStore store = await _activeStore();
+      final int before = store.messages('zayd-1').length;
 
-      store.submitVerificationDoc('photo-proof');
-      store.approveVerificationDoc('photo-proof');
+      store.blockProfile('zayd-1');
+      store.sendMessage('zayd-1', 'Salam');
+
+      expect(store.messages('zayd-1').length, before);
+    });
+
+    test('blocks and reports survive a reload', () async {
+      final AppStore store = await _activeStore();
+      store.blockProfile('imran-3');
+      store.reportProfile('bilal-4', 'Fake profile');
+
+      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      addTearDown(reloaded.dispose);
+
+      expect(reloaded.isBlocked('imran-3'), isTrue);
+      expect(reloaded.reports.single.profileId, 'bilal-4');
+      expect(reloaded.reports.single.reason, 'Fake profile');
+    });
+  });
+
+  group('account deletion', () {
+    test('removes proposals, blocks and reports from storage', () async {
+      final AppStore store = await _activeStore();
+      store.sendProposal('imran-3');
+      store.blockProfile('bilal-4');
+      store.reportProfile('bilal-4', 'Fake profile');
+
+      store.resetAll();
+
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('bk_proposal_records'), isNull);
+      expect(prefs.getString('bk_blocked'), isNull);
+      expect(prefs.getString('bk_reports'), isNull);
+      expect(store.isLoggedIn, isFalse);
+      expect(store.isBlocked('bilal-4'), isFalse);
+      expect(store.reports, isEmpty);
+    });
+  });
+
+  group('verification', () {
+    test('the badge follows approvals recorded by the reviewer', () async {
+      final List<VerificationDoc> reviewed = VerificationDoc.seeds
+          .map((VerificationDoc d) => d.isRequired
+              ? d.copyWith(status: VerificationDocStatus.approved)
+              : d)
+          .toList();
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'bk_stage': 'active',
+        'bk_onboarded': true,
+        'bk_docs': VerificationDoc.encodeList(reviewed),
+      });
+      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      addTearDown(store.dispose);
 
       expect(store.isBarkatVerified, isTrue);
       expect(store.verificationProgress, 100);
@@ -393,16 +459,17 @@ void main() {
 
     test('an unmatched profile leaves both match decks', () async {
       final AppStore store = await _activeStore();
-      store.approveIntro('bilal-4');
-      expect(store.chatMatches.any((MatchProfile p) => p.id == 'bilal-4'),
+      store.acceptProposal('farhan-2');
+      expect(store.chatMatches.any((MatchProfile p) => p.id == 'farhan-2'),
           isTrue);
 
-      store.unmatch('bilal-4');
+      store.unmatch('farhan-2');
 
-      expect(store.chatMatches.any((MatchProfile p) => p.id == 'bilal-4'),
+      expect(store.chatMatches.any((MatchProfile p) => p.id == 'farhan-2'),
           isFalse);
       expect(
-          store.sharedContactProfiles.any((MatchProfile p) => p.id == 'bilal-4'),
+          store.sharedContactProfiles
+              .any((MatchProfile p) => p.id == 'farhan-2'),
           isFalse);
     });
   });
