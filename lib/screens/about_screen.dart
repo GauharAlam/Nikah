@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
 import '../widgets/app_card.dart';
@@ -8,6 +10,15 @@ import '../widgets/app_snacks.dart';
 /// About & Help: brand story, FAQs, support contacts and legal rows.
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
+
+  /// Says so when nothing on the phone can open the link.
+  Future<void> _open(BuildContext context, Uri target) async {
+    final bool opened = await launchUrl(target, mode: LaunchMode.externalApplication)
+        .catchError((Object _) => false);
+    if (!opened && context.mounted) {
+      showAppSnack(context, 'Could not open this. Please try again.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,76 +63,33 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 22),
           const SectionLabel('Reach the support desk'),
           const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ContactCard(
-                  icon: Icons.chat_outlined,
-                  label: 'WhatsApp',
-                  onTap: () => showAppSnack(
-                    context,
-                    'Jazak Allah khayr — the support desk replies within 24h.',
-                    icon: Icons.check_circle_outline_rounded,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ContactCard(
-                  icon: Icons.mail_outline_rounded,
-                  label: 'Email',
-                  onTap: () => showAppSnack(
-                    context,
-                    'Jazak Allah khayr — the support desk replies within 24h.',
-                    icon: Icons.check_circle_outline_rounded,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ContactCard(
-                  icon: Icons.rate_review_outlined,
-                  label: 'Feedback',
-                  onTap: () => showAppSnack(
-                    context,
-                    'Jazak Allah khayr — the support desk replies within 24h.',
-                    icon: Icons.check_circle_outline_rounded,
-                  ),
-                ),
-              ),
-            ],
+          SettingsTile(
+            key: const Key('about_email_support'),
+            icon: Icons.mail_outline_rounded,
+            title: 'Email support',
+            subtitle: AppConfig.supportEmail,
+            onTap: () => _open(
+              context,
+              Uri(scheme: 'mailto', path: AppConfig.supportEmail),
+            ),
           ),
           const SizedBox(height: 22),
           const SectionLabel('Legal & guidelines'),
           const SizedBox(height: 10),
           SettingsTile(
+            key: const Key('about_privacy'),
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
             subtitle: 'How your biodata is protected',
-            onTap: () => showAppSnack(
-              context,
-              'Full document ships with the release, in sha Allah.',
-            ),
+            onTap: () => _open(context, Uri.parse(AppConfig.privacyUrl)),
           ),
           const SizedBox(height: 10),
           SettingsTile(
+            key: const Key('about_terms'),
             icon: Icons.gavel_rounded,
-            title: 'Community Guidelines',
-            subtitle: 'Adab-first conduct for every member',
-            onTap: () => showAppSnack(
-              context,
-              'Full document ships with the release, in sha Allah.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          SettingsTile(
-            icon: Icons.menu_book_outlined,
-            title: 'Qur\'an 30:21 — our founding verse',
-            subtitle: 'Reflection on sakinah, mawaddah & rahmah',
-            onTap: () => showAppSnack(
-              context,
-              'A fuller tafseer reading list ships soon, in sha Allah.',
-            ),
+            title: 'Terms',
+            subtitle: 'The rules every member agrees to',
+            onTap: () => _open(context, Uri.parse(AppConfig.termsUrl)),
           ),
           const SizedBox(height: 28),
           Center(
@@ -164,19 +132,19 @@ class _BrandHero extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Barkat Nikah',
+            'Nikah',
             style: AppTheme.ts(21, FontWeight.w800, color: Colors.white),
           ),
           const SizedBox(height: 4),
           Text(
-            'بركة نكاح',
+            'نكاح',
             style: AppTheme.ts(15, FontWeight.w700,
                 color: AppTheme.gold.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 10),
           Text(
-            'Dignity-first Islamic matrimony — guardian supervised, '
-            'adab protected, barakah built.',
+            'A private, reviewed place to find a spouse, with your family '
+            'involved as far as you choose.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(12.5, FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.82), height: 1.5),
@@ -235,37 +203,6 @@ class _FaqTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ContactCard extends StatelessWidget {
-  const _ContactCard({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: <Widget>[
-          Icon(icon, size: 20, color: AppTheme.green),
-          const SizedBox(height: 7),
-          Text(
-            label,
-            style:
-                AppTheme.ts(12, FontWeight.w700, color: AppTheme.slate800),
-          ),
-        ],
       ),
     );
   }

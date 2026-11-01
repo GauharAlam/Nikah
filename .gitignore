@@ -53,3 +53,9 @@ app.*.map.json
 *adminsdk*.json
 .env
 .env.*
+
+# Signing material never belongs in the repo.
+key.properties
+*.jks
+*.keystore
+*.p8

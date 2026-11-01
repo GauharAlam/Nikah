@@ -208,7 +208,7 @@ class TagChip extends StatelessWidget {
 
 /// Icon-with-gold-badge used for Wali-verified markers.
 class VerifiedBadge extends StatelessWidget {
-  const VerifiedBadge({super.key, this.label = 'Wali Verified'});
+  const VerifiedBadge({super.key, this.label = 'Verified'});
 
   final String label;
 

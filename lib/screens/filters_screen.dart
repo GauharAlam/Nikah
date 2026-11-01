@@ -1,4 +1,4 @@
-// Discovery filters — Barkat-style "Profile Settings" sheet with full-bleed
+// Discovery filters — "Profile Settings" sheet with full-bleed
 // two-line preference rows, diamond premium gates and a single Apply button.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

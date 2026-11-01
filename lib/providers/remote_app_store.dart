@@ -260,7 +260,7 @@ class RemoteAppStore extends AppStore {
   @override
   List<VerificationDoc> get verificationDocs => drafts.documents;
   @override
-  bool get isBarkatVerified => drafts.isVerified;
+  bool get isVerifiedMember => drafts.isVerified;
   @override
   int get verificationProgress => drafts.verificationProgress;
   @override
@@ -285,7 +285,8 @@ class RemoteAppStore extends AppStore {
   @override
   String? get introductionsError => discovery.error;
   @override
-  Future<void> refreshIntroductions() => discovery.refresh();
+  Future<void> refreshIntroductions({bool keepDeck = false}) =>
+      discovery.refresh(keepDeck: keepDeck);
   @override
   Future<void> loadMoreIntroductions() => discovery.loadMore();
   @override

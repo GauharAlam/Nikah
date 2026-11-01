@@ -109,6 +109,18 @@ void main() {
     });
   });
 
+  test('no reference-app branding ships', () {
+    final List<String> found = <String>[
+      ...Directory('lib').listSync(recursive: true).whereType<File>().map((File f) => f.path),
+      'pubspec.yaml',
+      'android/app/build.gradle.kts',
+      'android/app/src/main/AndroidManifest.xml',
+      'ios/Runner/Info.plist',
+      'ios/Runner/AppDelegate.swift',
+    ].where((String path) => File(path).readAsStringSync().toLowerCase().contains('barkat')).toList();
+    expect(found, isEmpty);
+  });
+
   test('only the entry point imports the demo store', () {
     final List<String> offenders = Directory('lib')
         .listSync(recursive: true)

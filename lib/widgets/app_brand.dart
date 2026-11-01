@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Rounded-square forest-green app mark with the white mosque glyph —
-/// mirrors the Barkat logo lockup.
-class BarkatLogoMark extends StatelessWidget {
-  const BarkatLogoMark({super.key, this.size = 34});
+/// the logo lockup.
+class NikahLogoMark extends StatelessWidget {
+  const NikahLogoMark({super.key, this.size = 34});
 
   final double size;
 
@@ -34,12 +34,12 @@ class BarkatLogoMark extends StatelessWidget {
   }
 }
 
-/// Logo mark + "Barkat Nikah" wordmark used on the entry pages.
+/// Logo mark + "Nikah" wordmark used on the entry pages.
 ///
 /// Renders the wordmark text exactly once so tests can locate it with a
-/// single `find.text('Barkat Nikah')`.
-class BarkatLockup extends StatelessWidget {
-  const BarkatLockup({super.key, this.markSize = 34, this.fontSize = 17});
+/// single `find.text('Nikah')`.
+class NikahLockup extends StatelessWidget {
+  const NikahLockup({super.key, this.markSize = 34, this.fontSize = 17});
 
   final double markSize;
   final double fontSize;
@@ -49,11 +49,11 @@ class BarkatLockup extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        BarkatLogoMark(size: markSize),
+        NikahLogoMark(size: markSize),
         const SizedBox(width: 9),
         Flexible(
           child: Text(
-            'Barkat Nikah',
+            'Nikah',
             style: AppTheme.ts(
               fontSize,
               FontWeight.w800,

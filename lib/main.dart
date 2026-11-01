@@ -23,6 +23,12 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      <String>['Plus Jakarta Sans'],
+      await rootBundle.loadString('assets/fonts/OFL.txt'),
+    );
+  });
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -59,14 +65,15 @@ void main() async {
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AppStore>.value(value: store),
       ],
-      child: BarkatNikahApp(router: router),
+      child: NikahApp(router: router),
     ),
   );
 }
 
-/// The local emulators accept any values for an isolated `demo-` project.
+/// The local emulators accept any values for an isolated `demo-` project. The
+/// SDK checks only the shape of the key, so this is a placeholder, not a secret.
 const FirebaseOptions _emulatorOptions = FirebaseOptions(
-  apiKey: 'demo-key',
+  apiKey: 'AIzaLOCALEMULATORONLYNOTAREALKEY0000000',
   appId: '1:1:android:1',
   messagingSenderId: '1',
   projectId: 'demo-nikah',
@@ -85,16 +92,16 @@ Future<void> _routePushTaps(GoRouter router) async {
   FirebaseMessaging.onMessageOpenedApp.listen(open);
 }
 
-class BarkatNikahApp extends StatefulWidget {
-  const BarkatNikahApp({super.key, required this.router});
+class NikahApp extends StatefulWidget {
+  const NikahApp({super.key, required this.router});
 
   final GoRouter router;
 
   @override
-  State<BarkatNikahApp> createState() => _BarkatNikahAppState();
+  State<NikahApp> createState() => _NikahAppState();
 }
 
-class _BarkatNikahAppState extends State<BarkatNikahApp> {
+class _NikahAppState extends State<NikahApp> {
   final GlobalKey<ScaffoldMessengerState> _messenger =
       GlobalKey<ScaffoldMessengerState>();
   late final AppStore _store = context.read<AppStore>();

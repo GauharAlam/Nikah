@@ -123,7 +123,7 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> confirmSubject(String code, {required bool agree}) async {}
   Future<void> withdrawSubject() async {}
   List<VerificationDoc> get verificationDocs;
-  bool get isBarkatVerified;
+  bool get isVerifiedMember;
   int get verificationProgress;
   Future<void> uploadVerificationDoc(String docId, List<String> localPaths);
 
@@ -136,7 +136,7 @@ abstract class AppStore extends ChangeNotifier {
   void setFilters(MatchFilters next);
   bool get isLoadingIntroductions;
   String? get introductionsError;
-  Future<void> refreshIntroductions();
+  Future<void> refreshIntroductions({bool keepDeck = false});
   Future<void> loadMoreIntroductions();
   void markProfileViewed(String id);
   void markIncompatible(String matchId);

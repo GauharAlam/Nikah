@@ -1,8 +1,8 @@
 # Security and Privacy Audit
 
 **Audited:** 2026-11-01, commit `a202624`. Each finding was read in the code at that commit.
-Findings marked **proved** have a failing emulator test written before the fix, recorded in
-`IMPLEMENTATION_PROGRESS.md`. The others are shown by the code cited.
+Every finding below has been addressed since; `IMPLEMENTATION_PROGRESS.md` records each fix and
+what was verified. This file is kept as the record of what was found.
 
 ## What already holds
 

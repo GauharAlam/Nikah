@@ -3,6 +3,12 @@
 Each phase records what actually ran. Older stage-by-stage notes are in
 `docs/history/PROGRESS_TO_2026-11-01.md`.
 
+## Where the project stands
+
+Every phase is complete. **The app is not ready for real members yet**, because nothing has run on
+a real Firebase project, a physical phone or real Play billing. The first release is Android
+only. See Definition of Done at the end of this file.
+
 ## Status
 
 | Phase | State |
@@ -15,7 +21,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 5 Family, privacy, deletion | Done |
 | 6 Trust and safety | Done |
 | 7 Notifications and premium | Done |
-| 8 Quality assurance | Next |
+| 8 Quality assurance | Done |
+| 9 Release preparation | Done, up to what needs accounts |
 
 ## Phase 0 — Baseline
 
@@ -375,3 +382,185 @@ Journey 8 proves the logic around them, not the stores themselves.
 **Outstanding blockers:** X-1, X-3.
 
 **Next priority:** Phase 8.
+
+## Phase 8 — Quality assurance
+
+**The first real run.** Until this phase `FirebaseBackend` had never executed. Every earlier test
+used a fake, or called functions from Node. It now runs on an Android emulator against the
+Firebase emulators: real Firestore rules, real Storage rules, real Cloud Functions.
+
+**Device results (android-36 emulator)**
+
+| Suite | Result |
+|---|---|
+| `integration_test/backend_journeys_test.dart`: Journeys 1 to 7 on the real client | 10 passed |
+| `integration_test/app_ui_test.dart`: 12 main screens with real data, no exceptions | 1 passed |
+
+Journey 8 runs in the emulator suite, because no store is reachable from here.
+
+**Bugs only a real run could find**
+
+- **`setState() called during build` on the production path.** `DiscoveryScreen.initState`
+  reached a synchronous `notifyListeners`. It fired on entry to Discover in every session, and
+  no test saw it because nothing had run the real store with the real router.
+  `session_transition_test.dart` now fails if the store notifies during a build. My first fix
+  was wrong (I moved a provider selection), and was reverted once a stack trace showed the cause.
+- **One member's matches shown to the next member on the same phone.** Firestore's disk cache
+  outlives sign-out. Disk persistence is now off, so no private data rests on the device either.
+  The cost is a slower first load and no reading offline after a restart.
+- `BACKEND=emulator` could not start, because the SDK rejects a badly shaped API key.
+
+**Found by the small-screen test:** overflows at 320dp and 1.5x text on review status,
+verification and search, all fixed.
+
+**Correction:** commit `af5c1ce` went out with one failing test and a blank test count. The
+machine had run out of disk, which hid the result, and the commit step did not stop on failure.
+The next commit fixed the test and the count. Commit steps now stop if tests fail.
+
+**Reviewed by eye on the device:** landing, Discover, Profile, Family Circle, Search, Delete
+Account. They render correctly with real data.
+
+**Tests added:** 17 widget tests on the production store, one session test, 8 accessibility tests,
+and 11 device tests. See `TESTING.md`.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 206 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 112 passed |
+| `tool/integration_test.sh integration_test -d emulator-5554` | 11 passed |
+
+Four defects were left here because another session held the files. All were closed in Phase 9.
+
+**Not verified:** performance on a mid-range device, a real SMS, real FCM, real store purchases,
+and any iOS build.
+
+**Next priority:** Phase 9.
+
+## Phase 9 — Release preparation
+
+**Implemented**
+
+- SEC-23: the product is now Nikah, with app id `com.gauharalam.nikah` on every platform. The
+  built APK reports that id and label, and holds no reference-app name. A test keeps it that way.
+- Release signing from a `key.properties` that git ignores. `tool/build_release.sh` refuses
+  placeholder links, or a missing key or Firebase file.
+- The landing page scrolls on small screens and gained a How it works sheet.
+- Discover gained a Search entry, a skeleton and pull to refresh on its empty state. The
+  self-managed label no longer overlaps the avatar. The landing page is back in the small-screen test.
+- The seven files from `41bdf8f` were brought in under their original author, without that
+  commit's older test copies.
+- ARC-11: `README.md` rewritten. `DEPLOYMENT.md` covers environments, secrets, configuration,
+  signing, iOS, privacy disclosures, permissions, a release checklist and rollback.
+
+**Files created:** `docs/DEPLOYMENT.md`, `tool/build_release.sh`.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 208 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 113 passed |
+| Device tests on the android-36 emulator | 11 passed |
+| `flutter build apk --release` | built, 66.2 MB |
+| APK inspection | id `com.gauharalam.nikah`, label `Nikah`, no `DemoAppStore`, no `Barkat` |
+
+**Left in the binary on purpose:** a seeded name in the wali screens, which stay gated to demo
+builds under the user's earlier decision. Production redirects those routes.
+
+## After Phase 9 — Work that needs no accounts
+
+**The app never used its own font.** `AppTheme.ts` asked for `PlusJakartaSans`, but `google_fonts`
+registers `PlusJakartaSans_regular` and similar names, so most text fell back to the system font.
+The five weights in use are now bundled, checked against the hashes in `google_fonts`, with the
+OFL licence shown in the app. `google_fonts` is removed, so nothing is downloaded on first launch.
+The small-screen tests now load the real font, because the test font hid overflows.
+
+**Member-facing claims that were false, now corrected**
+
+- About: the WhatsApp, Email and Feedback buttons sent nothing, yet said the support desk replies
+  within 24 hours. There is now one Email support row that opens the mail app. It needs
+  `SUPPORT_EMAIL`, and no reply time is promised.
+- About: Privacy Policy and Community Guidelines said the document "ships with the release".
+  Privacy and Terms now open their links. Community Guidelines and the tafseer row are removed
+  until they have real content. "Guardian supervised" and the old Arabic brand name are gone.
+- Verification and Premium said verified or paying members rank higher. The server orders by
+  approval date only, so those lines are removed. A paid promise could not stand.
+- The Contact Shared card gave real members a made-up `@nikah.demo` address and a blank Wali row.
+- Sending a proposal read "Proposal sent to " with no name. Family Call opened a route that
+  production redirects, so the button now stays in demo builds.
+- "Awaiting family approval", "Chaperoned chat" and "saved on this device" were not true. The
+  daily limit was written as 5 instead of read from `config/app`.
+
+**Existing issues fixed:** the profile page showed the main photo twice, labelled 1/2 and 2/2, and
+never showed a member's other photos. It now shows each photo once.
+
+**Discover:** pull to refresh works on the full deck and keeps the cards until the new page
+arrives. A card holds the place of a page that is loading, and a failed page offers Try again
+instead of leaving the member on the last card with no message.
+
+**Files created:** `assets/fonts/*`, `test/unit/truthful_copy_test.dart`,
+`test/widget/discover_deck_test.dart`.
+
+**Tests added:** 18 Flutter. `truthful_copy_test.dart` fails if any removed claim returns.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 226 passed |
+| Device tests on the android-36 emulator | 11 passed |
+
+Functions were not changed, so their tests were not run again.
+
+## Definition of Done
+
+Status is what was run. Emulator means local Firebase emulators, on an Android virtual device
+where the client is involved.
+
+| Requirement | Status |
+|---|---|
+| A real account can be created | Logic verified on emulator. Real SMS not run |
+| Real Firebase Authentication | Not run on a real project |
+| Full onboarding works, and data persists | Verified on emulator |
+| Photos and documents upload securely | Verified on emulator, rules and byte checks included |
+| Approval is server-controlled | Verified on emulator |
+| Only approved profiles in discovery | Verified on emulator |
+| Search and filters on real data | Verified on emulator |
+| Proposals reliable, and only mutual acceptance matches | Verified on emulator |
+| Chat for authorised matches | Verified on emulator |
+| Contact sharing needs consent | Verified on emulator |
+| Family invitations, permissions, revocation | Verified on emulator |
+| Blocking and reporting | Verified on emulator |
+| Push notifications | Written and unit tested. Never delivered |
+| Privacy settings enforced by the backend | Verified on emulator |
+| Purchase verification | Logic verified with a simulated store. Google Play never called |
+| Deletion complete and retryable | Verified on emulator |
+| Rules pass security tests | Yes |
+| Flutter tests pass; functions compile and pass | Yes |
+| Android build | Yes, unsigned for stores |
+| iOS build | Out of scope for now: Android only |
+| No fake backend in production | Yes, proved from the built APK |
+| Documentation reflects the implementation | Yes |
+
+## Open items that need a person
+
+| Id | Item |
+|---|---|
+| X-1 | Firebase project and config files |
+| X-3 | Google Play account and products |
+| X-4 | Legal review: terms, privacy, retention, safety procedure |
+| X-5 | Confirm the name and app id before first publish |
+| X-6 | Real institution data, quota decisions, app icon and artwork |
+
+## Known engineering gaps
+
+- ARC-03 is partial: controllers exist, but most screens still read them through `AppStore`.
+- Most new text has no Hindi translation yet.
+- No performance measurement on a mid-range device.

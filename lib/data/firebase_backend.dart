@@ -24,7 +24,11 @@ class FirebaseBackend implements Backend {
       : _auth = FirebaseAuth.instance,
         _db = FirebaseFirestore.instance,
         _storage = FirebaseStorage.instance,
-        _functions = FirebaseFunctions.instanceFor(region: 'asia-south1');
+        _functions = FirebaseFunctions.instanceFor(region: 'asia-south1') {
+    // No private data on disk. The cache also outlives sign-out, so a second
+    // member on the phone would briefly see the first member's matches.
+    _db.settings = const Settings(persistenceEnabled: false);
+  }
 
   /// Points every service at the local emulators. The emulators have no
   /// Cloud Messaging, so push stays off.

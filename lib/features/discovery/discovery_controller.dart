@@ -101,25 +101,32 @@ class DiscoveryController extends FeatureController {
     }
   }
 
-  Future<void> refresh() async {
-    _introductions = <MatchProfile>[];
+  /// Starts the deck again. [keepDeck] leaves the cards in place until the new
+  /// page arrives, so a failed refresh takes nothing away.
+  Future<void> refresh({bool keepDeck = false}) async {
+    if (keepDeck && _loading) return;
+    if (!keepDeck) _introductions = <MatchProfile>[];
     _cursor = null;
     _exhausted = false;
-    await loadMore();
+    await _load(replace: keepDeck);
   }
 
-  Future<void> loadMore() async {
+  Future<void> loadMore() => _load();
+
+  Future<void> _load({bool replace = false}) async {
     if (_loading || _exhausted || !_session.hasApprovedClaim) return;
     _loading = true;
     _error = null;
-    notifyListeners();
+    // A screen starts this from initState, where notifying would throw.
+    scheduleMicrotask(notifyListeners);
     try {
       final IntroductionPage page = await backend.fetchIntroductions(_filters, _cursor);
-      final Set<String> seen = _introductions.map((MatchProfile p) => p.id).toSet();
+      final Set<String> seen =
+          replace ? <String>{} : _introductions.map((MatchProfile p) => p.id).toSet();
       final List<MatchProfile> fresh =
           page.profiles.where((MatchProfile p) => seen.add(p.id)).toList();
       fresh.forEach(_remember);
-      _introductions = <MatchProfile>[..._introductions, ...fresh];
+      _introductions = <MatchProfile>[if (!replace) ..._introductions, ...fresh];
       _cursor = page.cursor;
       _exhausted = page.cursor == null;
       _freeLeft = page.freeLeft;

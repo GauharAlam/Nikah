@@ -370,7 +370,7 @@ class _InviteLetter extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'With gratitude and trust — sent via the Barkat Nikah '
+            'With gratitude and trust — sent via the Nikah '
             'guardianship protocol.',
             style: AppTheme.ts(11.5, FontWeight.w700, color: AppTheme.goldDeep),
           ),

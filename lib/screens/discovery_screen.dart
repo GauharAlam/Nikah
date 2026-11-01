@@ -1,4 +1,4 @@
-// Discovery tab — Barkat-style "Introductions for you" deck with the
+// Discovery tab — "Introductions for you" deck with the
 // Incompatible / Send Proposal / Request Contact action row.
 import 'dart:async';
 
@@ -17,6 +17,7 @@ import '../widgets/app_brand.dart';
 import '../widgets/app_images.dart';
 import '../widgets/app_snacks.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/load_states.dart';
 
 /// Discovery deck tab of the home shell.
 class DiscoveryScreen extends StatefulWidget {
@@ -44,6 +45,18 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Refreshes behind the cards, so nothing disappears while it loads.
+  Future<void> _pullToRefresh() async {
+    final AppStore store = context.read<AppStore>();
+    await store.refreshIntroductions(keepDeck: true);
+    if (!mounted) return;
+    if (store.introductionsError != null) {
+      showAppSnack(context, store.introductionsError!, icon: Icons.wifi_off_rounded);
+    } else if (_pageController.hasClients) {
+      _pageController.jumpToPage(0);
+    }
   }
 
   /// Slide the deck to the next card after an action removes the current one.
@@ -110,6 +123,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
     final List<MatchProfile> profiles = store.discoveredProfiles;
+    final bool hasEndCard = store.reachedProfileLimit ||
+        store.isLoadingIntroductions ||
+        store.introductionsError != null;
     final String firstName =
         store.profile?.displayName.split(' ').firstOrNull ?? 'there';
 
@@ -121,7 +137,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const BarkatLogoMark(size: 30),
+            const NikahLogoMark(size: 30),
             const SizedBox(width: 9),
             Flexible(
               child: Text(
@@ -134,6 +150,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ],
         ),
         actions: <Widget>[
+          IconButton(
+            key: const Key('discovery_open_search'),
+            tooltip: 'Search Rishtey',
+            onPressed: () => context.push(AppRoutes.search),
+            icon: const Icon(Icons.search_rounded),
+          ),
           NotificationBell(
             unread: store.unreadNotificationCount,
             onTap: () => context.push(AppRoutes.notifications),
@@ -179,9 +201,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       child: Text.rich(
                         TextSpan(
                           children: <InlineSpan>[
-                            const TextSpan(text: 'Introductions '),
+                            TextSpan(text: tr('Introductions ')),
                             TextSpan(
-                              text: 'for you',
+                              text: tr('for you'),
                               style: AppTheme.ts(
                                 23,
                                 FontWeight.w800,
@@ -211,7 +233,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ),
           Expanded(
             child: profiles.isEmpty && store.isLoadingIntroductions
-                ? const Center(child: CircularProgressIndicator())
+                ? const AppSkeleton()
                 : profiles.isEmpty && store.reachedProfileLimit
                 ? _UnlockMoreCard(limit: store.freeProfileAllowance)
                 : profiles.isEmpty && store.introductionsError != null
@@ -223,41 +245,110 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     onAction: store.refreshIntroductions,
                   )
                 : profiles.isEmpty
-                ? EmptyState(
+                ? RefreshIndicator(
+                    onRefresh: store.refreshIntroductions,
+                    child: ListView(
+                      children: <Widget>[
+                        EmptyState(
                     icon: Icons.explore_off_rounded,
                     title: tr('All reviewed'),
                     body: 'Every profile matching your preferences has been '
                         'considered. Broaden your search to keep browsing.',
                     actionLabel: tr('Adjust Filters'),
                     onAction: () => context.push(AppRoutes.filters),
+                        ),
+                      ],
+                    ),
                   )
-                : PageView.builder(
-                    controller: _pageController,
-                    itemCount: profiles.length + (store.reachedProfileLimit ? 1 : 0),
-                    onPageChanged: (int index) {
-                      if (index < profiles.length) {
-                        store.markProfileViewed(profiles[index].id);
-                      }
-                      if (index >= profiles.length - 2) {
-                        unawaited(store.loadMoreIntroductions());
-                      }
-                    },
-                    itemBuilder: (BuildContext context, int index) => index >= profiles.length
-                        ? _UnlockMoreCard(limit: store.freeProfileAllowance)
-                        : _DeckCard(
-                      profile: profiles[index],
-                      matchPercent: profiles[index].matchPercent,
-                      onIncompatible: () =>
-                          _markIncompatible(profiles[index], index),
-                      onProposal: () => _sendProposal(profiles[index], index),
-                      onContact: () => _requestContact(profiles[index], index),
-                      onExplore: () =>
-                          context.push(AppRoutes.matchDetail(profiles[index].id)),
+                : RefreshIndicator(
+                    onRefresh: _pullToRefresh,
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) =>
+                          SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: profiles.length + (hasEndCard ? 1 : 0),
+                            onPageChanged: (int index) {
+                              if (index < profiles.length) {
+                                store.markProfileViewed(profiles[index].id);
+                              }
+                              if (index >= profiles.length - 2 && index < profiles.length) {
+                                unawaited(store.loadMoreIntroductions());
+                              }
+                            },
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index >= profiles.length) {
+                                if (store.reachedProfileLimit) {
+                                  return _UnlockMoreCard(limit: store.freeProfileAllowance);
+                                }
+                                if (store.introductionsError != null) {
+                                  return EmptyState(
+                                    icon: Icons.wifi_off_rounded,
+                                    title: 'Could not load introductions',
+                                    body: store.introductionsError!,
+                                    actionLabel: tr('Try again'),
+                                    onAction: store.loadMoreIntroductions,
+                                  );
+                                }
+                                return const _DeckSkeleton();
+                              }
+                              return _DeckCard(
+                                profile: profiles[index],
+                                matchPercent: profiles[index].matchPercent,
+                                onIncompatible: () =>
+                                    _markIncompatible(profiles[index], index),
+                                onProposal: () => _sendProposal(profiles[index], index),
+                                onContact: () => _requestContact(profiles[index], index),
+                                onExplore: () =>
+                                    context.push(AppRoutes.matchDetail(profiles[index].id)),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
           ),
           const SizedBox(height: 4),
         ],
+      ),
+    );
+  }
+}
+
+/// Stands in for the next card while a page of profiles loads.
+class _DeckSkeleton extends StatelessWidget {
+  const _DeckSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Semantics(
+        label: tr('Loading more profiles'),
+        child: Container(
+          key: const Key('deck_skeleton'),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: AppTheme.slate100,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppTheme.slate200, width: 1.6),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(height: 20, width: 170, color: AppTheme.slate200),
+              const SizedBox(height: 12),
+              Container(height: 12, width: double.infinity, color: AppTheme.slate200),
+              const SizedBox(height: 8),
+              Container(height: 12, width: 200, color: AppTheme.slate200),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -346,7 +437,7 @@ class _ProposalsPill extends StatelessWidget {
                 style: AppTheme.ts(12.5, FontWeight.w800, color: AppTheme.slate900),
               ),
               Text(
-                'PROPOSALS SENT',
+                tr('PROPOSALS SENT'),
                 style: AppTheme.ts(
                   7.5,
                   FontWeight.w700,
@@ -362,7 +453,7 @@ class _ProposalsPill extends StatelessWidget {
   }
 }
 
-/// One full-bleed introduction card with the three Barkat actions.
+/// One full-bleed introduction card with the three actions.
 class _DeckCard extends StatelessWidget {
   const _DeckCard({
     required this.profile,
@@ -424,7 +515,11 @@ class _DeckCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Positioned(top: 14, left: 14, child: _CrestBadge()),
+              Positioned(
+                top: 14,
+                left: 14,
+                child: profile.isSelfManaged ? const _SelfManagedPill() : const _CrestBadge(),
+              ),
               if (profile.isNew)
                 const Positioned(top: 14, right: 14, child: _NewProfilePill()),
               Positioned(
@@ -436,10 +531,6 @@ class _DeckCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if (profile.isSelfManaged) ...<Widget>[
-                        const _SelfManagedPill(),
-                        const SizedBox(height: 8),
-                      ],
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: <Widget>[
@@ -508,7 +599,7 @@ class _DeckCard extends StatelessWidget {
                               TextSpan(
                                 children: <InlineSpan>[
                                   TextSpan(
-                                    text: 'Marriage',
+                                    text: tr('Marriage'),
                                     style: AppTheme.ts(
                                       12.5,
                                       FontWeight.w700,
@@ -676,7 +767,7 @@ class _NewProfilePill extends StatelessWidget {
           const Icon(Icons.auto_awesome_rounded, size: 11, color: AppTheme.goldInk),
           const SizedBox(width: 4),
           Text(
-            'New Profile',
+            tr('New Profile'),
             style: AppTheme.ts(10.5, FontWeight.w800, color: AppTheme.goldInk),
           ),
         ],
@@ -703,7 +794,7 @@ class _SelfManagedPill extends StatelessWidget {
           const Icon(Icons.person_rounded, size: 11, color: AppTheme.mint),
           const SizedBox(width: 4),
           Text(
-            'Self managed',
+            tr('Self managed'),
             style: AppTheme.ts(10, FontWeight.w700, color: Colors.white),
           ),
         ],

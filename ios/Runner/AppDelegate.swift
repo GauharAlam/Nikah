@@ -3,7 +3,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  private static let privacyShieldChannel = "com.barkat.nikah/privacy_shield"
+  private static let privacyShieldChannel = "com.gauharalam.nikah/privacy_shield"
 
   /// Hosts the window's layer inside a secure text field's layer, which iOS
   /// leaves out of screenshots and recordings. iOS has no FLAG_SECURE.

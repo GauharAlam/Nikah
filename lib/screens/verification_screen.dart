@@ -171,16 +171,16 @@ class VerificationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Get the Barkat Verified Badge',
+            'Get the Nikah Verified Badge',
             textAlign: TextAlign.center,
             style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
           Text(
-            store.isBarkatVerified
+            store.isVerifiedMember
                 ? 'MashaAllah — every required document is approved. Your '
                       'badge is live on your profile.'
-                : 'Verify your profile to earn the Barkat Verified badge — '
+                : 'Verify your profile to earn the Nikah Verified badge — '
                       'a mark of trust that members recognise instantly.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(
@@ -211,9 +211,12 @@ class VerificationScreen extends StatelessWidget {
                     color: AppTheme.goldInk,
                   ),
                   const SizedBox(width: 5),
-                  Text(
-                    'Barkat Verified',
-                    style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.goldInk),
+                  Flexible(
+                    child: Text(
+                      'Verified',
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.goldInk),
+                    ),
                   ),
                 ],
               ),
@@ -235,14 +238,9 @@ class VerificationScreen extends StatelessWidget {
             body: 'ID and education documents reviewed by our team.',
           ),
           const _BenefitRow(
-            icon: Icons.trending_up_rounded,
-            title: 'Move up in search results',
-            body: 'Verified profiles rank higher for serious seekers.',
-          ),
-          const _BenefitRow(
             icon: Icons.favorite_outline_rounded,
             title: 'Build confidence with serious seekers',
-            body: 'Members reach verified profiles first.',
+            body: 'A badge on your profile shows our team reviewed your documents.',
             last: true,
           ),
           const SizedBox(height: 20),
@@ -476,19 +474,26 @@ class _DocCard extends StatelessWidget {
                 ),
               )
             else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    pending ? 'View' : 'Upload',
-                    style: AppTheme.ts(12, FontWeight.w800, color: AppTheme.green),
-                  ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 17,
-                    color: AppTheme.green,
-                  ),
-                ],
+              ConstrainedBox(
+                // Large text must not push this off a small screen.
+                constraints: const BoxConstraints(maxWidth: 72),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        pending ? 'View' : 'Upload',
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.ts(12, FontWeight.w800, color: AppTheme.green),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 17,
+                      color: AppTheme.green,
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

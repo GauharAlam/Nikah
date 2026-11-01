@@ -19,7 +19,7 @@ class PrivacyShield {
   PrivacyShield._();
 
   static const MethodChannel _channel =
-      MethodChannel('com.barkat.nikah/privacy_shield');
+      MethodChannel('com.gauharalam.nikah/privacy_shield');
   static int _holders = 0;
 
   static bool get _supported =>

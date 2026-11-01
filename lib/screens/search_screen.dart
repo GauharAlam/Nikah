@@ -12,6 +12,7 @@ import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_images.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/load_states.dart';
 
 /// Search Rishtey: free-text search on top of the saved filters, with a
 /// Suggestions and Nearby switch. Every result comes from the server.
@@ -121,19 +122,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _body() {
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(_error!, key: const Key('search_error'), textAlign: TextAlign.center),
-            TextButton(onPressed: () => _load(reset: true), child: Text(tr('Try again'))),
-          ],
-        ),
-      );
-    }
+    if (_error != null) return ErrorState(message: _error!, onRetry: () => _load(reset: true));
     if (_results.isEmpty) {
-      if (_loading) return const Center(child: CircularProgressIndicator());
+      if (_loading) return const AppSkeleton();
       return EmptyState(
         icon: Icons.search_off_rounded,
         title: tr('No profiles found'),
@@ -207,7 +198,8 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
               children: <Widget>[
                 ChoiceChip(
                   key: const Key('mode_suggestions'),
@@ -215,7 +207,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   selected: !_nearby,
                   onSelected: (_) => _setNearby(false),
                 ),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   key: const Key('mode_nearby'),
                   label: Text(tr('Nearby')),

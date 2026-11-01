@@ -32,6 +32,12 @@ class FakeBackend implements Backend {
   Map<String, dynamic>? draft;
   Map<String, dynamic>? savedDraft;
   List<IntroductionPage> pages = <IntroductionPage>[];
+
+  /// Full profiles, in place of the one-photo card.
+  Map<String, MatchProfile> fullProfiles = <String, MatchProfile>{};
+
+  /// Holds the next page back until completed.
+  Completer<void>? gate;
   Object? failNext;
   Object? failDraft;
 
@@ -104,13 +110,16 @@ class FakeBackend implements Backend {
     lastQuery = filters.query;
     lastNearby = nearby;
     await _record('fetchIntroductions:$cursor');
+    final Completer<void>? held = gate;
+    gate = null;
+    await held?.future;
     return pages.isEmpty ? const IntroductionPage(<MatchProfile>[], null) : pages.removeAt(0);
   }
 
   @override
   Future<List<MatchProfile>> getProfiles(List<String> ids) async {
     await _record('getProfiles');
-    return ids.map(card).toList();
+    return ids.map((String id) => fullProfiles[id] ?? card(id)).toList();
   }
 
   @override

@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_snacks.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/load_states.dart';
 
 /// Explains what deleting does, then does it. An old session is asked to prove
 /// it is the owner first.
@@ -147,17 +148,9 @@ class _BlockedMembersScreenState extends State<BlockedMembersScreen> {
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(title: Text(tr('Blocked members'))),
       body: _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(_error!),
-                  TextButton(onPressed: _load, child: Text(tr('Try again'))),
-                ],
-              ),
-            )
+          ? ErrorState(message: _error!, onRetry: _load)
           : blocks == null
-              ? const Center(child: CircularProgressIndicator())
+              ? const AppSkeleton()
               : blocks.isEmpty
                   ? EmptyState(
                       icon: Icons.block_rounded,

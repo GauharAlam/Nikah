@@ -2,7 +2,7 @@ import 'match_profile.dart';
 
 /// Discovery / search filters persisted by [AppStore].
 ///
-/// Mirrors the Barkat filter sheet: age slider + single-select rows for
+/// The filter sheet: age slider + single-select rows for
 /// marriage status, caste, alma mater, education, profession and location,
 /// plus the contact-sharing mode.
 class MatchFilters {
@@ -18,7 +18,7 @@ class MatchFilters {
   final String query;
   final String contactSharing;
 
-  /// Legacy fields kept while older screens migrate to the Barkat set.
+  /// Legacy fields kept while older screens migrate.
   final List<String> cities;
   final bool waliVerifiedOnly;
   final List<String> practiceTags;
@@ -149,7 +149,7 @@ class MatchFilters {
     );
   }
 
-  /// Whether a Barkat-style profile passes the active filters.
+  /// Whether a profile passes the active filters.
   bool acceptsProfile(MatchProfile p) {
     if (p.age < minAge || p.age > maxAge) return false;
     if (marriageStatus != anyValue && p.maritalStatus != marriageStatus) {

@@ -98,7 +98,7 @@ Future<(AppStore, GoRouter)> pumpApp(
   await tester.pumpWidget(
     ChangeNotifierProvider<AppStore>.value(
       value: store,
-      child: BarkatNikahApp(router: router),
+      child: NikahApp(router: router),
     ),
   );
   await tester.pumpAndSettle();
