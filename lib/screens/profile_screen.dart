@@ -28,9 +28,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final WardProfile profile = store.profile ?? WardProfile.demoWard;
-    final String name =
-        profile.displayName.isEmpty ? 'Amina Al-Mansoor' : profile.displayName;
+    final WardProfile profile = store.profile ?? const WardProfile();
+    final String name = profile.displayName.isEmpty ? 'Member' : profile.displayName;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       body: ListView(
@@ -40,7 +39,7 @@ class ProfileScreen extends StatelessWidget {
             name: name,
             city: profile.city.isEmpty ? 'Set your city' : profile.city,
             age: profile.age,
-            verified: profile.waliVerified,
+            verified: store.isBarkatVerified,
             initials: _initials(name),
             unread: store.unreadNotificationCount,
             onSettings: () => context.push(AppRoutes.settings),
@@ -56,8 +55,8 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.edit_outlined,
-                        title: 'Edit Biodata',
-                        subtitle: 'Keep your record fresh',
+                        title: tr('Edit Biodata'),
+                        subtitle: tr('Keep your record fresh'),
                         onTap: () => context.push(AppRoutes.editProfile),
                       ),
                     ),
@@ -65,8 +64,8 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.tune_rounded,
-                        title: 'Preferences',
-                        subtitle: 'Privacy & settings',
+                        title: tr('Preferences'),
+                        subtitle: tr('Privacy & settings'),
                         onTap: () => context.push(AppRoutes.settings),
                       ),
                     ),
@@ -82,13 +81,13 @@ class ProfileScreen extends StatelessWidget {
                               title: 'Wali Hub',
                               subtitle: store.guardian.isVerified
                                   ? 'Verified guardian'
-                                  : 'Verification pending',
+                                  : tr('Verification pending'),
                               onTap: () => context.push(AppRoutes.waliHub),
                             )
                           : _QuickAction(
                               icon: Icons.phone_outlined,
-                              title: 'Contact details',
-                              subtitle: 'Number and sharing',
+                              title: tr('Contact details'),
+                              subtitle: tr('Number and sharing'),
                               onTap: () =>
                                   context.push(AppRoutes.contactDetails),
                             ),
@@ -97,15 +96,15 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.info_outline_rounded,
-                        title: 'About & Help',
-                        subtitle: 'FAQs and guidelines',
+                        title: tr('About & Help'),
+                        subtitle: tr('FAQs and guidelines'),
                         onTap: () => context.push(AppRoutes.about),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 22),
-                const SectionLabel('Biodata'),
+                SectionLabel(tr('Biodata')),
                 const SizedBox(height: 10),
                 GridView.count(
                   crossAxisCount: 2,
@@ -138,7 +137,7 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 22),
-                const SectionLabel('Deen snapshot'),
+                SectionLabel(tr('Deen snapshot')),
                 const SizedBox(height: 10),
                 AppCard(
                   child: Column(
@@ -299,7 +298,7 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 22),
                 SettingsTile(
                   icon: Icons.notifications_none_rounded,
-                  title: 'Notifications',
+                  title: tr('Notifications'),
                   subtitle: store.unreadNotificationCount > 0
                       ? '${store.unreadNotificationCount} unread updates'
                       : 'All caught up, alhamdulillah',
@@ -308,7 +307,7 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 SettingsTile(
                   icon: Icons.lock_outline_rounded,
-                  title: 'Privacy & modesty',
+                  title: tr('Privacy & modesty'),
                   subtitle: store.privacy('blurPhotos')
                       ? 'Photo blur is ON'
                       : 'Photo blur is OFF',
@@ -316,7 +315,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 if (store.isLoggedIn) ...<Widget>[
-                  const SectionLabel('Account'),
+                  SectionLabel(tr('Account')),
                   const SizedBox(height: 10),
                   DangerButton(
                     label: 'Sign out',
@@ -518,7 +517,7 @@ class _ProfileHeader extends StatelessWidget {
                         color: AppTheme.gold.withValues(alpha: 0.45)),
                   ),
                   child: Text(
-                    'Verification pending',
+                    tr('Verification pending'),
                     style: AppTheme.ts(11, FontWeight.w700,
                         color: AppTheme.gold),
                   ),

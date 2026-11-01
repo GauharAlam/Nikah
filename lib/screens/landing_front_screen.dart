@@ -90,7 +90,7 @@ class _LandingScreenState extends State<LandingScreen> {
               child: Column(
                 children: <Widget>[
                   Align(
-                    alignment: Alignment.centerRight,
+                    alignment: Alignment.centerLeft,
                     child: TextButton.icon(
                       key: const Key('landing_language'),
                       style: TextButton.styleFrom(foregroundColor: Colors.white),
@@ -108,7 +108,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   ),
                   const Spacer(flex: 3),
                   Text(
-                    'Connect & Meet\nEducated Muslims for Nikah',
+                    tr('Connect & Meet\nEducated Muslims for Nikah'),
                     textAlign: TextAlign.center,
                     style: AppTheme.ts(25, FontWeight.w800, color: Colors.white, height: 1.25),
                   ),
@@ -126,7 +126,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Manually reviewed  ·  Alma Mater filter',
+                    tr('Manually reviewed  ·  Alma Mater filter'),
                     style: AppTheme.ts(12.5, FontWeight.w600, color: Colors.white),
                   ),
                   const SizedBox(height: 20),

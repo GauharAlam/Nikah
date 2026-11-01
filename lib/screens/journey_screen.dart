@@ -79,7 +79,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
       final Map<String, String>? theirs = await store.theirAnswers(widget.matchId);
       if (mounted) {
         setState(() => _theirs = theirs);
-        showSuccessSnack(context, 'Your answers are saved.');
+        showSuccessSnack(context, tr('Your answers are saved.'));
       }
     } on BackendException catch (e) {
       if (mounted) showAppSnack(context, e.message);
@@ -100,11 +100,10 @@ class _JourneyScreenState extends State<JourneyScreen> {
         color: done ? AppTheme.green : AppTheme.slate300,
       ),
       title: Text(tr(step.title)),
-      subtitle: Text(
-        theirs != null && step.index <= theirs.index
-            ? '${step.detail} They have reached this step too.'
-            : step.detail,
-      ),
+      subtitle: Text(tr(step.detail)),
+      trailing: theirs != null && step.index <= theirs.index
+          ? const Icon(Icons.people_alt_outlined, size: 18, color: AppTheme.green)
+          : null,
       onTap: () => store.setJourneyStep(widget.matchId, step),
     );
   }
@@ -131,9 +130,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 const SizedBox(height: 4),
                 Text(
                   theirs == null
-                      ? 'You will see ${match.firstName}\'s answers once you have '
-                          'both answered. Answer only what you are comfortable sharing.'
-                      : 'Use these to talk, with your families where it helps.',
+                      ? '${tr('You will see their answers once you have both answered.')} '
+                          '${tr('Answer only what you are comfortable sharing.')}'
+                      : tr('Use these to talk, with your families where it helps.'),
                   style: AppTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -144,18 +143,18 @@ class _JourneyScreenState extends State<JourneyScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 10, bottom: 6),
                       child: Text(
-                        q.topic.toUpperCase(),
+                        tr(q.topic).toUpperCase(),
                         style: AppTheme.ts(11, FontWeight.w800, color: AppTheme.green),
                       ),
                     ),
-                  Text(q.text, style: AppTheme.ts(14, FontWeight.w600, color: AppTheme.slate900)),
+                  Text(tr(q.text), style: AppTheme.ts(14, FontWeight.w600, color: AppTheme.slate900)),
                   const SizedBox(height: 6),
                   TextField(
                     key: Key('answer_${q.id}'),
                     controller: _fields[q.id],
                     maxLength: 500,
                     maxLines: null,
-                    decoration: const InputDecoration(hintText: 'Your answer', counterText: ''),
+                    decoration: InputDecoration(hintText: tr('Your answer'), counterText: ''),
                   ),
                   if (theirs?[q.id] != null) ...<Widget>[
                     const SizedBox(height: 6),
@@ -166,7 +165,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 }(),
                 PrimaryButton(
                   key: const Key('save_answers'),
-                  label: _saving ? 'Saving…' : 'Save my answers',
+                  label: _saving ? tr('Saving…') : tr('Save my answers'),
                   onPressed: _saving ? null : _save,
                 ),
               ],

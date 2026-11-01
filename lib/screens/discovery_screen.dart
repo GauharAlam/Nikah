@@ -179,9 +179,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       child: Text.rich(
                         TextSpan(
                           children: <InlineSpan>[
-                            const TextSpan(text: 'Introductions '),
+                            TextSpan(text: tr('Introductions ')),
                             TextSpan(
-                              text: 'for you',
+                              text: tr('for you'),
                               style: AppTheme.ts(
                                 23,
                                 FontWeight.w800,
@@ -346,7 +346,7 @@ class _ProposalsPill extends StatelessWidget {
                 style: AppTheme.ts(12.5, FontWeight.w800, color: AppTheme.slate900),
               ),
               Text(
-                'PROPOSALS SENT',
+                tr('PROPOSALS SENT'),
                 style: AppTheme.ts(
                   7.5,
                   FontWeight.w700,
@@ -508,7 +508,7 @@ class _DeckCard extends StatelessWidget {
                               TextSpan(
                                 children: <InlineSpan>[
                                   TextSpan(
-                                    text: 'Marriage',
+                                    text: tr('Marriage'),
                                     style: AppTheme.ts(
                                       12.5,
                                       FontWeight.w700,
@@ -676,7 +676,7 @@ class _NewProfilePill extends StatelessWidget {
           const Icon(Icons.auto_awesome_rounded, size: 11, color: AppTheme.goldInk),
           const SizedBox(width: 4),
           Text(
-            'New Profile',
+            tr('New Profile'),
             style: AppTheme.ts(10.5, FontWeight.w800, color: AppTheme.goldInk),
           ),
         ],
@@ -703,7 +703,7 @@ class _SelfManagedPill extends StatelessWidget {
           const Icon(Icons.person_rounded, size: 11, color: AppTheme.mint),
           const SizedBox(width: 4),
           Text(
-            'Self managed',
+            tr('Self managed'),
             style: AppTheme.ts(10, FontWeight.w700, color: Colors.white),
           ),
         ],
