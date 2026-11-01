@@ -64,9 +64,10 @@ void main() async {
   );
 }
 
-/// The local emulators accept any values for an isolated `demo-` project.
+/// The local emulators accept any values for an isolated `demo-` project. The
+/// SDK checks only the shape of the key, so this is a placeholder, not a secret.
 const FirebaseOptions _emulatorOptions = FirebaseOptions(
-  apiKey: 'demo-key',
+  apiKey: 'AIzaLOCALEMULATORONLYNOTAREALKEY0000000',
   appId: '1:1:android:1',
   messagingSenderId: '1',
   projectId: 'demo-nikah',

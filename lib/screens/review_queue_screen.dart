@@ -9,6 +9,7 @@ import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snacks.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/load_states.dart';
 
 /// Reviewer tool: decide on submitted profiles and documents. The route needs
 /// the `reviewer` claim, and every action is re-checked on the server.
@@ -330,17 +331,9 @@ class _ReviewQueueScreenState extends State<ReviewQueueScreen> {
           ),
         ),
         body: _error != null
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(_error!),
-                    TextButton(onPressed: _load, child: const Text('Try again')),
-                  ],
-                ),
-              )
+            ? ErrorState(message: _error!, onRetry: _load)
             : items == null || reports == null
-                ? const Center(child: CircularProgressIndicator())
+                ? const AppSkeleton()
                 : TabBarView(
                     children: <Widget>[
                       _list(items.map(_card).toList(), 'No profiles are waiting for review.'),

@@ -15,7 +15,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 5 Family, privacy, deletion | Done |
 | 6 Trust and safety | Done |
 | 7 Notifications and premium | Done |
-| 8 Quality assurance | Next |
+| 8 Quality assurance | Done |
+| 9 Release preparation | Next |
 
 ## Phase 0 — Baseline
 
@@ -375,3 +376,61 @@ Journey 8 proves the logic around them, not the stores themselves.
 **Outstanding blockers:** X-1, X-3.
 
 **Next priority:** Phase 8.
+
+## Phase 8 — Quality assurance
+
+**The first real run.** Until this phase `FirebaseBackend` had never executed. Every earlier test
+used a fake, or called functions from Node. It now runs on an Android emulator against the
+Firebase emulators: real Firestore rules, real Storage rules, real Cloud Functions.
+
+**Device results (android-36 emulator)**
+
+| Suite | Result |
+|---|---|
+| `integration_test/backend_journeys_test.dart`: Journeys 1 to 7 on the real client | 10 passed |
+| `integration_test/app_ui_test.dart`: 12 main screens with real data, no exceptions | 1 passed |
+
+Journey 8 runs in the emulator suite, because no store is reachable from here.
+
+**Bugs only a real run could find**
+
+- **`setState() called during build` on the production path.** `DiscoveryScreen.initState`
+  reached a synchronous `notifyListeners`. It fired on entry to Discover in every session, and
+  no test saw it because nothing had run the real store with the real router.
+  `session_transition_test.dart` now fails if the store notifies during a build. My first fix
+  was wrong (I moved a provider selection), and was reverted once a stack trace showed the cause.
+- **One member's matches shown to the next member on the same phone.** Firestore's disk cache
+  outlives sign-out. Disk persistence is now off, so no private data rests on the device either.
+  The cost is a slower first load and no reading offline after a restart.
+- `BACKEND=emulator` could not start, because the SDK rejects a badly shaped API key.
+
+**Found by the small-screen test:** overflows at 320dp and 1.5x text on review status,
+verification and search, all fixed.
+
+**Reviewed by eye on the device:** landing, Discover, Profile, Family Circle, Search, Delete
+Account. They render correctly with real data.
+
+**Tests added:** 17 widget tests on the production store, one session test, 8 accessibility tests,
+and 11 device tests. See `TESTING.md`.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` |  passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 112 passed |
+| `tool/integration_test.sh integration_test -d emulator-5554` | 11 passed |
+
+**Known defects left open, in files held by another session**
+
+- `landing_front_screen.dart` overflows at 320dp with 1.5x text, so it is left out of the test.
+- The "Self managed" pill overlaps the avatar on the Discover card (`discovery_screen.dart`).
+- `profile_screen.dart` still falls back to `WardProfile.demoWard`.
+- Discover has no entry point to Search, skeleton or pull to refresh.
+
+**Not verified:** performance on a mid-range device, a real SMS, real FCM, real store purchases,
+and any iOS build.
+
+**Next priority:** Phase 9.

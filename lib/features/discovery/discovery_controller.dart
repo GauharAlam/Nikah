@@ -112,7 +112,8 @@ class DiscoveryController extends FeatureController {
     if (_loading || _exhausted || !_session.hasApprovedClaim) return;
     _loading = true;
     _error = null;
-    notifyListeners();
+    // A screen starts this from initState, where notifying would throw.
+    scheduleMicrotask(notifyListeners);
     try {
       final IntroductionPage page = await backend.fetchIntroductions(_filters, _cursor);
       final Set<String> seen = _introductions.map((MatchProfile p) => p.id).toSet();

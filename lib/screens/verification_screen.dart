@@ -476,19 +476,26 @@ class _DocCard extends StatelessWidget {
                 ),
               )
             else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    pending ? 'View' : 'Upload',
-                    style: AppTheme.ts(12, FontWeight.w800, color: AppTheme.green),
-                  ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 17,
-                    color: AppTheme.green,
-                  ),
-                ],
+              ConstrainedBox(
+                // Large text must not push this off a small screen.
+                constraints: const BoxConstraints(maxWidth: 72),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        pending ? 'View' : 'Upload',
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.ts(12, FontWeight.w800, color: AppTheme.green),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 17,
+                      color: AppTheme.green,
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

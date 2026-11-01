@@ -21,67 +21,83 @@ class ReviewStatusScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Icon(
-                rejected ? Icons.edit_note_rounded : Icons.hourglass_top_rounded,
-                size: 64,
-                color: rejected ? AppTheme.goldDeep : AppTheme.green,
-              ),
-              const SizedBox(height: 18),
-              Text(
-                changes
-                    ? tr('Please update your profile')
-                    : rejected
-                        ? tr('Your profile was not approved')
-                        : tr('Your profile is under review'),
-                textAlign: TextAlign.center,
-                style: AppTheme.ts(22, FontWeight.w800, color: AppTheme.slate900),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                rejected
-                    ? store.rejectionReason
-                    : 'Our team reviews every profile before it goes live. '
-                        'We will notify you when it is done.',
-                textAlign: TextAlign.center,
-                style: AppTheme.bodySmall,
-              ),
-              if (!rejected && store.subjectCode.isNotEmpty && !store.subjectConfirmed) ...<Widget>[
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Icon(
+                  rejected
+                      ? Icons.edit_note_rounded
+                      : Icons.hourglass_top_rounded,
+                  size: 64,
+                  color: rejected ? AppTheme.goldDeep : AppTheme.green,
+                ),
                 const SizedBox(height: 18),
                 Text(
-                  tr('Ask the person this profile is for to install the app, sign in with their own number, and enter this code:'),
+                  changes
+                      ? tr('Please update your profile')
+                      : rejected
+                      ? tr('Your profile was not approved')
+                      : tr('Your profile is under review'),
+                  textAlign: TextAlign.center,
+                  style: AppTheme.ts(
+                    22,
+                    FontWeight.w800,
+                    color: AppTheme.slate900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  rejected
+                      ? store.rejectionReason
+                      : 'Our team reviews every profile before it goes live. '
+                            'We will notify you when it is done.',
                   textAlign: TextAlign.center,
                   style: AppTheme.bodySmall,
                 ),
-                const SizedBox(height: 8),
-                SelectableText(
-                  store.subjectCode,
-                  key: const Key('subject_code'),
-                  textAlign: TextAlign.center,
-                  style: AppTheme.ts(24, FontWeight.w800, color: AppTheme.green),
+                if (!rejected &&
+                    store.subjectCode.isNotEmpty &&
+                    !store.subjectConfirmed) ...<Widget>[
+                  const SizedBox(height: 18),
+                  Text(
+                    tr(
+                      'Ask the person this profile is for to install the app, sign in with their own number, and enter this code:',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: AppTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    store.subjectCode,
+                    key: const Key('subject_code'),
+                    textAlign: TextAlign.center,
+                    style: AppTheme.ts(
+                      24,
+                      FontWeight.w800,
+                      color: AppTheme.green,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 26),
+                if (rejected)
+                  PrimaryButton(
+                    key: const Key('edit_after_rejection'),
+                    label: tr('Update my profile'),
+                    onPressed: () => context.go(AppRoutes.onboarding),
+                  ),
+                TextButton(
+                  onPressed: () => context.push(AppRoutes.verifyProfile),
+                  child: Text(tr('Add verification documents')),
+                ),
+                TextButton(
+                  onPressed: store.signOut,
+                  child: Text(tr('Log out')),
                 ),
               ],
-              const SizedBox(height: 26),
-              if (rejected)
-                PrimaryButton(
-                  key: const Key('edit_after_rejection'),
-                  label: tr('Update my profile'),
-                  onPressed: () => context.go(AppRoutes.onboarding),
-                ),
-              TextButton(
-                onPressed: () => context.push(AppRoutes.verifyProfile),
-                child: Text(tr('Add verification documents')),
-              ),
-              TextButton(
-                onPressed: store.signOut,
-                child: Text(tr('Log out')),
-              ),
-            ],
+            ),
           ),
         ),
       ),
