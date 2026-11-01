@@ -53,7 +53,7 @@ export const sendProposal = onCall(async (req) => {
   });
 });
 
-async function moveProposal(ref: FirebaseFirestore.DocumentReference, actor: string, next: R.ProposalStatus): Promise<void> {
+export async function moveProposal(ref: FirebaseFirestore.DocumentReference, actor: string, next: R.ProposalStatus): Promise<void> {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const p = snap.data() as { from: string; to: string; status: R.ProposalStatus } | undefined;

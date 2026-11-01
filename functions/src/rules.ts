@@ -1,4 +1,5 @@
 // Decision logic with no Firebase dependency, so every rule is unit-testable.
+import { createHash } from 'node:crypto';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
 
@@ -56,6 +57,7 @@ export const CONSENTS: Record<string, string> = {
   data_processing: 'Use of profile details, photos and documents for review and matching',
   marriage_intent: 'Confirmation that this profile is for marriage and is accurate',
   family_authorised: 'Confirmation by a family member that the person agreed to this profile',
+  subject_confirmed: 'Confirmation by the person themselves, from their own phone',
 };
 
 /** A profile can be sent for review from these stages. */
@@ -141,6 +143,25 @@ export function inviteReward(earnedSoFar: number | undefined, limits: Limits): n
 
 export const FAMILY_OPINIONS = ['good', 'discuss', 'no'];
 
+/** Only permissions with a real, enforced feature behind them. */
+export const FAMILY_PERMISSIONS = ['view_shortlist', 'view_profile', 'view_proposals', 'manage_proposals'];
+export const DEFAULT_FAMILY_PERMISSIONS = ['view_shortlist'];
+export const FAMILY_RELATIONSHIPS = ['father', 'mother', 'brother', 'sister', 'uncle', 'aunt', 'guardian', 'other'];
+export const FAMILY_INVITE_DAYS = 7;
+export const FAMILY_INVITE_RESENDS = 3;
+
+export const validPermissions = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((p) => FAMILY_PERMISSIONS.includes(p));
+
+/** Phone numbers and codes are compared by hash, so neither is stored. */
+export const hashOf = (value: string): string => createHash('sha256').update(value).digest('hex');
+
+export const RECENT_SIGN_IN_MS = 10 * 60 * 1000;
+export const recentlySignedIn = (signedInAt: number, now: number): boolean =>
+  now - signedInAt <= RECENT_SIGN_IN_MS;
+
+export const PHOTO_URL_MINUTES = 60;
+
 export interface ScoreInput {
   age?: number; country?: string; location?: string; sect?: string; caste?: string;
   marriageReadiness?: string; maritalStatus?: string; partnerCaste?: string;
@@ -203,7 +224,7 @@ export interface Draft {
   fullName?: string; gender?: string; maritalStatus?: string; marriageReadiness?: string;
   homeCity?: string; homeCountry?: string; dateOfBirth?: number; caste?: string; height?: string;
   almaMaters?: string[]; qualification?: string; qualificationGraduate?: boolean;
-  profession?: string; photos?: string[];
+  profession?: string; photos?: string[]; subjectPhone?: string;
   managedBy?: string; intentConfirmed?: boolean; dataConsent?: boolean; candidateConsent?: boolean;
 }
 
@@ -238,6 +259,7 @@ export function draftProblems(d: Draft, limits: Limits, now: Date): string[] {
   if (d.managedBy === 'family' && d.candidateConsent !== true) {
     out.push('Confirm that the person has agreed to this profile');
   }
+  if (d.managedBy === 'family' && !d.subjectPhone) out.push('Enter the phone number of the person this profile is for');
   return out;
 }
 
@@ -319,6 +341,11 @@ export const REPORT_REASON_MAX = 200;
 export type PhotoPrivacy = 'everyone' | 'matches';
 
 /** What a viewer may see of a stored card. Applied before any card leaves the server. */
+/** Which stored photos a viewer may receive links for. */
+export function visiblePhotos(paths: string[] | undefined, privacy: unknown, viewerMatched: boolean): string[] {
+  return privacy === 'matches' && !viewerMatched ? [] : paths ?? [];
+}
+
 export function redactCard<T extends {
   photos?: string[]; caste?: string; photoPrivacy?: string; showCaste?: boolean; photoPaths?: string[];
   family?: Record<string, unknown>; name?: string; employer?: string;
@@ -328,7 +355,7 @@ export function redactCard<T extends {
   const hide = card.photoPrivacy === 'matches' && !viewerMatched;
   const { photoPrivacy, showCaste, photoPaths, family, employer, ...rest } = card;
   return {
-    ...(rest as T), photos: hide ? [] : card.photos ?? [], photosHidden: hide,
+    ...(rest as T), photos: visiblePhotos(card.photos, card.photoPrivacy, viewerMatched), photosHidden: hide,
     caste: showCaste === false ? '' : card.caste ?? '',
     // Full name, employer and family details are for matched members only.
     name: viewerMatched ? card.name : String(card.name ?? '').split(' ')[0],

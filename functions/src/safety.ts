@@ -7,6 +7,7 @@ export const updatePrivacy = onCall(async (req) => {
   const uid = approvedUid(req);
   const update: Record<string, unknown> = {};
   if (typeof req.data?.nearbyOptIn === 'boolean') update.nearbyOptIn = req.data.nearbyOptIn;
+  if (typeof req.data?.allowContactRequests === 'boolean') update.allowContactRequests = req.data.allowContactRequests;
   if (req.data?.photoPrivacy === 'everyone' || req.data?.photoPrivacy === 'matches') update.photoPrivacy = req.data.photoPrivacy;
   if (typeof req.data?.showCaste === 'boolean') update.showCaste = req.data.showCaste;
   if (typeof req.data?.allowFamilyShare === 'boolean') update.allowFamilyShare = req.data.allowFamilyShare;
@@ -51,6 +52,22 @@ export const blockProfile = onCall(async (req) => {
     const ref = db.doc(`proposals/${id}`);
     if ((await tx.get(ref)).data()?.status === 'pending') tx.update(ref, { status: 'declined' });
   })));
+  return { ok: true };
+});
+
+export const listBlocks = onCall(async (req) => {
+  const uid = uidOf(req);
+  const blocks = await accountRef(uid).collection('blocks').limit(200).get();
+  const profiles = await Promise.all(blocks.docs.map((d) => db.doc(`profiles/${d.id}`).get()));
+  return {
+    blocks: blocks.docs.map((d, i) => ({ id: d.id, name: String(profiles[i].data()?.name ?? 'Member').split(' ')[0] })),
+  };
+});
+
+/** Lifts the block only. A closed match or declined proposal stays closed. */
+export const unblockProfile = onCall(async (req) => {
+  const uid = uidOf(req);
+  await blockRef(uid, idArg(req.data?.target, 'target')).delete();
   return { ok: true };
 });
 

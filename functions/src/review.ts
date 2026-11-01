@@ -3,14 +3,14 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import * as R from './rules';
-import { accountRef, audit, checkUpload, db, idArg, limits, notify, readUrl, reviewerUid, stringArg, tokenUrl } from './shared';
+import { accountRef, audit, checkUpload, db, idArg, limits, notify, readUrl, reviewerUid, stringArg } from './shared';
 
 /** What members may see of a reviewed draft. */
-function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[], photoPaths: string[]) {
+function cardFrom(uid: string, d: Record<string, any>, photoPaths: string[]) {
   const location = [d.homeCity, d.homeState].filter(Boolean).join(', ');
   const universities: string[] = d.almaMaters ?? [];
   return {
-    id: uid, name: d.fullName, gender: d.gender, dateOfBirth: d.dateOfBirth, photos: photoUrls, photoPaths,
+    id: uid, name: d.fullName, gender: d.gender, dateOfBirth: d.dateOfBirth, photoPaths,
     profession: d.profession, employer: d.company ?? '', education: d.qualification,
     university: universities.join(', '), location, country: d.homeCountry ?? '', caste: d.caste ?? '',
     maritalStatus: d.maritalStatus, marriageReadiness: d.marriageReadiness, height: d.height,
@@ -71,16 +71,14 @@ export const getDocumentUrl = onCall(async (req) => {
 });
 
 /** Copies reviewed photos to a path no client can write, so approval cannot be bypassed. */
-async function publishPhotos(uid: string, paths: string[], version: number): Promise<{ urls: string[]; published: string[] }> {
+async function publishPhotos(uid: string, paths: string[], version: number): Promise<string[]> {
   const bucket = getStorage().bucket();
-  const published = await Promise.all(paths.map(async (path, i) => {
+  return Promise.all(paths.map(async (path, i) => {
     await checkUpload(path, R.PHOTO_TYPES);
     const target = `published/${uid}/${version}-${i}.jpg`;
     await bucket.file(path).copy(bucket.file(target));
     return target;
   }));
-  const urls = await Promise.all(published.map(tokenUrl));
-  return { urls, published };
 }
 
 async function removeOldPublished(uid: string, keep: string[]): Promise<void> {
@@ -128,8 +126,11 @@ export const reviewProfile = onCall(async (req) => {
     if (!paths.every((p) => p.startsWith(`photos/${uid}/`) && !p.includes('..'))) {
       throw new HttpsError('failed-precondition', 'Photos must belong to this member.');
     }
-    const { urls, published } = await publishPhotos(uid, paths, sub.version);
-    batch.set(db.doc(`profiles/${uid}`), { ...cardFrom(uid, draft, urls, published), held: FieldValue.delete() }, { merge: true });
+    if (draft.managedBy === 'family' && account.subjectConfirmed !== true) {
+      throw new HttpsError('failed-precondition', 'The person has not confirmed this profile from their own phone.');
+    }
+    const published = await publishPhotos(uid, paths, sub.version);
+    batch.set(db.doc(`profiles/${uid}`), { ...cardFrom(uid, draft, published), held: FieldValue.delete() }, { merge: true });
     batch.set(accountRef(uid), {
       stage: 'approved', approvedAt: FieldValue.serverTimestamp(), reviewedBy: reviewer, editsPending: false,
       rejectionReason: FieldValue.delete(), rejectedPhotos: FieldValue.delete(),

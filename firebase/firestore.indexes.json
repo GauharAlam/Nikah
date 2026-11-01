@@ -11,12 +11,20 @@
     { "collectionGroup": "contactRequests", "queryScope": "COLLECTION", "fields": [
       { "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "ASCENDING" } ] },
     { "collectionGroup": "accounts", "queryScope": "COLLECTION", "fields": [
-      { "fieldPath": "stage", "order": "ASCENDING" }, { "fieldPath": "submittedAt", "order": "ASCENDING" } ] }
+      { "fieldPath": "stage", "order": "ASCENDING" }, { "fieldPath": "submittedAt", "order": "ASCENDING" } ] },
+    { "collectionGroup": "messages", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "sender", "order": "ASCENDING" }, { "fieldPath": "sentAt", "order": "DESCENDING" } ] }
   ],
   "fieldOverrides": [
     { "collectionGroup": "accounts", "fieldPath": "editsPending", "indexes": [
       { "order": "ASCENDING", "queryScope": "COLLECTION" } ] },
     { "collectionGroup": "blocks", "fieldPath": "target", "indexes": [
+      { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" } ] },
+    { "collectionGroup": "hidden", "fieldPath": "target", "indexes": [
+      { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" } ] },
+    { "collectionGroup": "viewed", "fieldPath": "target", "indexes": [
+      { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" } ] },
+    { "collectionGroup": "shortlist", "fieldPath": "profileId", "indexes": [
       { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" } ] }
   ]
 }

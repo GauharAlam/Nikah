@@ -22,7 +22,7 @@ service cloud.firestore {
           'inviteCode', 'prayer', 'prayerFrequency', 'quranComfort', 'practices', 'extraPractices',
           'halalLifestyle', 'preferredLanguage', 'familyType', 'familyBackground', 'familyValues',
           'familyLocation', 'siblings', 'graduationYear', 'educationStatus', 'employmentStatus',
-          'careerDescription', 'subjectName', 'subjectPhone', 'relationship', 'nearbyOptIn'
+          'careerDescription', 'subjectName', 'subjectPhone', 'relationship', 'nearbyOptIn', 'allowContactRequests'
         ])
         && under(d, 'fullName', 80) && under(d, 'aboutMe', 1500) && under(d, 'company', 80)
         && under(d, 'familyBackground', 1000) && under(d, 'familyValues', 500)
@@ -136,18 +136,46 @@ service cloud.firestore {
       }
     }
 
-    // Family Circle: the member and their guardians read short summaries only.
+    // Family: the owner sees everything in their circle. A guardian sees their
+    // own membership, and shared summaries only with view_shortlist.
     match /family/{member} {
-      function inCircle() {
-        return signedIn() && (request.auth.uid == member
-          || request.auth.uid in get(/databases/$(database)/documents/family/$(member)).data.guardians);
+      function membership() {
+        return get(/databases/$(database)/documents/family/$(member)/memberships/$(request.auth.uid));
       }
-      allow read: if inCircle();
+      function isGuardianOf() {
+        return signedIn() && exists(/databases/$(database)/documents/family/$(member)/memberships/$(request.auth.uid));
+      }
+      function mayViewShortlist() {
+        return isUser(member) || (isGuardianOf() && 'view_shortlist' in membership().data.permissions);
+      }
+      allow read: if isUser(member) || isGuardianOf();
       allow write: if false;
       match /shortlist/{profile} {
-        allow read: if inCircle();
+        allow read: if mayViewShortlist();
         allow write: if false;
       }
+      match /memberships/{guardian} {
+        allow read: if isUser(member) || isUser(guardian);
+        allow write: if false;
+      }
+      match /invitations/{id} {
+        allow read: if isUser(member);
+        allow write: if false;
+      }
+      match /history/{id} {
+        allow read: if isUser(member);
+        allow write: if false;
+      }
+    }
+
+    match /familyLinks/{guardian}/circles/{member} {
+      allow read: if isUser(guardian);
+      allow write: if false;
+    }
+
+    match /deletionRequests/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
     }
 
     // Reports, blocks, hidden profiles and everything else: server only.

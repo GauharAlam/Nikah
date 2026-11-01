@@ -1,7 +1,7 @@
 import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { deleteObject, getBytes, listAll, ref, uploadBytes } from 'firebase/storage';
 
 let env: RulesTestEnvironment;
@@ -139,11 +139,24 @@ test('answers stay hidden until you give yours', async () => {
 
 test('family summaries reach only the member and their guardians', async () => {
   await env.withSecurityRulesDisabled(async (c) => {
-    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent'], names: { parent: 'Abu' } });
+    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent', 'limited'], names: { parent: 'Abu' } });
     await setDoc(doc(c.firestore(), 'family/a/shortlist/b'), { firstName: 'B' });
+    await setDoc(doc(c.firestore(), 'family/a/memberships/parent'), { permissions: ['view_shortlist'] });
+    await setDoc(doc(c.firestore(), 'family/a/memberships/limited'), { permissions: ['view_profile'] });
+    await setDoc(doc(c.firestore(), 'family/a/invitations/i'), { status: 'pending' });
+    await setDoc(doc(c.firestore(), 'family/a/history/h'), { action: 'joined' });
+    await setDoc(doc(c.firestore(), 'familyLinks/parent/circles/a'), { member: 'a' });
   });
   await assertSucceeds(getDoc(doc(member('a'), 'family/a/shortlist/b')));
   await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('limited', false), 'family/a/shortlist/b')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('limited', false), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/invitations/i')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/history/h')));
+  await assertSucceeds(getDoc(doc(member('a'), 'family/a/history/h')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'familyLinks/parent/circles/a')));
+  await assertFails(setDoc(doc(member('parent', false), 'family/a/memberships/parent'), { permissions: ['view_proposals'] }));
   await assertFails(getDoc(doc(member('z'), 'family/a/shortlist/b')));
   await assertFails(setDoc(doc(member('parent', false), 'family/a'), { guardians: ['z'] }));
   await assertFails(updateDoc(doc(member('parent', false), 'family/a/shortlist/b'), { firstName: 'X' }));
@@ -151,6 +164,22 @@ test('family summaries reach only the member and their guardians', async () => {
   await assertFails(getDoc(doc(member('parent', false), 'matches/a_b/messages/m')));
   await assertFails(getDoc(doc(member('parent', false), 'accounts/a')));
   await assertFails(getDoc(doc(member('parent', false), 'accounts/a/documents/name-proof')));
+
+  // A revoked guardian loses everything on the next request.
+  await env.withSecurityRulesDisabled((c) => deleteDoc(doc(c.firestore(), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a')));
+});
+
+test('a member reads their own deletion status and nobody else can', async () => {
+  await env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), 'deletionRequests/a'), { status: 'pending' }));
+  await assertSucceeds(getDoc(doc(member('a'), 'deletionRequests/a')));
+  await assertFails(getDoc(doc(member('b'), 'deletionRequests/a')));
+  await assertFails(setDoc(doc(member('a'), 'deletionRequests/a'), { status: 'done' }));
+  await assertFails(getDoc(doc(member('a'), 'auditLogs/x')));
+  await assertFails(getDoc(doc(member('a'), 'rateLimits/x')));
+  await assertFails(getDoc(doc(member('a'), 'familyInviteIndex/x')));
+  await assertFails(getDoc(doc(member('a'), 'subjectConfirmations/x')));
 });
 
 test('notifications: mark read only', async () => {

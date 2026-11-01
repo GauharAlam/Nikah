@@ -89,7 +89,8 @@ test('intent and consent are required, and family profiles need the person\'s ag
   assert.ok(p({ intentConfirmed: false }).some((x) => x.includes('marriage')));
   assert.ok(p({ dataConsent: false }).some((x) => x.includes('Agree')));
   assert.ok(p({ managedBy: 'family' }).some((x) => x.includes('agreed')));
-  assert.deepEqual(p({ managedBy: 'family', candidateConsent: true }), []);
+  assert.ok(p({ managedBy: 'family', candidateConsent: true }).some((x) => x.includes('phone')));
+  assert.deepEqual(p({ managedBy: 'family', candidateConsent: true, subjectPhone: '+919000000000' }), []);
 });
 
 test('caste is optional, and the graduate rule is a setting', () => {
@@ -219,4 +220,24 @@ test('page sizes are bounded and junk is refused', () => {
 test('nearby compares cities, never anything finer', () => {
   assert.equal(r.cityOf('Delhi, Delhi'), 'delhi');
   assert.equal(r.cityOf(undefined), '');
+});
+
+test('family permissions name only features that exist', () => {
+  assert.ok(r.validPermissions(['view_shortlist', 'manage_proposals']));
+  assert.ok(!r.validPermissions(['read_chats']));
+  assert.ok(!r.validPermissions('view_profile'));
+  assert.ok(!r.FAMILY_PERMISSIONS.some((p) => /chat|message|document|contact/.test(p)));
+});
+
+test('deletion needs a recent sign-in', () => {
+  const now = Date.now();
+  assert.ok(r.recentlySignedIn(now - 60000, now));
+  assert.ok(!r.recentlySignedIn(now - r.RECENT_SIGN_IN_MS - 1, now));
+});
+
+test('photos reach a viewer only as their privacy allows', () => {
+  assert.deepEqual(r.visiblePhotos(['a'], 'everyone', false), ['a']);
+  assert.deepEqual(r.visiblePhotos(['a'], 'matches', false), []);
+  assert.deepEqual(r.visiblePhotos(['a'], 'matches', true), ['a']);
+  assert.deepEqual(r.visiblePhotos(undefined, 'everyone', true), []);
 });

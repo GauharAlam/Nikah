@@ -18,6 +18,9 @@ export const requestContact = onCall(async (req) => {
     if (target.data()?.live !== true || !R.gendersCompatible(self.data()?.gender, target.data()?.gender)) {
       throw new HttpsError('not-found', 'This profile is unavailable.');
     }
+    if (target.data()?.allowContactRequests === false) {
+      throw new HttpsError('failed-precondition', 'This member is not accepting contact requests.');
+    }
     const status = existing.data()?.status;
     if (status === 'pending' || status === 'accepted') return { status }; // No second charge.
     // A decline is respected, as it is for a proposal.

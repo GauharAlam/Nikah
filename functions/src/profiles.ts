@@ -1,5 +1,6 @@
 import { FieldValue, Transaction } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { issueSubjectCode } from './family';
 import * as R from './rules';
 import { accountRef, approvedUid, checkUpload, db, limits, stringArg, uidOf } from './shared';
 
@@ -30,11 +31,13 @@ export const submitProfile = onCall(async (req) => {
   if (proof && !['pending', 'under_review', 'approved'].includes(proof.data()?.status)) {
     throw new HttpsError('failed-precondition', 'Upload your ID before submitting.');
   }
-  return db.runTransaction(async (tx) => {
+  let needsSubjectCode: string | undefined;
+  const result = await db.runTransaction(async (tx) => {
     const [draftSnap, accSnap] = await Promise.all([tx.get(db.doc(`drafts/${uid}`)), tx.get(accountRef(uid))]);
     const draft = draftSnap.data() as R.Draft | undefined;
     const acc = accSnap.data() ?? {};
     const stage: string = acc.stage ?? 'draft';
+    needsSubjectCode = draft?.managedBy === 'family' && acc.subjectConfirmed !== true ? draft.subjectPhone : undefined;
     if (stage === 'submitted') return { stage, version: acc.submissionVersion as number };
     if (!R.canSubmit(stage)) throw new HttpsError('failed-precondition', 'Your profile is already approved.');
     if (!draft) throw new HttpsError('failed-precondition', 'Complete your profile first.');
@@ -49,6 +52,13 @@ export const submitProfile = onCall(async (req) => {
     recordConsents(tx, uid, draft, version);
     return { stage: 'submitted', version: next };
   });
+  // The person the profile is about confirms from their own phone.
+  if (result.stage === 'submitted' && needsSubjectCode) {
+    const subjectCode = await issueSubjectCode(uid, needsSubjectCode);
+    await accountRef(uid).set({ subjectCode }, { merge: true });
+    return { ...result, subjectCode };
+  }
+  return result;
 });
 
 /** An approved member's changes stay private until a reviewer publishes them. */

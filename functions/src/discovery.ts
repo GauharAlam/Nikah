@@ -1,12 +1,19 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import * as R from './rules';
-import { accountRef, approvedUid, blockedEitherWay, db, idArg, isPremium, limits } from './shared';
+import { accountRef, approvedUid, blockedEitherWay, db, idArg, isPremium, limits, readUrl } from './shared';
+
+/** Short-lived links for the photos this viewer may see. [primaryOnly] keeps lists cheap. */
+async function withPhotos<T extends { photos?: string[] }>(card: T, primaryOnly: boolean): Promise<T> {
+  const paths = card.photos ?? [];
+  const urls = await Promise.all((primaryOnly ? paths.slice(0, 1) : paths).map((p) => readUrl(p, R.PHOTO_URL_MINUTES).catch(() => '')));
+  return { ...card, photos: urls.filter(Boolean) };
+}
 
 function toPublicCard(
   id: string, d: Record<string, any>, now: Date, viewerMatched: boolean, viewer?: Record<string, any>,
 ) {
-  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, partnerCaste, nearbyOptIn, ...rest } = d;
+  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, partnerCaste, nearbyOptIn, paused, ...rest } = d;
   const active = (lastActiveAt as Timestamp | undefined)?.toMillis();
   const age = R.ageOn(dateOfBirth, now);
   const score = viewer ? R.matchScore(
@@ -15,7 +22,7 @@ function toPublicCard(
       maritalStatus: d.maritalStatus, caste: d.showCaste === false ? undefined : d.caste },
   ) : undefined;
   return {
-    ...R.redactCard(rest, viewerMatched), id, age, matchPercent: score,
+    ...R.redactCard({ ...rest, photos: d.photoPaths ?? [] }, viewerMatched), id, age, matchPercent: score,
     activeDaysAgo: active === undefined ? null : Math.floor((now.getTime() - active) / 86400000),
     isNew: (approvedAt as Timestamp | undefined)?.toMillis() !== undefined &&
       now.getTime() - (approvedAt as Timestamp).toMillis() < 7 * 86400000,
@@ -65,7 +72,7 @@ export const fetchIntroductions = onCall(async (req) => {
   const cursor = req.data?.cursor;
   if (typeof cursor === 'number') query = query.startAfter(Timestamp.fromMillis(cursor));
 
-  const out: { id: string }[] = [];
+  const out: { id: string; photos?: string[] }[] = [];
   const fresh: string[] = [];
   let last: number | null = null;
   const scanned = await query.get();
@@ -87,7 +94,7 @@ export const fetchIntroductions = onCall(async (req) => {
       remaining--;
       fresh.push(doc.id);
     }
-    out.push(card as { id: string });
+    out.push(card as { id: string; photos?: string[] });
     if (out.length === pageSize) break;
   }
 
@@ -102,13 +109,13 @@ export const fetchIntroductions = onCall(async (req) => {
       granted = new Set(allowed);
       if (allowed.length > 0) {
         tx.set(accountRef(uid), { viewKey, viewCount: used + allowed.length }, { merge: true });
-        allowed.forEach((id) => tx.set(accountRef(uid).collection('viewed').doc(id), { at: Timestamp.now() }));
+        allowed.forEach((id) => tx.set(accountRef(uid).collection('viewed').doc(id), { target: id, at: Timestamp.now() }));
       }
       return R.viewsLeft(lim.freeProfileLimit, used + allowed.length);
     });
   }
   return {
-    profiles: out.filter((p) => viewed.has(p.id) || premium || granted.has(p.id)),
+    profiles: await Promise.all(out.filter((p) => viewed.has(p.id) || premium || granted.has(p.id)).map((p) => withPhotos(p, true))),
     cursor: left === 0 ? null : scanned.size === 60 || out.length === pageSize ? last : null,
     freeLeft: left, freeLimit: lim.freeProfileLimit, limitReached: left === 0,
   };
@@ -142,7 +149,8 @@ export const getProfiles = onCall(async (req) => {
       ]);
       if (!links.some((l) => l.exists)) return null;
     }
-    return toPublicCard(id, d, now, activeMatch, me);
+    // One id is a profile being opened, so it gets every photo.
+    return withPhotos(toPublicCard(id, d, now, activeMatch, me), ids.length > 1);
   }));
   return { profiles: results.filter(Boolean) };
 });
@@ -159,7 +167,7 @@ export const hideProfile = onCall(async (req) => {
     if (used >= lim.decisionsPerDay) throw new HttpsError('resource-exhausted', 'Daily decision limit reached.');
     tx.set(accountRef(uid), { decisionDay: key, decisionCount: used + 1 }, { merge: true });
     tx.set(accountRef(uid).collection('hidden').doc(target), {
-      until: Timestamp.fromMillis(Date.now() + lim.hideDays * 86400000),
+      target, until: Timestamp.fromMillis(Date.now() + lim.hideDays * 86400000),
     });
   });
   return { ok: true };
