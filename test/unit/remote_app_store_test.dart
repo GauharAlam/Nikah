@@ -274,7 +274,7 @@ void main() {
   test('deleting the account calls the server and clears preferences', () async {
     await signIn();
     store.acceptPledge();
-    store.resetAll();
+    await store.deleteAccount();
     await settle();
     await settle();
     expect(backend.calls, contains('deleteAccount'));

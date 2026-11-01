@@ -406,6 +406,9 @@ void main() {
     expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
     await tap(tester, find.byKey(const Key('candidate_consent')));
     await tap(tester, find.byKey(const Key('onboarding_next')));
+    expect(find.byKey(const Key('onboarding_error')), findsOneWidget, reason: 'their phone is required');
+    await tester.enterText(find.byKey(const Key('subject_phone')), '+919876543210');
+    await tap(tester, find.byKey(const Key('onboarding_next')));
     expect(find.text('Education & profession'), findsOneWidget);
     await drain(tester);
   });

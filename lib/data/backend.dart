@@ -51,6 +51,10 @@ class AccountState {
     this.premiumUntil,
     this.plan = '',
     this.familyOf,
+    this.subjectOf,
+    this.subjectCode = '',
+    this.subjectConfirmed = false,
+    this.paused = false,
   });
 
   final ReviewStage stage;
@@ -72,6 +76,14 @@ class AccountState {
 
   /// The member whose circle this account belongs to, if any.
   final String? familyOf;
+
+  /// The profile this person confirmed was made for them, if any.
+  final String? subjectOf;
+
+  /// For a family-made profile: the code the person enters on their own phone.
+  final String subjectCode;
+  final bool subjectConfirmed;
+  final bool paused;
 
   bool get isPremium =>
       premiumUntil != null && premiumUntil!.isAfter(DateTime.now());
@@ -178,6 +190,96 @@ class FamilyPick {
   final Map<String, String> opinions;
 }
 
+/// What a family member may do. Only permissions with a real feature behind them.
+const Map<String, String> familyPermissionLabels = <String, String>{
+  'view_shortlist': 'See profiles I share and give an opinion',
+  'view_profile': 'See a summary of my profile',
+  'view_proposals': 'See proposals I receive',
+  'manage_proposals': 'Answer proposals for me',
+};
+
+const Map<String, String> familyRelationships = <String, String>{
+  'father': 'Father',
+  'mother': 'Mother',
+  'brother': 'Brother',
+  'sister': 'Sister',
+  'uncle': 'Uncle',
+  'aunt': 'Aunt',
+  'guardian': 'Guardian',
+  'other': 'Other',
+};
+
+class FamilyMember {
+  const FamilyMember({
+    required this.uid,
+    required this.name,
+    required this.relationship,
+    required this.permissions,
+  });
+  final String uid;
+  final String name;
+  final String relationship;
+  final List<String> permissions;
+}
+
+class FamilyInvitation {
+  const FamilyInvitation({
+    required this.id,
+    required this.name,
+    required this.relationship,
+    required this.status,
+    this.expiresAt,
+  });
+  final String id;
+  final String name;
+  final String relationship;
+  final String status;
+  final DateTime? expiresAt;
+  bool get isPending => status == 'pending';
+}
+
+class FamilyEvent {
+  const FamilyEvent({required this.action, required this.at});
+  final String action;
+  final DateTime at;
+}
+
+/// The owner's view of their circle.
+class FamilyAdmin {
+  const FamilyAdmin({
+    this.members = const <FamilyMember>[],
+    this.invitations = const <FamilyInvitation>[],
+    this.history = const <FamilyEvent>[],
+  });
+  final List<FamilyMember> members;
+  final List<FamilyInvitation> invitations;
+  final List<FamilyEvent> history;
+}
+
+class FamilyProposal {
+  const FamilyProposal({required this.from, required this.summary});
+  final String from;
+  final String summary;
+}
+
+/// What the server lets this guardian see, decided per permission.
+class FamilyOverview {
+  const FamilyOverview({
+    this.permissions = const <String>[],
+    this.profileSummary,
+    this.proposals,
+  });
+  final List<String> permissions;
+  final String? profileSummary;
+  final List<FamilyProposal>? proposals;
+}
+
+class BlockedMember {
+  const BlockedMember(this.id, this.name);
+  final String id;
+  final String name;
+}
+
 class FamilyState {
   const FamilyState({
     this.guardians = const <String, String>{},
@@ -230,6 +332,9 @@ abstract class Backend {
   Future<void> signInWithGoogle();
   Future<void> refreshClaims();
   Future<void> signOut();
+
+  /// Confirms the person's identity afresh is the caller's job: this fails with
+  /// [FailureKind.recentSignInNeeded] on an old session.
   Future<void> deleteAccount();
 
   // Account and draft
@@ -271,8 +376,18 @@ abstract class Backend {
   Future<void> unmatch(String other);
   Future<void> blockProfile(String target);
   Future<void> reportProfile(String target, String reason);
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn});
+  Future<void> updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  });
   Future<void> touchActive();
+  Future<void> setPaused(bool paused);
+  Future<List<BlockedMember>> listBlocks();
+  Future<void> unblockProfile(String target);
+  Future<Map<String, dynamic>> exportMyData();
 
   // Invites and edits
   Future<InviteInfo> getInviteCode();
@@ -280,8 +395,22 @@ abstract class Backend {
 
   // Family Circle
   Stream<FamilyState> watchFamily(String member);
-  Future<String> createFamilyInvite();
-  Future<void> joinFamily(String code, String name);
+  Stream<FamilyAdmin> watchFamilyAdmin(String member);
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  });
+  Future<void> joinFamily(String code);
+  Future<void> rejectFamilyInvite(String code);
+  Future<void> cancelFamilyInvite(String id);
+  Future<String> resendFamilyInvite(String id);
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions);
+  Future<FamilyOverview> familyOverview(String member);
+  Future<void> familyRespondProposal(String member, String from, {required bool accept});
+  Future<void> confirmSubject(String code, {required bool agree});
+  Future<void> withdrawSubject();
   Future<void> removeGuardian(String guardian, {String? member});
   Future<void> shareWithFamily(String profileId);
   Future<void> giveFamilyOpinion(String member, String profileId, String opinion);

@@ -161,7 +161,13 @@ class FakeBackend implements Backend {
   @override
   Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
   @override
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) =>
+  Future<void> updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) =>
       _record('privacy:$photoPrivacy');
   @override
   Future<void> touchActive() => _record('touchActive');
@@ -172,10 +178,57 @@ class FakeBackend implements Backend {
   Future<void> submitEdits() => _record('submitEdits');
   @override
   Stream<FamilyState> watchFamily(String member) => familyStream.stream;
+  final StreamController<FamilyAdmin> familyAdmin = StreamController<FamilyAdmin>.broadcast();
+  FamilyOverview overview = const FamilyOverview();
+  List<BlockedMember> blocks = <BlockedMember>[];
   @override
-  Future<String> createFamilyInvite() async => 'FAM234';
+  Stream<FamilyAdmin> watchFamilyAdmin(String member) => familyAdmin.stream;
   @override
-  Future<void> joinFamily(String code, String name) => _record('joinFamily:$code');
+  Future<void> rejectFamilyInvite(String code) => _record('rejectInvite:$code');
+  @override
+  Future<void> cancelFamilyInvite(String id) => _record('cancelInvite:$id');
+  @override
+  Future<String> resendFamilyInvite(String id) async {
+    await _record('resendInvite:$id');
+    return 'NEW234';
+  }
+
+  @override
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions) =>
+      _record('permissions:$guardian:${permissions.join(',')}');
+  @override
+  Future<FamilyOverview> familyOverview(String member) async {
+    await _record('overview:$member');
+    return overview;
+  }
+
+  @override
+  Future<void> familyRespondProposal(String member, String from, {required bool accept}) =>
+      _record('familyAnswer:$member:$from:$accept');
+  @override
+  Future<void> confirmSubject(String code, {required bool agree}) => _record('subject:$code:$agree');
+  @override
+  Future<void> withdrawSubject() => _record('withdrawSubject');
+  @override
+  Future<void> setPaused(bool paused) => _record('paused:$paused');
+  @override
+  Future<List<BlockedMember>> listBlocks() async => blocks;
+  @override
+  Future<void> unblockProfile(String target) => _record('unblock:$target');
+  @override
+  Future<Map<String, dynamic>> exportMyData() async => <String, dynamic>{'draft': <String, dynamic>{'fullName': 'Sara'}};
+  @override
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  }) async {
+    await _record('invite:$relationship:${permissions.join(',')}');
+    return 'FAM234';
+  }
+  @override
+  Future<void> joinFamily(String code) => _record('join:$code');
   @override
   Future<void> removeGuardian(String guardian, {String? member}) => _record('removeGuardian:$guardian');
   @override

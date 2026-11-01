@@ -156,10 +156,16 @@ class DemoAppStore extends AppStore {
   bool get isGuardian => false;
 
   @override
-  Future<String> createFamilyInvite() async => 'DEMO24';
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  }) async =>
+      'DEMO24';
 
   @override
-  Future<void> joinFamily(String code, String name) async {
+  Future<void> joinFamily(String code) async {
     throw const BackendException('Family codes work once the app is connected.');
   }
 
@@ -265,12 +271,19 @@ class DemoAppStore extends AppStore {
 
   // ─── Privacy ──────────────────────────────────────────────────────────────
   @override
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) {
+  void updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) {
     updateProfile((WardProfile p) => p.copyWith(
           photoPrivacy: photoPrivacy,
           showCaste: showCaste,
           allowFamilyShare: allowFamilyShare,
           nearbyOptIn: nearbyOptIn,
+          allowContactRequests: allowContactRequests,
         ));
   }
 
@@ -1701,6 +1714,11 @@ class DemoAppStore extends AppStore {
   }
 
   @override
+  Future<void> deleteAccount() async => resetAll();
+
+  @override
+  Future<String> exportData() async => '{}';
+
   void resetAll() {
     for (final String key in <String>[
       _kStage, _kOnboarded, _kSteps, _kProfile, _kChats, _kReadAt,

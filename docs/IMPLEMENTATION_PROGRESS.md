@@ -12,7 +12,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 2 Architecture refactor | Done |
 | 3 Authentication, onboarding, review | Done |
 | 4 Discovery, proposals, matches, chat | Done |
-| 5 Family, privacy, deletion | Next |
+| 5 Family, privacy, deletion | Done |
+| 6 Trust and safety | Next |
 
 ## Phase 0 — Baseline
 
@@ -227,3 +228,52 @@ until Phase 5.
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 5.
+
+## Phase 5 — Family, privacy and deletion
+
+**Implemented**
+
+- SEC-11: phone-bound invitations, hashed codes and numbers, relationship and permissions on
+  each membership, an owner-only history, resend limits and attempt limits. Permissions name
+  only features that exist. See `FAMILY_ACCESS_MODEL.md`.
+- FLOW-19: a family-made profile needs the subject's confirmation from their own phone, and
+  the subject can refuse or withdraw at any time.
+- SEC-08, FLOW-13: deletion needs a recent sign-in, ends access at once, and runs named,
+  resumable, paged steps with hourly retries. It has its own screen explaining what is deleted
+  and what is kept. Report and payment records follow the table in `FIREBASE_SECURITY.md`.
+- SEC-01: cards hold no URLs. Each viewer gets one-hour signed links for permitted photos, so a
+  privacy change stops new links at once.
+- SEC-24: data export. FLOW-12: pause, blocked list and unblock, contact-request switch, nearby
+  switch. SEC-22: optional app lock using the phone's own lock.
+- SEC-16, in part: a shared transactional rate limiter, used for family codes.
+
+**Existing issues fixed:** removal from one circle cleared a guardian's link to another.
+Leaving a circle targeted the wrong member. App lock did not ask again on returning to the app.
+
+**Files created:** `functions/src/family.ts` (rewritten), `functions/src/account.ts` (rewritten),
+`lib/screens/account_screens.dart`, `lib/services/app_lock.dart`,
+`functions/test/family.emulator.test.ts`, `functions/test/account.emulator.test.ts`,
+`test/unit/phase5_test.dart`, `docs/FAMILY_ACCESS_MODEL.md`, `docs/FIREBASE_SECURITY.md`.
+
+**Tests added:** 13 Flutter, 3 logic, 19 emulator and rules, including Journey 4, Journey 7 and
+every guardian denial. The old guardian test was replaced by the new suite.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 167 passed |
+| `npm run test:unit` | 31 passed |
+| `npm run test:emulator` | 88 passed |
+| `flutter build apk --release` | built, after moving to `FlutterFragmentActivity` |
+
+**Not verified:** signed URLs on real Storage, re-authentication, and the biometric prompt on a
+device. The iOS privacy shield remains uncompiled (X-2).
+
+**Decision for the user:** retention periods and the choice to delete conversations for both
+sides are engineering defaults that need legal review (X-4).
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 6.

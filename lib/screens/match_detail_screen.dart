@@ -41,6 +41,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   bool _saved = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(context.read<AppStore>().loadFullProfile(widget.matchId));
+    });
+  }
+
+  @override
   void dispose() {
     _photoController.dispose();
     super.dispose();

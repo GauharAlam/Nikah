@@ -16,6 +16,7 @@ import 'data/firebase_backend.dart';
 import 'l10n/app_strings.dart';
 import 'providers/app_store.dart';
 import 'providers/demo_app_store.dart';
+import 'services/app_lock.dart';
 import 'services/privacy_shield.dart';
 import 'theme/app_theme.dart';
 
@@ -124,9 +125,12 @@ class _BarkatNikahAppState extends State<BarkatNikahApp> {
       routerConfig: widget.router,
       builder: (BuildContext context, Widget? child) {
         // Rebuilds every screen when the language changes.
-        final Widget page = KeyedSubtree(
-          key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
-          child: child ?? const SizedBox.shrink(),
+        final Widget page = AppLockGate(
+          prefs: _store.prefs,
+          child: KeyedSubtree(
+            key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
         return AppConfig.isDemo
             ? Banner(message: 'DEMO', location: BannerLocation.topEnd, child: page)

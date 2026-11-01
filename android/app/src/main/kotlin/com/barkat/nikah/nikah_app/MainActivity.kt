@@ -1,11 +1,12 @@
 package com.barkat.nikah.nikah_app
 
 import android.view.WindowManager
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+// FragmentActivity is what the biometric prompt needs.
+class MainActivity : FlutterFragmentActivity() {
     private val channelName = "com.barkat.nikah/privacy_shield"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

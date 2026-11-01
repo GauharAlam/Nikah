@@ -84,12 +84,19 @@ class ProfileController extends FeatureController {
     if (_session.isActive) send(backend.submitEdits);
   }
 
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) {
+  void updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) {
     updateProfile((WardProfile p) => p.copyWith(
           photoPrivacy: photoPrivacy,
           showCaste: showCaste,
           allowFamilyShare: allowFamilyShare,
           nearbyOptIn: nearbyOptIn,
+          allowContactRequests: allowContactRequests,
         ));
     if (_session.isActive) {
       send(() => backend.updatePrivacy(
@@ -97,6 +104,7 @@ class ProfileController extends FeatureController {
             showCaste: showCaste,
             allowFamilyShare: allowFamilyShare,
             nearbyOptIn: nearbyOptIn,
+            allowContactRequests: allowContactRequests,
           ));
     }
   }

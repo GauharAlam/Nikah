@@ -6,6 +6,7 @@ import 'config/app_config.dart';
 import 'data/backend.dart';
 import 'providers/app_store.dart';
 import 'screens/approved_screen.dart';
+import 'screens/account_screens.dart';
 import 'screens/contact_details_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/phone_signin_screen.dart';
@@ -73,6 +74,8 @@ class AppRoutes {
   static const String invite = '/invite';
   static const String familyCircle = '/family/circle';
   static const String familyView = '/family/view';
+  static const String deleteAccount = '/settings/delete';
+  static const String blockedMembers = '/settings/blocked';
   static const String contactDetails = '/profile/contact';
   static const String verifyPhone = '/profile/phone';
   static const String reviewQueue = '/admin/review';
@@ -266,6 +269,8 @@ GoRouter buildRouter(AppStore store) {
         builder: (_, _) => const NotificationsScreen(),
       ),
       GoRoute(path: AppRoutes.settings, builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: AppRoutes.deleteAccount, builder: (_, _) => const DeleteAccountScreen()),
+      GoRoute(path: AppRoutes.blockedMembers, builder: (_, _) => const BlockedMembersScreen()),
       GoRoute(path: AppRoutes.about, builder: (_, _) => const AboutScreen()),
       GoRoute(
         path: AppRoutes.editProfile,

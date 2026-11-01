@@ -110,6 +110,8 @@ class WardProfile {
   final bool candidateConsent;
   final String inviteCode;
   final bool nearbyOptIn;
+  final bool allowContactRequests;
+  final String subjectPhone;
   final String preferredLanguage;
   final String familyType;
   final String familyBackground;
@@ -169,6 +171,8 @@ class WardProfile {
     this.candidateConsent = false,
     this.inviteCode = '',
     this.nearbyOptIn = false,
+    this.allowContactRequests = true,
+    this.subjectPhone = '',
     this.preferredLanguage = '',
     this.familyType = '',
     this.familyBackground = '',
@@ -229,6 +233,8 @@ class WardProfile {
     bool? candidateConsent,
     String? inviteCode,
     bool? nearbyOptIn,
+    bool? allowContactRequests,
+    String? subjectPhone,
     String? preferredLanguage,
     String? familyType,
     String? familyBackground,
@@ -288,6 +294,8 @@ class WardProfile {
       candidateConsent: candidateConsent ?? this.candidateConsent,
       inviteCode: inviteCode ?? this.inviteCode,
       nearbyOptIn: nearbyOptIn ?? this.nearbyOptIn,
+      allowContactRequests: allowContactRequests ?? this.allowContactRequests,
+      subjectPhone: subjectPhone ?? this.subjectPhone,
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
       familyType: familyType ?? this.familyType,
       familyBackground: familyBackground ?? this.familyBackground,
@@ -479,6 +487,7 @@ class WardProfile {
         'aboutMe': aboutMe,
         'step': onboardingStep,
         'stepVersion': 2,
+        'subjectPhone': subjectPhone,
         'sect': sect,
         'children': children,
         'photoPrivacy': photoPrivacy,
@@ -556,6 +565,8 @@ class WardProfile {
         candidateConsent: d['candidateConsent'] as bool? ?? false,
         inviteCode: d['inviteCode'] as String? ?? '',
         nearbyOptIn: d['nearbyOptIn'] as bool? ?? false,
+        allowContactRequests: d['allowContactRequests'] as bool? ?? true,
+        subjectPhone: d['subjectPhone'] as String? ?? '',
         preferredLanguage: d['preferredLanguage'] as String? ?? '',
         familyType: d['familyType'] as String? ?? '',
         familyBackground: d['familyBackground'] as String? ?? '',
