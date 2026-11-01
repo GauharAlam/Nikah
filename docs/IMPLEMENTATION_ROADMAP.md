@@ -42,8 +42,8 @@ documented, but stays unverified until the item arrives.
 | # | Decision | Why |
 |---|---|---|
 | D-1 | Keep Firebase and Provider | The brief's default, and nothing in the audit justifies a migration |
-| D-2 | Demo mode becomes a debug-only `Backend` | One production code path, and the user has no Firebase project yet, so a preview is still needed |
-| D-3 | Wali portal, chaperone chat and meeting scheduler are removed | Fake, demo-only, and replaced by the real family hub. The brief forbids silent chaperoning and fake flows |
+| D-2 | The local simulation moves to a debug-only `DemoAppStore` | One production code path, and the user has no Firebase project yet, so a preview is still needed |
+| D-3 | Wali portal, chaperone chat and meeting scheduler stay, gated to demo builds | The user's earlier decision (D2 in `docs/history/PROGRESS_TO_2026-11-01.md`) keeps them as a superset. They stay out of production through `AppConfig.guardianFeatures`. Family Circle is the real feature and grows into the family hub |
 | D-4 | Contact acceptance may open a match | Both people have acted, so it is not one-sided. Consent is recorded, and blocks apply |
 | D-5 | Photos stay server-mediated by signed URL | The only way to enforce per-viewer privacy on Storage |
 | D-6 | `AppStore` stays as a thin facade during migration | 35 files depend on it; moving them all at once adds risk with no user benefit |

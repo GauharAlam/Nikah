@@ -67,12 +67,12 @@ Keep these. None of them needs rebuilding.
 - **Expected:** one production code path. Demo behaviour sits behind the `Backend`
   interface and cannot leak into a real session.
 - **Files:** `lib/providers/app_store.dart`, `lib/providers/remote_app_store.dart`.
-- **Solution:** delete the local simulation from the store. Add `DemoBackend implements
-  Backend` for debug previews and widget tests, so demo and production run the same
-  controllers.
+- **Solution:** `AppStore` becomes the interface screens use. The local simulation moves to
+  `DemoAppStore`, compiled out of release builds, and `RemoteAppStore` stops inheriting it.
+  Demo-only guardian members return inert defaults in production.
 - **Acceptance:** `AppStore` holds no seeded data. Fabricated strings such as
   "Khalid Al-Mansoor" appear in no production-reachable path.
-- **Tests:** existing widget flows pass on `DemoBackend`; a test asserts no seeded data
+- **Tests:** existing widget flows pass on `DemoAppStore`; a test asserts no seeded data
   appears in a signed-in `FakeBackend` session.
 
 ### ARC-03 · God object and global rebuilds — High

@@ -5,10 +5,11 @@
 ```mermaid
 flowchart LR
   subgraph Device
-    UI[Screens] --> C[Feature controllers]
+    UI[Screens] --> S[AppStore interface]
+    S --> C[Feature controllers]
     C --> B[Backend interface]
     B --> FB[FirebaseBackend]
-    B -. debug only .-> DB[DemoBackend]
+    S -. debug only .-> DS[DemoAppStore]
   end
   FB -->|callable| CF[Cloud Functions]
   FB -->|read, own writes| FS[(Firestore)]
@@ -39,9 +40,11 @@ flowchart LR
 |---|---|---|
 | Screens and widgets | `lib/screens`, `lib/widgets` | Rendering and local UI state |
 | Feature controllers | `lib/features/*` | One `ChangeNotifier` per feature |
-| Facade | `lib/providers/app_store.dart` | Delegates to controllers while screens migrate |
+| Interface | `lib/providers/app_store.dart` | What screens see while they migrate to controllers |
+| Production facade | `lib/providers/remote_app_store.dart` | Delegates to controllers |
+| Demo | `lib/providers/demo_app_store.dart` | Debug-only local simulation, never in release |
 | Backend interface | `lib/data/backend.dart` | The contract with the server |
-| Implementations | `lib/data/firebase_backend.dart`, `lib/data/demo_backend.dart` | Real and debug-only |
+| Implementation | `lib/data/firebase_backend.dart` | Firebase |
 | Models | `lib/models` | Data and serialisation |
 
 `lib/features` holds only what has been extracted. Files are not moved for their own sake.
