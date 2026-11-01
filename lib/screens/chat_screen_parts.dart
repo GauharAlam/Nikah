@@ -75,7 +75,7 @@ class _IcebreakerChips extends StatelessWidget {
     'MashaAllah',
     'In sha Allah',
     'Jazak Allah khayr',
-    'My Wali will contact yours',
+    'Assalamu alaikum',
     'Barakallahu fikum',
   ];
 
@@ -317,7 +317,7 @@ class _MessageBubble extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 20, bottom: 2),
           child: Text(
-            'Seen ✓✓ by Wali',
+            'Seen ✓✓',
             style: AppTheme.ts(10, FontWeight.w600, color: AppTheme.slate400),
           ),
         ),

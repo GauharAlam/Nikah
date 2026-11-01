@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'config/app_config.dart';
+import 'data/backend.dart';
 import 'providers/app_store.dart';
+import 'screens/approved_screen.dart';
+import 'screens/contact_details_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/phone_signin_screen.dart';
+import 'screens/plans_screen.dart';
+import 'screens/review_queue_screen.dart';
+import 'screens/review_status_screen.dart';
+import 'screens/start_profile_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/activities_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/chat_tab_screen.dart';
-import 'screens/create_account_screen.dart';
 import 'screens/discovery_screen.dart';
 import 'screens/edit_profile_screen.dart';
-import 'screens/education_career_screen.dart';
 import 'screens/filters_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/islamic_practice_screen.dart';
@@ -18,17 +26,12 @@ import 'screens/match_detail_screen.dart';
 import 'screens/matches_hub_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/photo_viewer_screen.dart';
-import 'screens/photos_verification_screen.dart';
 import 'screens/premium_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/proposals_screen.dart';
-import 'screens/review_screen.dart';
-import 'screens/biodata_screen.dart';
 import 'screens/schedule_meeting_screen.dart';
 import 'screens/settings_screen.dart';
-import 'screens/signin_screen.dart';
 import 'screens/verification_screen.dart';
-import 'screens/welcome_intentions_screen.dart';
 import 'screens/wali_hub_screen.dart';
 import 'screens/wali_onboarding_screen.dart';
 import 'screens/wali_sms_portal_screen.dart';
@@ -36,16 +39,13 @@ import 'screens/wali_sms_portal_screen.dart';
 /// Central table of routes. Replaces the old boolean-flag router and
 /// restores system back-gesture behaviour on every sub-page.
 class AppRoutes {
+  static const String splash = '/splash';
   static const String landing = '/landing';
-  static const String welcome = '/welcome';
   static const String signIn = '/signin';
-  static const String onboardingAccount = '/onboarding/account';
-  static const String onboardingEducation = '/onboarding/education';
-  static const String onboardingPractice = '/onboarding/practice';
-  static const String onboardingPhotos = '/onboarding/photos';
-  static const String onboardingWali = '/onboarding/wali';
-  static const String onboardingBiodata = '/onboarding/biodata';
-  static const String onboardingReview = '/onboarding/review';
+  static const String startProfile = '/start';
+  static const String onboarding = '/onboarding';
+  static const String reviewStatus = '/review/status';
+  static const String approved = '/approved';
   static const String homeDiscovery = '/home/discovery';
   static const String homeProposals = '/home/proposals';
   static const String homeMatches = '/home/matches';
@@ -59,6 +59,10 @@ class AppRoutes {
   static const String about = '/about';
   static const String editProfile = '/profile/edit';
   static const String verifyProfile = '/profile/verify';
+  static const String practice = '/profile/practice';
+  static const String plans = '/plans';
+  static const String contactDetails = '/profile/contact';
+  static const String reviewQueue = '/admin/review';
   static const String waliHub = '/wali/hub';
   static const String waliOnboarding = '/wali/onboarding';
   static const String waliPortal = '/wali/portal';
@@ -69,66 +73,90 @@ class AppRoutes {
   static String photo(String id) => '/photo/$id';
 }
 
-/// Builds the application router. [store] is the shared state instance
-/// (also provided through Provider) used for redirect decisions.
-GoRouter buildRouter(AppStore store) {
-  String redirectForPath(String path) {
-    if (path == '/') {
-      return store.isLoggedIn ? AppRoutes.homeDiscovery : AppRoutes.landing;
+/// Where [location] should go for the member's current state, or null to stay.
+String? guardRoute(AppStore store, String location) {
+  bool at(String path) => location == path;
+  if (store.isRestoring) return at(AppRoutes.splash) ? null : AppRoutes.splash;
+
+  final bool public = at(AppRoutes.landing) || at(AppRoutes.signIn);
+  if (!store.isSignedIn) return public ? null : AppRoutes.landing;
+
+  if (store.isLoggedIn) {
+    if (!store.pledgeAccepted) {
+      return at(AppRoutes.approved) ? null : AppRoutes.approved;
     }
-    final bool inOnboarding = path.startsWith('/onboarding');
-    if (inOnboarding && !store.isOnboarding && store.hasCompletedOnboarding) {
+    final bool entry = public ||
+        location == '/' ||
+        at(AppRoutes.splash) ||
+        at(AppRoutes.startProfile) ||
+        at(AppRoutes.onboarding) ||
+        at(AppRoutes.reviewStatus) ||
+        at(AppRoutes.approved);
+    if (entry) return AppRoutes.homeDiscovery;
+    final bool guardianRoute =
+        location.startsWith('/wali') ||
+        location.startsWith('/schedule') ||
+        at(AppRoutes.practice);
+    if (guardianRoute && !AppConfig.guardianFeatures) {
       return AppRoutes.homeDiscovery;
     }
-    return path;
+    if (at(AppRoutes.reviewQueue) && !store.isReviewer) {
+      return AppRoutes.homeDiscovery;
+    }
+    return null;
   }
 
+  // Signed in, not approved.
+  if (at(AppRoutes.verifyProfile)) return null;
+  return switch (store.reviewStage) {
+    ReviewStage.submitted =>
+      at(AppRoutes.reviewStatus) ? null : AppRoutes.reviewStatus,
+    ReviewStage.rejected =>
+      at(AppRoutes.reviewStatus) || at(AppRoutes.onboarding)
+          ? null
+          : AppRoutes.reviewStatus,
+    _ => at(AppRoutes.startProfile) || at(AppRoutes.onboarding)
+        ? null
+        : AppRoutes.startProfile,
+  };
+}
+
+/// Builds the application router. [store] drives every redirect.
+GoRouter buildRouter(AppStore store) {
   return GoRouter(
     initialLocation: '/',
     refreshListenable: store,
+    redirect: (_, GoRouterState state) => guardRoute(store, state.matchedLocation),
     routes: <RouteBase>[
-      GoRoute(
-        path: '/',
-        redirect: (_, GoRouterState state) {
-          final String target = redirectForPath('/');
-          return target == state.matchedLocation ? null : target;
-        },
-      ),
+      GoRoute(path: '/', builder: (_, _) => const _SplashScreen()),
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const _SplashScreen()),
       GoRoute(path: AppRoutes.landing, builder: (_, _) => const LandingScreen()),
+      GoRoute(path: AppRoutes.signIn, builder: (_, _) => const PhoneSignInScreen()),
       GoRoute(
-        path: AppRoutes.welcome,
-        builder: (_, _) => const WelcomeIntentionsScreen(),
-      ),
-      GoRoute(path: AppRoutes.signIn, builder: (_, _) => const SignInScreen()),
-
-      // ── Onboarding flow (6 steps + review) ────────────────────────────────
-      GoRoute(
-        path: AppRoutes.onboardingAccount,
-        builder: (_, _) => const CreateAccountStepScreen(),
+        path: AppRoutes.startProfile,
+        builder: (_, _) => const StartProfileScreen(),
       ),
       GoRoute(
-        path: AppRoutes.onboardingEducation,
-        builder: (_, _) => const EducationCareerStepScreen(),
+        path: AppRoutes.onboarding,
+        builder: (_, _) => const OnboardingScreen(),
       ),
       GoRoute(
-        path: AppRoutes.onboardingPractice,
+        path: AppRoutes.reviewStatus,
+        builder: (_, _) => const ReviewStatusScreen(),
+      ),
+      GoRoute(path: AppRoutes.approved, builder: (_, _) => const ApprovedScreen()),
+      GoRoute(
+        path: AppRoutes.practice,
         builder: (_, _) => const IslamicPracticeStepScreen(),
       ),
       GoRoute(
-        path: AppRoutes.onboardingPhotos,
-        builder: (_, _) => const PhotosVerificationStepScreen(),
+        path: AppRoutes.contactDetails,
+        builder: (_, _) => const ContactDetailsScreen(),
       ),
+      GoRoute(path: AppRoutes.plans, builder: (_, _) => const PlansScreen()),
       GoRoute(
-        path: AppRoutes.onboardingWali,
-        builder: (_, _) => const WaliOnboardingStepScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingBiodata,
-        builder: (_, _) => const BiodataStepScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingReview,
-        builder: (_, _) => const ReviewStepScreen(),
+        path: AppRoutes.reviewQueue,
+        builder: (_, _) => const ReviewQueueScreen(),
       ),
 
       // ── Main tabs shell (Barkat 6-tab layout) ─────────────────────────────
@@ -239,6 +267,15 @@ GoRouter buildRouter(AppStore store) {
     ],
     errorBuilder: (_, GoRouterState state) => const _NotFoundScreen(),
   );
+}
+
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
 }
 
 class _NotFoundScreen extends StatelessWidget {

@@ -2,6 +2,7 @@
 // panel, WHAT'S INCLUDED checklist and WHY UPGRADE section.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
@@ -10,7 +11,6 @@ import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
-import '../widgets/app_snacks.dart';
 
 /// Premium tab of the home shell.
 class PremiumScreen extends StatelessWidget {
@@ -20,7 +20,7 @@ class PremiumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
     final int credits = store.contactCredits;
-    final int total = AppStore.monthlyContactCredits;
+    final int total = store.monthlyCredits;
 
     return Scaffold(
       backgroundColor: AppTheme.ivoryWarm,
@@ -76,13 +76,15 @@ class PremiumScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  'Free plan',
+                  store.isPremium ? 'Barkat Premium' : 'Free plan',
                   style:
                       AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'No subscription active',
+                  store.isPremium
+                      ? 'Renews on ${DateFormat.yMMMd().format(store.premiumUntil!)}'
+                      : 'No subscription active',
                   style:
                       AppTheme.ts(12, FontWeight.w500, color: AppTheme.slate500),
                 ),
@@ -121,12 +123,7 @@ class PremiumScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           InkWell(
-                            onTap: () => showAppSnack(
-                              context,
-                              'In-app purchases are not available in this '
-                              'build. No plan has been purchased.',
-                              icon: Icons.receipt_long_outlined,
-                            ),
+                            onTap: () => context.push(AppRoutes.plans),
                             borderRadius: BorderRadius.circular(6),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -158,10 +155,7 @@ class PremiumScreen extends StatelessWidget {
                     _AvailablePanel(
                       credits: credits,
                       total: total,
-                      onBuyMore: () => showSuccessSnack(
-                        context,
-                        'Checkout is disabled in this demo build.',
-                      ),
+                      onBuyMore: () => context.push(AppRoutes.plans),
                     ),
                   ],
                 ),
@@ -193,8 +187,9 @@ class PremiumScreen extends StatelessWidget {
                       child: _QuotaTile(
                         icon: Icons.favorite_rounded,
                         label: 'Daily Proposals',
-                        value:
-                            '${AppStore.proposalQuota} per day',
+                        value: store.isPremium
+                            ? 'Unlimited'
+                            : '${store.dailyProposalLimit} per day',
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -232,8 +227,7 @@ class PremiumScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Upgrade to lift your profile higher in search, reach serious '
-            'matches faster and keep every introduction supervised by your '
-            'Wali from first salam to nikah.',
+            'matches faster and take more decisions every day.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(
               12.5,
@@ -246,10 +240,7 @@ class PremiumScreen extends StatelessWidget {
           PrimaryButton(
             label: 'Compare Plans',
             icon: Icons.workspace_premium_outlined,
-            onPressed: () => showSuccessSnack(
-              context,
-              'Checkout is disabled in this demo build.',
-            ),
+            onPressed: () => context.push(AppRoutes.plans),
           ),
         ],
       ),

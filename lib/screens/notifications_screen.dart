@@ -33,7 +33,7 @@ class NotificationsScreen extends StatelessWidget {
           ? const EmptyState(
               icon: Icons.notifications_off_outlined,
               title: 'No notifications yet',
-              body: 'Introductions, guardian approvals and milestones will '
+              body: 'Proposals, matches and review updates will '
                   'appear here, in sha Allah.',
             )
           : ListView.separated(

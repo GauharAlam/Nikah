@@ -1,4 +1,4 @@
-/// Chaperoned one-to-one conversation with wali supervision overlays.
+/// One-to-one conversation with a match.
 library;
 
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/chat_message.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -109,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final MatchProfile match = MatchProfile.byId(widget.matchId);
+    final MatchProfile match = store.profileById(widget.matchId);
     final List<ChatMessage> messages = store.messages(widget.matchId);
     _listenForNewMessages(messages);
 
@@ -158,15 +159,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    'Chaperoned',
-                    style: AppTheme.ts(
-                      10.5,
-                      FontWeight.w600,
-                      color: AppTheme.slate500,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -185,9 +177,10 @@ class _ChatScreenState extends State<ChatScreen> {
         top: false,
         child: Column(
           children: <Widget>[
-            _ChaperoneHeader(
-              text: 'Supervised by ${store.guardian.name} & ${match.waliName}',
-            ),
+            if (AppConfig.guardianFeatures)
+              _ChaperoneHeader(
+                text: 'Supervised by ${store.guardian.name} & ${match.waliName}',
+              ),
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,

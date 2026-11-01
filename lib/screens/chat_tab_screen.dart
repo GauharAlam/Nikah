@@ -28,7 +28,7 @@ class ChatTabScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: const Text('Chaperoned Conversations'),
+        title: const Text('Messages'),
         actions: <Widget>[
           NotificationBell(
             unread: store.unreadNotificationCount,
@@ -42,8 +42,7 @@ class ChatTabScreen extends StatelessWidget {
               icon: Icons.forum_outlined,
               title: 'No conversations yet',
               body:
-                  'When a Ta\'aruf is approved by both Wali, your '
-                  'chaperoned conversations will appear here.',
+                  'Conversations with your matches will appear here.',
             )
           : Column(
               children: <Widget>[
@@ -52,8 +51,7 @@ class ChatTabScreen extends StatelessWidget {
                   child: const InfoBanner(
                     icon: Icons.shield_outlined,
                     text:
-                        'All conversations remain chaperoned between both '
-                        'Wali.',
+                        'Keep conversations respectful and on the app.',
                   ),
                 ),
                 Expanded(
@@ -62,7 +60,7 @@ class ChatTabScreen extends StatelessWidget {
                     itemCount: threadIds.length,
                     itemBuilder: (BuildContext context, int index) {
                       final String id = threadIds[index];
-                      final MatchProfile match = MatchProfile.byId(id);
+                      final MatchProfile match = store.profileById(id);
                       final List<ChatMessage> thread = store.messages(id);
                       final ChatMessage? last = thread.isEmpty
                           ? null

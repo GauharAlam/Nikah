@@ -77,6 +77,7 @@ class _TestHttpOverrides extends HttpOverrides {
 const Map<String, Object> activePrefs = <String, Object>{
   'bk_stage': 'active',
   'bk_onboarded': true,
+  'bk_pledge': true,
 };
 
 Future<(AppStore, GoRouter)> pumpApp(

@@ -1,18 +1,20 @@
 import 'dart:convert';
 
-enum VerificationDocStatus { missing, pending, approved }
+enum VerificationDocStatus { missing, pending, approved, rejected }
 
 extension VerificationDocStatusX on VerificationDocStatus {
   String get label => switch (this) {
     VerificationDocStatus.missing => 'Not started',
     VerificationDocStatus.pending => 'Under review',
     VerificationDocStatus.approved => 'Approved',
+    VerificationDocStatus.rejected => 'Needs attention',
   };
 
   String get detail => switch (this) {
     VerificationDocStatus.missing => 'Tap to upload this document.',
     VerificationDocStatus.pending => 'Our team is reviewing your upload.',
     VerificationDocStatus.approved => 'Verified by the Barkat team.',
+    VerificationDocStatus.rejected => 'Tap to upload a new document.',
   };
 }
 
@@ -24,6 +26,7 @@ class VerificationDoc {
   final String subtitle;
   final VerificationDocStatus status;
   final bool isRequired;
+  final String rejectionReason;
 
   const VerificationDoc({
     required this.id,
@@ -31,14 +34,20 @@ class VerificationDoc {
     required this.subtitle,
     required this.status,
     this.isRequired = true,
+    this.rejectionReason = '',
   });
 
-  VerificationDoc copyWith({VerificationDocStatus? status}) => VerificationDoc(
+  VerificationDoc copyWith({
+    VerificationDocStatus? status,
+    String? rejectionReason,
+  }) =>
+      VerificationDoc(
         id: id,
         title: title,
         subtitle: subtitle,
         status: status ?? this.status,
         isRequired: isRequired,
+        rejectionReason: rejectionReason ?? this.rejectionReason,
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -59,6 +68,29 @@ class VerificationDoc {
             VerificationDocStatus.missing,
         isRequired: json['isRequired'] as bool? ?? true,
       );
+
+  /// What a real member starts with, before anything is uploaded.
+  static const List<VerificationDoc> blank = <VerificationDoc>[
+    VerificationDoc(
+      id: 'name-proof',
+      title: 'Name proof',
+      subtitle: 'Aadhaar, passport or driving licence',
+      status: VerificationDocStatus.missing,
+    ),
+    VerificationDoc(
+      id: 'education-proof',
+      title: 'Education proof',
+      subtitle: 'Degree certificate, mark sheet or university ID',
+      status: VerificationDocStatus.missing,
+    ),
+    VerificationDoc(
+      id: 'employment-proof',
+      title: 'Employment proof (optional)',
+      subtitle: 'Employment letter or business proof',
+      status: VerificationDocStatus.missing,
+      isRequired: false,
+    ),
+  ];
 
   static const List<VerificationDoc> seeds = <VerificationDoc>[
     VerificationDoc(

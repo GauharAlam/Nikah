@@ -195,7 +195,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                             icon: Icons.forum_outlined,
                             title: 'No chat matches yet',
                             body: 'Approve an introduction to open a '
-                                'chaperoned chat — it will appear here.',
+                                'chat — it will appear here.',
                             actionLabel: 'Browse Discovery',
                             onAction: () => context.go(AppRoutes.homeDiscovery),
                           )

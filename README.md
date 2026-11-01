@@ -2,6 +2,9 @@
 
 **Barkat Nikah** is a modern, dignity-first Islamic matrimony application built with **Flutter 3.47+**, adhering to authentic Islamic principles: guardian (**Wali**) oversight, photo modesty controls, verified biodata, and chaperoned communications.
 
+> **Setup and release:** see [docs/SETUP.md](docs/SETUP.md). Current status is in
+> [docs/IMPLEMENTATION_PROGRESS.md](docs/IMPLEMENTATION_PROGRESS.md). The screen table below is the original Stitch record.
+
 ---
 
 ## 📱 Stitch Project & Screens

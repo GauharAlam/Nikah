@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/filters.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -93,7 +94,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
     _draft = context.read<AppStore>().filters;
   }
 
-  int get _matchCount => MatchProfile.seeds
+  int get _matchCount => context.read<AppStore>().directory
       .where((MatchProfile p) => _draft.acceptsProfile(p))
       .length;
 
@@ -326,8 +327,8 @@ class _FiltersScreenState extends State<FiltersScreen> {
                     (String v) => _draft = _draft.copyWith(location: v),
                   ),
                 ),
-                const _RowDivider(),
-                Padding(
+                if (AppConfig.guardianFeatures) const _RowDivider(),
+                if (AppConfig.guardianFeatures) Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: SwitchTile(
                     key: const Key('wali_verified_switch'),
@@ -458,7 +459,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                   child: Text(
-                    'Secondary approvals follow your Wali\'s settings.',
+                    'Your number is shared only when you accept a request.',
                     style: AppTheme.ts(
                       11.5,
                       FontWeight.w500,
@@ -486,7 +487,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                '$_matchCount of ${MatchProfile.seeds.length} profiles match',
+                '$_matchCount profiles match',
                 key: const Key('filter_match_count'),
                 style: AppTheme.ts(11, FontWeight.w600, color: AppTheme.slate500),
               ),

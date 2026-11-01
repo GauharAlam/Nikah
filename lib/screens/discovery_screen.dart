@@ -1,10 +1,13 @@
 // Discovery tab — Barkat-style "Introductions for you" deck with the
 // Incompatible / Send Proposal / Request Contact action row.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -24,6 +27,12 @@ class DiscoveryScreen extends StatefulWidget {
 
 class _DiscoveryScreenState extends State<DiscoveryScreen> {
   final PageController _pageController = PageController();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(context.read<AppStore>().refreshIntroductions());
+  }
 
   @override
   void dispose() {
@@ -50,7 +59,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     if (!ok) {
       showAppSnack(
         context,
-        'Daily limit reached — ${AppStore.proposalQuota}/${AppStore.proposalQuota} '
+        'Daily limit reached — ${store.dailyProposalLimit}/${store.dailyProposalLimit} '
         'proposals sent. More slots unlock tomorrow.',
         icon: Icons.hourglass_bottom_rounded,
         background: AppTheme.goldDeep,
@@ -59,7 +68,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     }
     showSuccessSnack(
       context,
-      'Proposal sent — ${profile.firstName}\'s family was notified.',
+      'Proposal sent to ${profile.firstName}.',
     );
     _advanceCard(index, store.discoveredProfiles.length);
   }
@@ -110,7 +119,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
             const SizedBox(width: 9),
             Flexible(
               child: Text(
-                'Barkat Nikah',
+                AppBrand.name,
                 style: AppTheme.ts(16.5, FontWeight.w800, color: AppTheme.slate900),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -181,7 +190,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     const SizedBox(width: 10),
                     _ProposalsPill(
                       used: store.proposalsSentToday,
-                      quota: AppStore.proposalQuota,
+                      quota: store.dailyProposalLimit,
                     ),
                   ],
                 ),
@@ -189,7 +198,17 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
             ),
           ),
           Expanded(
-            child: profiles.isEmpty
+            child: profiles.isEmpty && store.isLoadingIntroductions
+                ? const Center(child: CircularProgressIndicator())
+                : profiles.isEmpty && store.introductionsError != null
+                ? EmptyState(
+                    icon: Icons.wifi_off_rounded,
+                    title: 'Could not load introductions',
+                    body: store.introductionsError!,
+                    actionLabel: 'Try again',
+                    onAction: store.refreshIntroductions,
+                  )
+                : profiles.isEmpty
                 ? EmptyState(
                     icon: Icons.explore_off_rounded,
                     title: 'All reviewed',
@@ -201,6 +220,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 : PageView.builder(
                     controller: _pageController,
                     itemCount: profiles.length,
+                    onPageChanged: (int index) {
+                      if (index >= profiles.length - 2) {
+                        unawaited(store.loadMoreIntroductions());
+                      }
+                    },
                     itemBuilder: (BuildContext context, int index) => _DeckCard(
                       profile: profiles[index],
                       matchPercent: profiles[index].matchPercent,

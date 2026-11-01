@@ -1,6 +1,31 @@
 # Implementation Progress
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-01
+
+## Current state (2026-11-01)
+
+The whole app is now written against Firebase and runs in demo mode until the Firebase
+files are added. See `docs/SETUP.md`. Sections below this one are history.
+
+**Built:** Firestore and Storage rules; Cloud Functions for review, verification,
+discovery, proposals, limits, contact sharing, block, report, deletion, purchases and push;
+`FirebaseBackend`; `RemoteAppStore`; route guards; phone and Google sign-in; the seven-step
+onboarding with saved progress; review status; approval pledge; How to Use; reviewer queue;
+document upload; plans and purchases.
+
+**Verified by running it:** analyzer; Flutter tests; 10 server logic tests; 22 emulator tests
+on real Firestore, Storage and Functions; demo and `BACKEND=firebase` Android release builds.
+
+**Never run:** anything against a real Firebase project; real SMS, Google sign-in, push,
+store purchases or receipt validation; any phone or simulator; any iOS build, because
+Xcode is not installed. The Flutter `FirebaseBackend` compiles but has no test against the
+emulators; `RemoteAppStore` is tested with a fake backend.
+
+**Known gaps:** guardian, chaperone and meeting features are demo-only, with no server
+support. Share profile is a placeholder. Matches, Activities and Profile are not rebuilt
+from new evidence. Step 7 was not in the screenshots, so it follows the website's
+"verification, review and submit". Option lists are starter lists, not Barkat's data.
+Google Fonts load at runtime and should be bundled for release.
 
 ## Stage 0 — Decisions (RESOLVED)
 

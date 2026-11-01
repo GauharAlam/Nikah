@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../app_router.dart';
 import '../models/ward_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -78,9 +77,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
   }
 
   void _submit() {
-    context
-        .read<AppStore>()
-        ..updateProfile(
+    context.read<AppStore>().updateProfile(
           (WardProfile p) => p.copyWith(
             prayerFrequency: _prayer,
             quranComfort: _quran,
@@ -88,16 +85,14 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             timeline: _timeline,
             relocation: _relocation,
           ),
-        )
-        ..markStepDone(3);
+        );
     showSuccessSnack(context, 'Practice profile saved. MashaAllah!');
-    context.push(AppRoutes.onboardingPhotos);
+    context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return OnboardingShell(
-      step: 3,
+    return ProfileSectionShell(
       title: 'Deen & Practice',
       subtitle: 'Share your salah, Quran and halal commitments with ihsan.',
       child: Column(
