@@ -14,7 +14,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 4 Discovery, proposals, matches, chat | Done |
 | 5 Family, privacy, deletion | Done |
 | 6 Trust and safety | Done |
-| 7 Notifications and premium | Next |
+| 7 Notifications and premium | Done |
+| 8 Quality assurance | Next |
 
 ## Phase 0 — Baseline
 
@@ -327,3 +328,50 @@ but no real device run yet.
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 7.
+
+## Phase 7 — Notifications and premium
+
+**Implemented**
+
+- SEC-07: purchases rewritten. Each store transaction has one record, keyed by a hash of the
+  transaction id. The product and expiry come from the store. Credits move through a ledger.
+  Refunds reverse exactly what was granted. Product ids and the app id come from `config/app`.
+- Apple now uses the App Store Server API, replacing the deprecated `verifyReceipt`.
+- Play and App Store notifications are handled. A notification is only a hint: the purchase is
+  read back from the store, so a forged request changes nothing.
+- A purchase finishes on the device only after the server verifies it, so a failed check is
+  retried by the store rather than lost.
+- SEC-19: push preferences per category, enforced on the server. Account notices always send,
+  and the in-app record stays. One device belongs to one account, and token rotation is handled.
+- FLOW-18: renewal terms before buying, purchase history, and a pending state.
+
+**Existing issues fixed:** every Android purchase failed, because the app never sent
+`packageName`. A cheap token could claim a more expensive product. An expired Apple receipt
+granted a new period. Different Apple purchases could collide on one key. The app finished
+purchases even when verification failed, so the buyer could pay and receive nothing.
+
+**Files created:** `functions/src/stores.ts`, `functions/test/purchases.emulator.test.ts`,
+`test/unit/phase7_test.dart`.
+
+**Tests added:** 8 Flutter, 2 logic, 14 emulator and rules, including all of Journey 8.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 181 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 112 passed |
+| `flutter build apk --release` | built |
+
+**Test seam:** the emulator reads store answers from `emulatorStore/{token}`. That path needs
+`FUNCTIONS_EMULATOR=true`, which a deployed function never has.
+
+**Not verified, and cannot be from here:** any real Apple or Google call, store notification,
+real FCM delivery, or real product. The verifiers in `stores.ts` have never run against a store.
+Journey 8 proves the logic around them, not the stores themselves.
+
+**Outstanding blockers:** X-1, X-3.
+
+**Next priority:** Phase 8.

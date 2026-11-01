@@ -171,6 +171,25 @@ test('family summaries reach only the member and their guardians', async () => {
   await assertFails(getDoc(doc(member('parent', false), 'family/a')));
 });
 
+test('purchases and the credit ledger are readable by their owner and written by nobody', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'purchases/p'), { uid: 'a', productId: 'x' });
+    await setDoc(doc(c.firestore(), 'creditLedger/l'), { uid: 'a', delta: 5 });
+  });
+  await assertSucceeds(getDoc(doc(member('a'), 'purchases/p')));
+  await assertFails(getDoc(doc(member('b'), 'purchases/p')));
+  await assertFails(setDoc(doc(member('a'), 'purchases/q'), { uid: 'a' }));
+  await assertSucceeds(getDoc(doc(member('a'), 'creditLedger/l')));
+  await assertFails(setDoc(doc(member('a'), 'creditLedger/m'), { uid: 'a', delta: 99 }));
+});
+
+test('notification settings accept known categories, and devices are server-written', async () => {
+  await assertSucceeds(setDoc(doc(member('a'), 'accounts/a/settings/notifications'), { messages: false }));
+  await assertFails(setDoc(doc(member('a'), 'accounts/a/settings/notifications'), { billing: false }));
+  await assertFails(setDoc(doc(member('b'), 'accounts/a/settings/notifications'), { messages: false }));
+  await assertFails(setDoc(doc(member('a'), 'accounts/a/devices/t'), { token: 't' }));
+});
+
 test('a member reads their own deletion status and nobody else can', async () => {
   await env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), 'deletionRequests/a'), { status: 'pending' }));
   await assertSucceeds(getDoc(doc(member('a'), 'deletionRequests/a')));

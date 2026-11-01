@@ -5,16 +5,12 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../providers/app_store.dart';
 
-/// Store products. Ids must match `PLAN_DAYS` and `CREDIT_PACKS` in
-/// `functions/src/index.ts`. Prices always come from the store.
+/// Talks to the store. Product ids come from the server. Prices come from the
+/// store. Nothing is granted here: the server checks every purchase with the
+/// store first, and a purchase is finished only after that succeeds, so a
+/// failed check is retried rather than lost.
 class PurchaseService {
   PurchaseService(this._store);
-
-  static const Set<String> planIds = <String>{'barkat_monthly', 'barkat_weekly'};
-  static const Set<String> creditIds = <String>{
-    'barkat_credit_single',
-    'barkat_credits_small',
-  };
 
   final AppStore _store;
   final InAppPurchase _iap = InAppPurchase.instance;
@@ -22,38 +18,51 @@ class PurchaseService {
 
   Future<List<ProductDetails>> loadProducts() async {
     if (!await _iap.isAvailable()) return const <ProductDetails>[];
-    final ProductDetailsResponse res =
-        await _iap.queryProductDetails(<String>{...planIds, ...creditIds});
+    final ProductDetailsResponse res = await _iap.queryProductDetails(
+      <String>{..._store.subscriptionProductIds, ..._store.creditProductIds},
+    );
     return res.productDetails;
   }
 
-  void listen({required void Function(String) onError, required void Function() onDone}) {
+  void listen({
+    required void Function(String) onError,
+    required void Function() onDone,
+    void Function()? onPending,
+  }) {
     _sub = _iap.purchaseStream.listen((List<PurchaseDetails> updates) async {
       for (final PurchaseDetails p in updates) {
-        if (p.status == PurchaseStatus.error) {
-          onError('The purchase did not complete.');
-        } else if (p.status == PurchaseStatus.purchased ||
-            p.status == PurchaseStatus.restored) {
-          try {
-            // Nothing is granted here. The server verifies with the store.
-            await _store.validatePurchase(
-              productId: p.productID,
-              platform: Platform.isAndroid ? 'android' : 'ios',
-              token: p.verificationData.serverVerificationData,
-            );
-            onDone();
-          } on Object {
-            onError('We could not verify this purchase. Please contact support.');
-          }
+        switch (p.status) {
+          case PurchaseStatus.pending:
+            onPending?.call();
+          case PurchaseStatus.error:
+            onError('The purchase did not complete.');
+            if (p.pendingCompletePurchase) await _iap.completePurchase(p);
+          case PurchaseStatus.canceled:
+            if (p.pendingCompletePurchase) await _iap.completePurchase(p);
+          case PurchaseStatus.purchased:
+          case PurchaseStatus.restored:
+            try {
+              await _store.validatePurchase(
+                productId: p.productID,
+                platform: Platform.isAndroid ? 'android' : 'ios',
+                // Google identifies a purchase by its token, Apple by its transaction.
+                token: Platform.isAndroid
+                    ? p.verificationData.serverVerificationData
+                    : p.purchaseID ?? '',
+              );
+              if (p.pendingCompletePurchase) await _iap.completePurchase(p);
+              onDone();
+            } on Object {
+              onError('We could not verify this purchase. It will be checked again.');
+            }
         }
-        if (p.pendingCompletePurchase) await _iap.completePurchase(p);
       }
     });
   }
 
   Future<void> buy(ProductDetails product) {
     final PurchaseParam param = PurchaseParam(productDetails: product);
-    return planIds.contains(product.id)
+    return _store.subscriptionProductIds.contains(product.id)
         ? _iap.buyNonConsumable(purchaseParam: param)
         : _iap.buyConsumable(purchaseParam: param);
   }

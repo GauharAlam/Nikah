@@ -241,3 +241,20 @@ test('photos reach a viewer only as their privacy allows', () => {
   assert.deepEqual(r.visiblePhotos(['a'], 'matches', true), ['a']);
   assert.deepEqual(r.visiblePhotos(undefined, 'everyone', true), []);
 });
+
+test('a store record grants only what it says, while it is active', () => {
+  const v = { transactionId: 't', productId: 'p', state: 'active' as const, expiresAt: 2000 };
+  assert.equal(r.purchaseProblem('p', v, 1000), null);
+  assert.ok(r.purchaseProblem('q', v, 1000)?.includes('different product'));
+  assert.ok(r.purchaseProblem('p', v, 3000)?.includes('expired'));
+  assert.ok(r.purchaseProblem('p', { ...v, state: 'pending' }, 1000)?.includes('not active'));
+  assert.ok(r.purchaseProblem('p', { ...v, state: 'refunded' }, 1000)?.includes('not active'));
+  assert.ok(r.purchaseProblem('p', null, 1000)?.includes('could not'));
+});
+
+test('push preferences never silence account notices', () => {
+  assert.ok(r.wantsPush(undefined, 'message'));
+  assert.ok(!r.wantsPush({ messages: false }, 'message'));
+  assert.ok(r.wantsPush({ messages: false }, 'proposal'));
+  assert.ok(r.wantsPush({ messages: false, proposals: false }, 'review'));
+});

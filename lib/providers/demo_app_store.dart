@@ -266,7 +266,6 @@ class DemoAppStore extends AppStore {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   }) async {}
 
   // ─── Privacy ──────────────────────────────────────────────────────────────

@@ -421,6 +421,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.privacy('blurPhotos'), isTrue);
+    await tester.scrollUntilVisible(
+      find.text('Modesty blur on photos'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     final Finder tile =
         find.widgetWithText(SwitchTile, 'Modesty blur on photos');
     expect(tile, findsOneWidget);

@@ -65,7 +65,13 @@ service cloud.firestore {
         allow create, delete: if false;
       }
       match /devices/{token} {
-        allow read, write: if isUser(uid);
+        allow read, delete: if isUser(uid);
+        allow write: if false;
+      }
+      match /settings/notifications {
+        allow read: if isUser(uid);
+        allow write: if isUser(uid)
+          && request.resource.data.keys().hasOnly(['proposals', 'matches', 'messages', 'contacts', 'family']);
       }
     }
 
@@ -170,6 +176,15 @@ service cloud.firestore {
 
     match /familyLinks/{guardian}/circles/{member} {
       allow read: if isUser(guardian);
+      allow write: if false;
+    }
+
+    match /purchases/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+    match /creditLedger/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
       allow write: if false;
     }
 

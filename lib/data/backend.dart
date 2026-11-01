@@ -98,6 +98,8 @@ class AppLimits {
     this.monthlyContactCredits = 30,
     this.requireIdProof = true,
     this.graduatesOnly = true,
+    this.subscriptionIds = const <String>{'nikah_monthly', 'nikah_weekly'},
+    this.creditIds = const <String>{'nikah_credit_single', 'nikah_credits_small'},
   });
 
   final int proposalsPerDay;
@@ -106,7 +108,34 @@ class AppLimits {
   final int monthlyContactCredits;
   final bool requireIdProof;
   final bool graduatesOnly;
+
+  /// Store product ids. Prices always come from the store.
+  final Set<String> subscriptionIds;
+  final Set<String> creditIds;
 }
+
+/// One purchase, as the server recorded it.
+class PurchaseRecord {
+  const PurchaseRecord({
+    required this.productId,
+    required this.state,
+    required this.createdAt,
+    this.expiresAt,
+  });
+  final String productId;
+  final String state;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+}
+
+/// Push categories a member can turn off. Account notices always send.
+const Map<String, String> notificationCategories = <String, String>{
+  'proposals': 'Proposals',
+  'matches': 'New matches',
+  'messages': 'Messages',
+  'contacts': 'Contact requests',
+  'family': 'Family circle',
+};
 
 class IntroductionPage {
   const IntroductionPage(
@@ -446,6 +475,8 @@ abstract class Backend {
   Stream<List<NotificationItem>> watchNotifications(String uid);
   Future<void> markNotificationRead(String uid, String id);
   Future<void> registerPushToken(String uid);
+  Stream<Map<String, bool>> watchNotificationPrefs(String uid);
+  Future<void> setNotificationPref(String uid, String category, bool on);
 
   // Verification
   Stream<List<VerificationDoc>> watchDocuments(String uid);
@@ -456,8 +487,8 @@ abstract class Backend {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   });
+  Stream<List<PurchaseRecord>> watchPurchases(String uid);
 
   // Review tools, reviewer accounts only
   Future<List<Map<String, dynamic>>> listReviewQueue();

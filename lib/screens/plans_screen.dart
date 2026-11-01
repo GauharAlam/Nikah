@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
+import '../data/backend.dart';
 import '../providers/app_store.dart';
 import '../services/purchase_service.dart';
 import '../theme/app_theme.dart';
@@ -39,6 +40,9 @@ class _PlansScreenState extends State<PlansScreen> {
       onDone: () {
         if (mounted) showSuccessSnack(context, 'Purchase verified.');
       },
+      onPending: () {
+        if (mounted) showAppSnack(context, 'Waiting for the store to confirm your payment.');
+      },
     );
     unawaited(_load());
   }
@@ -61,6 +65,7 @@ class _PlansScreenState extends State<PlansScreen> {
   @override
   Widget build(BuildContext context) {
     final List<ProductDetails>? products = _products;
+    final List<PurchaseRecord> history = context.watch<AppStore>().purchases;
     return Scaffold(
       backgroundColor: AppTheme.ivoryWarm,
       appBar: AppBar(title: Text(tr('Plans'))),
@@ -78,6 +83,7 @@ class _PlansScreenState extends State<PlansScreen> {
                     for (final ProductDetails p in products)
                       Card(
                         child: ListTile(
+                          key: Key('plan_${p.id}'),
                           title: Text(p.title),
                           subtitle: Text(p.description),
                           trailing: FilledButton(
@@ -86,10 +92,33 @@ class _PlansScreenState extends State<PlansScreen> {
                           ),
                         ),
                       ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        tr('Subscriptions renew automatically at the price shown until you cancel in your store account, at least 24 hours before the renewal date. Prices are set by the store and include any local tax it applies.'),
+                        key: const Key('renewal_terms'),
+                        style: AppTheme.bodySmall,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () => unawaited(_purchases.restore()),
                       child: Text(tr('Restore purchases')),
                     ),
+                    if (history.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Text(tr('Purchase history'),
+                          style: AppTheme.ts(15, FontWeight.w800, color: AppTheme.slate900)),
+                      for (final PurchaseRecord r in history)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(r.productId),
+                          subtitle: Text(<String>[
+                            AppStore.fmtDate(r.createdAt),
+                            if (r.state == 'refunded') tr('Refunded'),
+                            if (r.expiresAt != null) '${tr('Until')} ${AppStore.fmtDate(r.expiresAt!)}',
+                          ].join(' · ')),
+                        ),
+                    ],
                   ],
                 ),
     );

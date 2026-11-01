@@ -260,13 +260,16 @@ class FakeBackend implements Backend {
   Future<void> submitDocument(String uid, String type, List<String> localPaths) =>
       _record('document:$type');
   @override
-  Future<void> validatePurchase({
-    required String productId,
-    required String platform,
-    required String token,
-    String? packageName,
-  }) =>
-      _record('purchase:$productId');
+  Future<void> validatePurchase({required String productId, required String platform, required String token}) =>
+      _record('purchase:$productId:$platform');
+  final StreamController<List<PurchaseRecord>> purchaseRecords = StreamController<List<PurchaseRecord>>.broadcast();
+  final StreamController<Map<String, bool>> notificationPrefs = StreamController<Map<String, bool>>.broadcast();
+  @override
+  Stream<List<PurchaseRecord>> watchPurchases(String uid) => purchaseRecords.stream;
+  @override
+  Stream<Map<String, bool>> watchNotificationPrefs(String uid) => notificationPrefs.stream;
+  @override
+  Future<void> setNotificationPref(String uid, String category, bool on) => _record('pref:$category:$on');
   @override
   Future<List<Map<String, dynamic>>> listReviewQueue() async => queue;
   List<Map<String, dynamic>> queue = <Map<String, dynamic>>[];

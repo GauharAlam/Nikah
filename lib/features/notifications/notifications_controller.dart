@@ -9,13 +9,26 @@ class NotificationsController extends FeatureController {
   final SessionController _session;
 
   List<NotificationItem> _items = <NotificationItem>[];
+  Map<String, bool> _prefs = <String, bool>{};
 
   List<NotificationItem> get items => List<NotificationItem>.unmodifiable(_items.reversed);
+  bool wants(String category) => _prefs[category] ?? true;
+
+  void setWants(String category, bool on) {
+    _prefs = <String, bool>{..._prefs, category: on};
+    notifyListeners();
+    send(() => backend.setNotificationPref(_session.uid, category, on));
+  }
+
   int get unreadCount => _items.where((NotificationItem n) => !n.isRead).length;
 
   void start(String uid) {
     follow(backend.watchNotifications(uid), (List<NotificationItem> n) {
       _items = n;
+      notifyListeners();
+    });
+    follow(backend.watchNotificationPrefs(uid), (Map<String, bool> p) {
+      _prefs = p;
       notifyListeners();
     });
   }
@@ -36,5 +49,6 @@ class NotificationsController extends FeatureController {
   Future<void> stop() async {
     await super.stop();
     _items = <NotificationItem>[];
+    _prefs = <String, bool>{};
   }
 }

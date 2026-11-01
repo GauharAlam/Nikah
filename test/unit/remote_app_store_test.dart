@@ -365,8 +365,8 @@ void main() {
 
   test('purchases are granted by the server only', () async {
     await signIn();
-    await store.validatePurchase(productId: 'barkat_monthly', platform: 'android', token: 't');
-    expect(backend.calls, contains('purchase:barkat_monthly'));
+    await store.validatePurchase(productId: 'nikah_monthly', platform: 'android', token: 't');
+    expect(backend.calls, contains('purchase:nikah_monthly:android'));
     expect(store.isPremium, isFalse);
     backend.account.add(AccountState(
       stage: ReviewStage.approved,

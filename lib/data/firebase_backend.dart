@@ -43,6 +43,7 @@ class FirebaseBackend implements Backend {
   final FirebaseStorage _storage;
   final FirebaseFunctions _functions;
   bool _googleReady = false;
+  StreamSubscription<String>? _tokenSub;
   int? _resendToken;
   String? _resendPhone;
 
@@ -189,6 +190,7 @@ class FirebaseBackend implements Backend {
   @override
   Future<void> signOut() async {
     final String? uid = _auth.currentUser?.uid;
+    await _tokenSub?.cancel();
     if (uid != null && pushAvailable) {
       // ignore: deprecated_member_use
       final String? token = await FirebaseMessaging.instance.getToken();
@@ -246,8 +248,18 @@ class FirebaseBackend implements Backend {
           monthlyContactCredits: l['monthlyContactCredits'] as int? ?? 30,
           requireIdProof: l['requireIdProof'] as bool? ?? true,
           graduatesOnly: l['graduatesOnly'] as bool? ?? true,
+          subscriptionIds: _productIds(s.data()?['products'], 'subscription') ?? const AppLimits().subscriptionIds,
+          creditIds: _productIds(s.data()?['products'], 'credits') ?? const AppLimits().creditIds,
         );
       });
+
+  static Set<String>? _productIds(Object? products, String kind) {
+    if (products is! Map) return null;
+    return <String>{
+      for (final MapEntry<dynamic, dynamic> e in products.entries)
+        if ((e.value as Map?)?['kind'] == kind) e.key as String,
+    };
+  }
 
   @override
   Future<Map<String, dynamic>?> loadDraft(String uid) => _guard(() async {
@@ -839,11 +851,29 @@ class FirebaseBackend implements Backend {
         await FirebaseMessaging.instance.requestPermission();
         // ignore: deprecated_member_use
         final String? token = await FirebaseMessaging.instance.getToken();
-        if (token == null) return;
-        await _db.doc('accounts/$uid/devices/$token').set(<String, dynamic>{
-          'platform': Platform.operatingSystem,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        if (token != null) await _registerDevice(token);
+        unawaited(_tokenSub?.cancel());
+        // ignore: deprecated_member_use
+        _tokenSub = FirebaseMessaging.instance.onTokenRefresh.listen(
+          (String next) => unawaited(_registerDevice(next).catchError((Object _) {})),
+        );
+      });
+
+  Future<void> _registerDevice(String token) =>
+      _call('registerDevice', <String, dynamic>{'token': token, 'platform': Platform.operatingSystem});
+
+  @override
+  Stream<Map<String, bool>> watchNotificationPrefs(String uid) => _db
+      .doc('accounts/$uid/settings/notifications')
+      .snapshots()
+      .map((DocumentSnapshot<Map<String, dynamic>> s) =>
+          (s.data() ?? const <String, dynamic>{}).cast<String, bool>());
+
+  @override
+  Future<void> setNotificationPref(String uid, String category, bool on) => _guard(() async {
+        await _db
+            .doc('accounts/$uid/settings/notifications')
+            .set(<String, dynamic>{category: on}, SetOptions(merge: true));
       });
 
   // ─── Verification ──────────────────────────────────────────────────────────
@@ -895,14 +925,31 @@ class FirebaseBackend implements Backend {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   }) =>
       _call('validatePurchase', <String, dynamic>{
         'productId': productId,
         'platform': platform,
         'token': token,
-        'packageName': ?packageName,
       });
+
+  @override
+  Stream<List<PurchaseRecord>> watchPurchases(String uid) => _db
+      .collection('purchases')
+      .where('uid', isEqualTo: uid)
+      .orderBy('createdAt', descending: true)
+      .limit(50)
+      .snapshots()
+      .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.map((s) {
+            final Map<String, dynamic> d = s.data();
+            return PurchaseRecord(
+              productId: d['productId'] as String? ?? '',
+              state: d['state'] as String? ?? '',
+              createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              expiresAt: d['expiresAt'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch((d['expiresAt'] as num).toInt()),
+            );
+          }).toList());
 
   // ─── Review tools ──────────────────────────────────────────────────────────
 

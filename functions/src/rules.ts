@@ -62,6 +62,43 @@ export const CONSENTS: Record<string, string> = {
   subject_confirmed: 'Confirmation by the person themselves, from their own phone',
 };
 
+export type StoreState = 'active' | 'expired' | 'refunded' | 'pending';
+
+/** What a store says about one transaction. */
+export interface VerifiedPurchase {
+  transactionId: string; productId: string; state: StoreState; expiresAt?: number;
+}
+
+export interface Product { kind: 'subscription' | 'credits'; credits?: number }
+
+// Placeholders until the store listings exist. config/app `products` overrides them.
+export const DEFAULT_PRODUCTS: Record<string, Product> = {
+  nikah_monthly: { kind: 'subscription' },
+  nikah_weekly: { kind: 'subscription' },
+  nikah_credit_single: { kind: 'credits', credits: 1 },
+  nikah_credits_small: { kind: 'credits', credits: 5 },
+};
+
+/** Why a store record grants nothing, or null when it is good. */
+export function purchaseProblem(productId: string, v: VerifiedPurchase | null, now: number): string | null {
+  if (!v) return 'Purchase could not be verified.';
+  if (v.productId !== productId) return 'Purchase is for a different product.';
+  if (v.state !== 'active') return 'This purchase is not active.';
+  if (v.expiresAt !== undefined && v.expiresAt <= now) return 'This purchase has expired.';
+  return null;
+}
+
+export const NOTIFICATION_CATEGORIES: Record<string, string> = {
+  review: 'account', verification: 'account', proposal: 'proposals', match: 'matches', message: 'messages',
+  contact: 'contacts', family: 'family', subscription: 'account',
+};
+
+/** Whether a member wants a push for this kind of event. Everything is on by default. */
+export function wantsPush(prefs: Record<string, unknown> | undefined, type: string): boolean {
+  const category = NOTIFICATION_CATEGORIES[type];
+  return category === 'account' || prefs?.[category] !== false;
+}
+
 /** A profile can be sent for review from these stages. */
 export const canSubmit = (stage: string): boolean =>
   ['draft', 'rejected', 'changes_requested'].includes(stage);

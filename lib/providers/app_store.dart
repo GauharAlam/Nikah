@@ -241,8 +241,14 @@ abstract class AppStore extends ChangeNotifier {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   });
+  Set<String> get subscriptionProductIds => const AppLimits().subscriptionIds;
+  Set<String> get creditProductIds => const AppLimits().creditIds;
+  List<PurchaseRecord> get purchases => const <PurchaseRecord>[];
+
+  /// Whether a member wants push for a category. Everything starts on.
+  bool wantsNotification(String category) => true;
+  void setWantsNotification(String category, bool on) {}
 
   // ─── Demo-only surfaces ───────────────────────────────────────────────────
   // Guardian portal, meetings and the local timeline have no server support.

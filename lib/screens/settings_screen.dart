@@ -52,31 +52,25 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 60),
         children: <Widget>[
-          if (AppConfig.isDemo) ...<Widget>[
           const SectionLabel('Notifications'),
           const SizedBox(height: 10),
           AppCard(
             child: Column(
               children: <Widget>[
-                SwitchTile(
-                  icon: Icons.notifications_active_outlined,
-                  title: 'Push notifications',
-                  subtitle: 'New matches, intros & milestones',
-                  value: store.pushEnabled,
-                  onChanged: store.setPushEnabled,
-                ),
-                const Divider(height: 20),
-                SwitchTile(
-                  icon: Icons.mail_outline_rounded,
-                  title: 'Email digest',
-                  subtitle: 'A calm weekly summary of activity',
-                  value: store.emailDigest,
-                  onChanged: store.setEmailDigest,
-                ),
+                for (final MapEntry<String, String> c in notificationCategories.entries) ...<Widget>[
+                  SwitchTile(
+                    key: Key('notify_${c.key}'),
+                    icon: Icons.notifications_active_outlined,
+                    title: tr(c.value),
+                    subtitle: tr('Push notifications. Details are never shown on your lock screen.'),
+                    value: store.wantsNotification(c.key),
+                    onChanged: (bool v) => store.setWantsNotification(c.key, v),
+                  ),
+                  if (c.key != notificationCategories.keys.last) const Divider(height: 20),
+                ],
               ],
             ),
           ),
-          ],
           const SizedBox(height: 22),
           const SectionLabel('Privacy & modesty'),
           const SizedBox(height: 10),

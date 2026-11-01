@@ -107,6 +107,7 @@ class RemoteAppStore extends AppStore {
     }
     final String uid = user.uid;
     session.start(uid);
+    session.followPurchases(uid);
     circle.start(uid);
     discovery.start();
     connections.start(uid);
@@ -476,14 +477,18 @@ class RemoteAppStore extends AppStore {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   }) =>
-      _backend.validatePurchase(
-        productId: productId,
-        platform: platform,
-        token: token,
-        packageName: packageName,
-      );
+      _backend.validatePurchase(productId: productId, platform: platform, token: token);
+  @override
+  Set<String> get subscriptionProductIds => session.limits.subscriptionIds;
+  @override
+  Set<String> get creditProductIds => session.limits.creditIds;
+  @override
+  List<PurchaseRecord> get purchases => session.purchases;
+  @override
+  bool wantsNotification(String category) => inbox.wants(category);
+  @override
+  void setWantsNotification(String category, bool on) => inbox.setWants(category, on);
 
   @override
   void dispose() {
