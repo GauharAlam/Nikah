@@ -22,7 +22,7 @@ service cloud.firestore {
           'inviteCode', 'prayer', 'prayerFrequency', 'quranComfort', 'practices', 'extraPractices',
           'halalLifestyle', 'preferredLanguage', 'familyType', 'familyBackground', 'familyValues',
           'familyLocation', 'siblings', 'graduationYear', 'educationStatus', 'employmentStatus',
-          'careerDescription', 'subjectName', 'subjectPhone', 'relationship'
+          'careerDescription', 'subjectName', 'subjectPhone', 'relationship', 'nearbyOptIn'
         ])
         && under(d, 'fullName', 80) && under(d, 'aboutMe', 1500) && under(d, 'company', 80)
         && under(d, 'familyBackground', 1000) && under(d, 'familyValues', 500)
@@ -99,10 +99,12 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/matches/$(pair)).data.status == 'active';
       }
       allow read: if signedIn() && request.auth.uid in resource.data.users;
-      // A member may only move their own read marker.
+      // A member may only move their own read marker and clear their own count.
       allow update: if signedIn() && request.auth.uid in resource.data.users && (
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
-          && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]))
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt', 'unread'])
+          && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid])
+          && request.resource.data.unread.diff(resource.data.unread).affectedKeys().hasOnly([request.auth.uid])
+          && (request.resource.data.unread == resource.data.unread || request.resource.data.unread[request.auth.uid] == 0))
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['journey'])
           && request.resource.data.journey.diff(resource.data.get('journey', {})).affectedKeys().hasOnly([request.auth.uid])
           && request.resource.data.journey[request.auth.uid] in ['talking', 'questions', 'families', 'istikhara', 'decision'])
@@ -120,9 +122,10 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // Closing or blocking a match, or losing approval, ends access to it.
       match /messages/{id} {
-        allow read: if participant();
-        allow create: if participant() && open()
+        allow read: if participant() && open() && isApproved();
+        allow create: if participant() && open() && isApproved()
           && request.resource.data.keys().hasOnly(['sender', 'text', 'sentAt'])
           && request.resource.data.sender == request.auth.uid
           && request.resource.data.text is string

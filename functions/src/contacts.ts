@@ -18,7 +18,10 @@ export const requestContact = onCall(async (req) => {
     if (target.data()?.live !== true || !R.gendersCompatible(self.data()?.gender, target.data()?.gender)) {
       throw new HttpsError('not-found', 'This profile is unavailable.');
     }
-    if (existing.data()?.status === 'pending') return { status: 'pending' }; // No second charge.
+    const status = existing.data()?.status;
+    if (status === 'pending' || status === 'accepted') return { status }; // No second charge.
+    // A decline is respected, as it is for a proposal.
+    if (status === 'declined') throw new HttpsError('failed-precondition', 'This member declined your request.');
     const a = acc.data() ?? {};
     const spent = R.countFor(a.creditMonth, a.creditsSpent, month);
     const allowance = lim.monthlyContactCredits + (a.purchasedCredits ?? 0);
@@ -38,6 +41,7 @@ export const respondContact = onCall(async (req) => {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (snap.data()?.status !== 'pending') throw new HttpsError('failed-precondition', 'This request was already answered.');
+    if (accept && await blockedEitherWay(from, uid, tx)) throw new HttpsError('not-found', 'This profile is unavailable.');
     const matchRef = db.doc(`matches/${R.pairId(from, uid)}`);
     const [a, b, match] = await Promise.all([tx.get(accountRef(from)), tx.get(accountRef(uid)), tx.get(matchRef)]);
     tx.update(ref, { status: accept ? 'accepted' : 'declined', respondedAt: FieldValue.serverTimestamp() });

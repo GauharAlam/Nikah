@@ -23,7 +23,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'profiles/b'), { name: 'B', gender: 'female', live: true });
     await setDoc(doc(db, 'proposals/a_b'), { from: 'a', to: 'b', status: 'pending' });
     await setDoc(doc(db, 'contactShares/a_b'), { users: ['a', 'b'], phones: { a: '1', b: '2' } });
-    await setDoc(doc(db, 'matches/a_b'), { users: ['a', 'b'], status: 'active', readAt: {}, unread: { a: 0, b: 0 } });
+    await setDoc(doc(db, 'matches/a_b'), { users: ['a', 'b'], status: 'active', readAt: {}, unread: { a: 2, b: 3 } });
     await setDoc(doc(db, 'matches/a_c'), { users: ['a', 'c'], status: 'blocked', readAt: {}, unread: {} });
     await setDoc(doc(db, 'accounts/a/notifications/n1'), { title: 't', read: false });
     await setDoc(doc(db, 'reports/r1'), { reporter: 'a' });
@@ -87,6 +87,29 @@ test('only participants of an open match can message', async () => {
   await assertFails(addDoc(collection(member('a'), 'matches/a_c/messages'), message('a')));
   await assertFails(addDoc(collection(member('a'), 'matches/a_b/messages'), message('a', 'x'.repeat(2001))));
   await assertFails(getDoc(doc(member('z'), 'matches/a_b/messages/m')));
+});
+
+test('SEC-13: blocked and closed conversations cannot be read or written', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'matches/a_c/messages/m1'), { sender: 'c', text: 'x', sentAt: serverTimestamp() });
+    await setDoc(doc(c.firestore(), 'matches/a_b/messages/m1'), { sender: 'b', text: 'x', sentAt: serverTimestamp() });
+  });
+  await assertFails(getDoc(doc(member('a'), 'matches/a_c/messages/m1')));
+  await assertSucceeds(getDoc(doc(member('a'), 'matches/a_b/messages/m1')));
+  await assertFails(addDoc(collection(member('a'), 'matches/a_c/messages'), { sender: 'a', text: 'hi', sentAt: serverTimestamp() }));
+});
+
+test('SEC-13: a member who lost approval cannot message', async () => {
+  const held = member('a', false);
+  await assertFails(addDoc(collection(held, 'matches/a_b/messages'), { sender: 'a', text: 'hi', sentAt: serverTimestamp() }));
+  await assertFails(getDoc(doc(held, 'matches/a_b/messages/m1')));
+});
+
+test('a member clears only their own unread count, and only to zero', async () => {
+  await assertSucceeds(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.a': 0, 'readAt.a': serverTimestamp() }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.b': 0 }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.a': 5 }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { status: 'closed' }));
 });
 
 test('a member moves only their own read marker', async () => {

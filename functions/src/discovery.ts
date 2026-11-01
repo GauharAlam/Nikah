@@ -6,7 +6,7 @@ import { accountRef, approvedUid, blockedEitherWay, db, idArg, isPremium, limits
 function toPublicCard(
   id: string, d: Record<string, any>, now: Date, viewerMatched: boolean, viewer?: Record<string, any>,
 ) {
-  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, partnerCaste, ...rest } = d;
+  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, partnerCaste, nearbyOptIn, ...rest } = d;
   const active = (lastActiveAt as Timestamp | undefined)?.toMillis();
   const age = R.ageOn(dateOfBirth, now);
   const score = viewer ? R.matchScore(
@@ -31,15 +31,21 @@ export const fetchIntroductions = onCall(async (req) => {
   const filters = R.allowedFilters((req.data?.filters ?? {}) as R.Filters, premium);
   const lim = await limits();
   const viewKey = R.windowKey(lim.freeProfileWindow, now);
-  const pageSize = Math.min(Number(req.data?.limit ?? 10), 20);
+  const pageSize = R.pageSize(req.data?.limit);
+  if (pageSize === null) throw new HttpsError('invalid-argument', 'Page size is invalid.');
+  const nearby = req.data?.mode === 'nearby';
+  if (nearby && me.nearbyOptIn !== true) {
+    throw new HttpsError('failed-precondition', 'Turn on nearby discovery in settings first.');
+  }
+  const myCity = R.cityOf(me.location);
 
   const [blocksOut, blocksIn, hidden, sent, received, matches, viewedSnap, accSnap] = await Promise.all([
     accountRef(uid).collection('blocks').get(),
     db.collectionGroup('blocks').where('target', '==', uid).get(),
     accountRef(uid).collection('hidden').get(),
-    db.collection('proposals').where('from', '==', uid).get(),
-    db.collection('proposals').where('to', '==', uid).get(),
-    db.collection('matches').where('users', 'array-contains', uid).get(),
+    db.collection('proposals').where('from', '==', uid).select('to').limit(2000).get(),
+    db.collection('proposals').where('to', '==', uid).select('from').limit(2000).get(),
+    db.collection('matches').where('users', 'array-contains', uid).select('users').limit(2000).get(),
     accountRef(uid).collection('viewed').get(),
     accountRef(uid).get(),
   ]);
@@ -72,6 +78,7 @@ export const fetchIntroductions = onCall(async (req) => {
       lastActiveAt: (doc.data().lastActiveAt as Timestamp | undefined)?.toMillis(), staleDays: lim.staleDays,
     }, now.getTime());
     if (!visible) continue;
+    if (nearby && (doc.data().nearbyOptIn !== true || R.cityOf(doc.data().location) !== myCity)) continue;
     const card = toPublicCard(doc.id, doc.data(), now, false, me);
     if (!R.matchesFilters(card as unknown as R.Card, filters)) continue;
     // A profile counts once. Ones already seen stay free to see again.
@@ -120,8 +127,11 @@ export const getProfiles = onCall(async (req) => {
       db.doc(`profiles/${id}`).get(), blockedEitherWay(uid, id), db.doc(`matches/${R.pairId(uid, id)}`).get(),
     ]);
     const d = snap.data();
-    if (!d || blocked || d.gender === me?.gender) return null;
-    if (!premium && !match.exists) {
+    const activeMatch = match.data()?.status === 'active';
+    if (!d || !R.canViewProfile({
+      live: d.live === true, activeMatch, blocked, oppositeGender: R.gendersCompatible(me?.gender, d.gender),
+    })) return null;
+    if (!premium && !activeMatch) {
       // Free members may open a profile they were shown or have a connection with.
       const links = await Promise.all([
         accountRef(uid).collection('viewed').doc(id).get(),
@@ -132,7 +142,7 @@ export const getProfiles = onCall(async (req) => {
       ]);
       if (!links.some((l) => l.exists)) return null;
     }
-    return toPublicCard(id, d, now, match.data()?.status === 'active', me);
+    return toPublicCard(id, d, now, activeMatch, me);
   }));
   return { profiles: results.filter(Boolean) };
 });

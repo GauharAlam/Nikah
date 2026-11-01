@@ -198,3 +198,25 @@ test('eligibility is configurable but never below 18', () => {
   assert.ok(r.draftProblems(d, { ...r.DEFAULT_LIMITS, firstMarriageOnly: true }, now).some((p) => p.includes('first-time')));
   assert.ok(!r.draftProblems(d, r.DEFAULT_LIMITS, now).some((p) => p.includes('first-time')));
 });
+
+test('one visibility rule decides who may be served a card', () => {
+  const base = { live: true, activeMatch: false, blocked: false, oppositeGender: true };
+  assert.ok(r.canViewProfile(base));
+  assert.ok(!r.canViewProfile({ ...base, live: false }));
+  assert.ok(r.canViewProfile({ ...base, live: false, activeMatch: true }));
+  assert.ok(!r.canViewProfile({ ...base, blocked: true, activeMatch: true }));
+  assert.ok(!r.canViewProfile({ ...base, oppositeGender: false }));
+});
+
+test('page sizes are bounded and junk is refused', () => {
+  assert.equal(r.pageSize(undefined), r.DEFAULT_PAGE);
+  assert.equal(r.pageSize(500), r.MAX_PAGE);
+  assert.equal(r.pageSize(NaN), null);
+  assert.equal(r.pageSize('5'), null);
+  assert.equal(r.pageSize(0), null);
+});
+
+test('nearby compares cities, never anything finer', () => {
+  assert.equal(r.cityOf('Delhi, Delhi'), 'delhi');
+  assert.equal(r.cityOf(undefined), '');
+});

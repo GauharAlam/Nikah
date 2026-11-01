@@ -244,6 +244,7 @@ export function draftProblems(d: Draft, limits: Limits, now: Date): string[] {
 export interface Filters {
   minAge?: number; maxAge?: number; maritalStatus?: string; caste?: string; almaMater?: string;
   education?: string; profession?: string; location?: string; sect?: string;
+  country?: string; query?: string;
 }
 export const ANY = 'No preference';
 export const PREMIUM_FILTERS: (keyof Filters)[] = ['education', 'profession', 'location'];
@@ -258,7 +259,28 @@ export function allowedFilters(f: Filters, premium: boolean): Filters {
 
 export interface Card {
   age: number; maritalStatus: string; caste: string; university: string;
-  education: string; profession: string; location: string; sect?: string;
+  education: string; profession: string; location: string; sect?: string; country?: string;
+}
+
+/** The first part of a location, which is the coarsest thing nearby ever compares. */
+export const cityOf = (location?: string): string => (location ?? '').split(',')[0].trim().toLowerCase();
+
+export const DEFAULT_PAGE = 10;
+export const MAX_PAGE = 20;
+
+/** A page size, or null when the value is not one. */
+export function pageSize(raw: unknown): number | null {
+  if (raw === undefined || raw === null) return DEFAULT_PAGE;
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) return null;
+  return Math.min(raw, MAX_PAGE);
+}
+
+/** The single rule for who may be served a stored card. */
+export function canViewProfile(v: {
+  live: boolean; activeMatch: boolean; blocked: boolean; oppositeGender: boolean;
+}): boolean {
+  if (v.blocked || !v.oppositeGender) return false;
+  return v.live || v.activeMatch;
 }
 
 export function matchesFilters(c: Card, f: Filters): boolean {
@@ -272,6 +294,11 @@ export function matchesFilters(c: Card, f: Filters): boolean {
   if (on(f.sect) && c.sect !== f.sect) return false;
   if (on(f.profession) && c.profession !== f.profession) return false;
   if (on(f.location) && !c.location.toLowerCase().includes(f.location!.toLowerCase())) return false;
+  if (on(f.country) && c.country !== f.country) return false;
+  if (on(f.query)) {
+    const text = [c.university, c.profession, c.education, c.location].join(' ').toLowerCase();
+    if (!text.includes(f.query!.trim().toLowerCase())) return false;
+  }
   return true;
 }
 
@@ -294,17 +321,18 @@ export type PhotoPrivacy = 'everyone' | 'matches';
 /** What a viewer may see of a stored card. Applied before any card leaves the server. */
 export function redactCard<T extends {
   photos?: string[]; caste?: string; photoPrivacy?: string; showCaste?: boolean; photoPaths?: string[];
-  family?: Record<string, unknown>;
+  family?: Record<string, unknown>; name?: string; employer?: string;
 }>(
   card: T, viewerMatched: boolean,
 ): T & { photosHidden: boolean } {
   const hide = card.photoPrivacy === 'matches' && !viewerMatched;
-  const { photoPrivacy, showCaste, photoPaths, family, ...rest } = card;
+  const { photoPrivacy, showCaste, photoPaths, family, employer, ...rest } = card;
   return {
     ...(rest as T), photos: hide ? [] : card.photos ?? [], photosHidden: hide,
     caste: showCaste === false ? '' : card.caste ?? '',
-    // Family details are for matched members only.
-    ...(viewerMatched && family ? { family } : {}),
+    // Full name, employer and family details are for matched members only.
+    name: viewerMatched ? card.name : String(card.name ?? '').split(' ')[0],
+    ...(viewerMatched ? { family, employer: employer ?? '' } : {}),
   };
 }
 

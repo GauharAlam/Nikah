@@ -1,14 +1,16 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import * as R from './rules';
-import { approvedUid, blockRef, closeMatch, db, idArg, limits, stringArg, uidOf } from './shared';
+import { accountRef, approvedUid, blockRef, closeMatch, db, idArg, limits, stringArg, uidOf } from './shared';
 
 export const updatePrivacy = onCall(async (req) => {
   const uid = approvedUid(req);
   const update: Record<string, unknown> = {};
+  if (typeof req.data?.nearbyOptIn === 'boolean') update.nearbyOptIn = req.data.nearbyOptIn;
   if (req.data?.photoPrivacy === 'everyone' || req.data?.photoPrivacy === 'matches') update.photoPrivacy = req.data.photoPrivacy;
   if (typeof req.data?.showCaste === 'boolean') update.showCaste = req.data.showCaste;
   if (typeof req.data?.allowFamilyShare === 'boolean') update.allowFamilyShare = req.data.allowFamilyShare;
+  if (Object.keys(update).length === 0) throw new HttpsError('invalid-argument', 'Nothing to change.');
   await Promise.all([db.doc(`profiles/${uid}`).update(update), db.doc(`drafts/${uid}`).set(update, { merge: true })]);
   return { ok: true };
 });
@@ -30,8 +32,20 @@ export const unmatch = onCall(async (req) => {
 export const blockProfile = onCall(async (req) => {
   const uid = uidOf(req);
   const target = idArg(req.data?.target, 'target');
+  if (target === uid) throw new HttpsError('invalid-argument', 'You cannot block yourself.');
   await blockRef(uid, target).set({ target, createdAt: FieldValue.serverTimestamp() });
   await closeMatch(uid, target, 'blocked');
+  // Nothing already in flight may survive the block, in either direction.
+  await Promise.all([R.proposalId(uid, target), R.proposalId(target, uid)].map((id) => db.runTransaction(async (tx) => {
+    const ref = db.doc(`contactRequests/${id}`);
+    const request = (await tx.get(ref)).data();
+    if (request?.status !== 'pending') return;
+    const acc = (await tx.get(accountRef(request.from))).data();
+    tx.update(ref, { status: 'closed' });
+    tx.set(accountRef(request.from), {
+      creditsSpent: R.creditsAfterRefund(request.month, acc?.creditsSpent, acc?.creditMonth),
+    }, { merge: true });
+  })));
   const pending = [R.proposalId(uid, target), R.proposalId(target, uid)];
   await Promise.all(pending.map((id) => db.runTransaction(async (tx) => {
     const ref = db.doc(`proposals/${id}`);
