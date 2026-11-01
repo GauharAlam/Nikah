@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snacks.dart';
+import '../widgets/picker_sheets.dart';
 
 /// First screen: sign in with phone or Google.
 class LandingScreen extends StatefulWidget {
@@ -87,6 +89,16 @@ class _LandingScreenState extends State<LandingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 22),
               child: Column(
                 children: <Widget>[
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      key: const Key('landing_language'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white),
+                      icon: const Icon(Icons.translate_rounded, size: 18),
+                      label: Text(context.watch<AppStore>().language.label),
+                      onPressed: () => pickLanguage(context),
+                    ),
+                  ),
                   const Spacer(flex: 2),
                   const Icon(Icons.mosque_rounded, size: 72, color: AppTheme.gold),
                   const SizedBox(height: 12),
@@ -107,7 +119,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       const Icon(Icons.school_rounded, size: 18, color: AppTheme.goldAccent),
                       const SizedBox(width: 8),
                       Text(
-                        'Graduates and Above',
+                        tr('Graduates and Above'),
                         style: AppTheme.ts(15, FontWeight.w600, color: AppTheme.goldAccent),
                       ),
                     ],
@@ -121,29 +133,29 @@ class _LandingScreenState extends State<LandingScreen> {
                   _authButton(
                     key: const Key('continue_phone'),
                     icon: Icons.phone_outlined,
-                    label: 'Continue with Phone',
+                    label: tr('Continue with Phone'),
                     onPressed: _busy ? null : () => context.push(AppRoutes.signIn),
                   ),
                   const SizedBox(height: 12),
                   _authButton(
                     key: const Key('continue_google'),
                     icon: Icons.g_mobiledata_rounded,
-                    label: _busy ? 'Signing in…' : 'Continue with Google',
+                    label: _busy ? tr('Signing in…') : tr('Continue with Google'),
                     onPressed: _busy ? null : _google,
                   ),
                   const SizedBox(height: 14),
                   Wrap(
                     alignment: WrapAlignment.center,
                     children: <Widget>[
-                      Text('By continuing, you agree to our ', style: small),
+                      Text(tr('By continuing, you agree to our '), style: small),
                       GestureDetector(
                         onTap: () => unawaited(launchUrl(Uri.parse(AppConfig.termsUrl))),
-                        child: Text('Terms', style: link),
+                        child: Text(tr('Terms'), style: link),
                       ),
                       Text(' & ', style: small),
                       GestureDetector(
                         onTap: () => unawaited(launchUrl(Uri.parse(AppConfig.privacyUrl))),
-                        child: Text('Privacy Policy', style: link),
+                        child: Text(tr('Privacy Policy'), style: link),
                       ),
                     ],
                   ),

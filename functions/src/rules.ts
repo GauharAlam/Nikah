@@ -2,6 +2,8 @@
 
 export type ProposalStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
 
+export type ViewWindow = 'total' | 'month' | 'day';
+
 export interface Limits {
   proposalsPerDay: number;
   decisionsPerDay: number;
@@ -15,6 +17,10 @@ export interface Limits {
   staleDays: number;
   reportHoldThreshold: number;
   contactExpiryDays: number;
+  freeProfileLimit: number;
+  freeProfileWindow: ViewWindow;
+  inviteRewardCredits: number;
+  inviteRewardCap: number;
 }
 
 // 5 (0/5 PROPOSALS SENT), 10 decisions and 15 waiting are observed in the
@@ -33,6 +39,10 @@ export const DEFAULT_LIMITS: Limits = {
   staleDays: 45,
   reportHoldThreshold: 3,
   contactExpiryDays: 14,
+  freeProfileLimit: 15,
+  freeProfileWindow: 'total',
+  inviteRewardCredits: 2,
+  inviteRewardCap: 10,
 };
 
 const TRANSITIONS: Record<ProposalStatus, ProposalStatus[]> = {
@@ -56,6 +66,55 @@ export function actorAllowed(
   return false;
 }
 
+/** Proposals and contact requests only run between a man and a woman. */
+export function gendersCompatible(a: unknown, b: unknown): boolean {
+  return (a === 'male' && b === 'female') || (a === 'female' && b === 'male');
+}
+
+/** Codes avoid look-alike characters, so they survive being read aloud. */
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+export function makeCode(random: () => number, length = 6): string {
+  let out = '';
+  for (let i = 0; i < length; i++) out += CODE_ALPHABET[Math.floor(random() * CODE_ALPHABET.length)];
+  return out;
+}
+
+export function normalizeCode(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const code = raw.trim().toUpperCase();
+  return /^[A-Z0-9]{6}$/.test(code) ? code : null;
+}
+
+/** Credits an inviter earns, stopping at the lifetime cap. */
+export function inviteReward(earnedSoFar: number | undefined, limits: Limits): number {
+  return Math.min(limits.inviteRewardCredits, Math.max(0, limits.inviteRewardCap - (earnedSoFar ?? 0)));
+}
+
+export const FAMILY_OPINIONS = ['good', 'discuss', 'no'];
+
+export interface ScoreInput {
+  age?: number; country?: string; location?: string; sect?: string; caste?: string;
+  marriageReadiness?: string; maritalStatus?: string; partnerCaste?: string;
+}
+
+/**
+ * A simple, explainable score from shared details. It says how much two
+ * profiles have in common, nothing more.
+ */
+export function matchScore(me: ScoreInput, them: ScoreInput): number {
+  let score = 50;
+  const city = (s?: string) => (s ?? '').split(',')[0].trim().toLowerCase();
+  if (city(me.location) !== '' && city(me.location) === city(them.location)) score += 15;
+  else if (me.country && me.country === them.country) score += 8;
+  if (me.sect && me.sect === them.sect) score += 10;
+  if (me.marriageReadiness && me.marriageReadiness === them.marriageReadiness) score += 10;
+  if (me.maritalStatus && me.maritalStatus === them.maritalStatus) score += 5;
+  if (me.age !== undefined && them.age !== undefined && Math.abs(me.age - them.age) <= 5) score += 5;
+  if (me.partnerCaste && them.caste && me.partnerCaste === them.caste) score += 5;
+  return Math.min(score, 98);
+}
+
 export const pairId = (a: string, b: string): string => [a, b].sort().join('_');
 export const proposalId = (from: string, to: string): string => `${from}_${to}`;
 
@@ -70,6 +129,17 @@ export function monthKey(now: Date): string {
 /** Counter value for [key], treating a stale key as zero. */
 export function countFor(storedKey: string | undefined, count: number | undefined, key: string): number {
   return storedKey === key ? count ?? 0 : 0;
+}
+
+/** The counting period a free profile view belongs to. */
+export function windowKey(window: ViewWindow, now: Date): string {
+  if (window === 'day') return dayKey(now);
+  if (window === 'month') return monthKey(now);
+  return 'total';
+}
+
+export function viewsLeft(limit: number, used: number): number {
+  return Math.max(0, limit - used);
 }
 
 export function ageOn(dobMillis: number, now: Date): number {

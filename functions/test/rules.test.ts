@@ -126,3 +126,49 @@ test('stale profiles leave discovery', () => {
   assert.equal(r.visibleInDiscovery({ ...base, lastActiveAt: t - 46 * 86400000 }, t), false);
   assert.equal(r.visibleInDiscovery({ ...base, lastActiveAt: t - 44 * 86400000 }, t), true);
 });
+
+test('only a man and a woman are compatible', () => {
+  assert.equal(r.gendersCompatible('male', 'female'), true);
+  assert.equal(r.gendersCompatible('female', 'male'), true);
+  assert.equal(r.gendersCompatible('male', 'male'), false);
+  assert.equal(r.gendersCompatible('female', 'female'), false);
+  assert.equal(r.gendersCompatible(undefined, 'female'), false);
+});
+
+test('free views count by the chosen window', () => {
+  assert.equal(r.windowKey('total', now), 'total');
+  assert.equal(r.windowKey('day', now), '2026-11-01');
+  assert.equal(r.windowKey('month', now), '2026-11');
+  assert.equal(r.DEFAULT_LIMITS.freeProfileLimit, 15);
+});
+
+test('views left never goes below zero', () => {
+  assert.equal(r.viewsLeft(15, 10), 5);
+  assert.equal(r.viewsLeft(15, 15), 0);
+  assert.equal(r.viewsLeft(15, 40), 0);
+});
+
+test('codes are readable and validated', () => {
+  let i = 0;
+  const code = r.makeCode(() => (i++ % 10) / 10);
+  assert.equal(code.length, 6);
+  assert.equal(/[01IO]/.test(code), false);
+  assert.equal(r.normalizeCode(' abc234 '), 'ABC234');
+  assert.equal(r.normalizeCode('short'), null);
+  assert.equal(r.normalizeCode(7), null);
+});
+
+test('invite rewards stop at the cap', () => {
+  assert.equal(r.inviteReward(0, r.DEFAULT_LIMITS), 2);
+  assert.equal(r.inviteReward(9, r.DEFAULT_LIMITS), 1);
+  assert.equal(r.inviteReward(10, r.DEFAULT_LIMITS), 0);
+});
+
+test('match score rises with shared details and stays bounded', () => {
+  const me = { age: 28, location: 'Delhi', country: 'India', sect: 'Sunni', marriageReadiness: 'Ready within 1 year', maritalStatus: 'Never married', partnerCaste: 'Syed' };
+  const same = { ...me, caste: 'Syed' };
+  assert.equal(r.matchScore({}, {}), 50);
+  assert.ok(r.matchScore(me, same) > r.matchScore(me, { age: 45, location: 'London' }));
+  assert.ok(r.matchScore(me, same) <= 98);
+  assert.ok(r.matchScore(me, { country: 'India' }) >= 58);
+});

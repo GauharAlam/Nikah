@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_router.dart';
 import 'config/app_config.dart';
 import 'data/firebase_backend.dart';
+import 'l10n/app_strings.dart';
 import 'providers/app_store.dart';
 import 'services/privacy_shield.dart';
 import 'theme/app_theme.dart';
@@ -105,13 +106,16 @@ class _BarkatNikahAppState extends State<BarkatNikahApp> {
       scaffoldMessengerKey: _messenger,
       theme: AppTheme.lightTheme,
       routerConfig: widget.router,
-      builder: (_, Widget? child) => AppConfig.isDemo
-          ? Banner(
-              message: 'DEMO',
-              location: BannerLocation.topEnd,
-              child: child ?? const SizedBox.shrink(),
-            )
-          : child ?? const SizedBox.shrink(),
+      builder: (BuildContext context, Widget? child) {
+        // Rebuilds every screen when the language changes.
+        final Widget page = KeyedSubtree(
+          key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
+          child: child ?? const SizedBox.shrink(),
+        );
+        return AppConfig.isDemo
+            ? Banner(message: 'DEMO', location: BannerLocation.topEnd, child: page)
+            : page;
+      },
     );
   }
 }

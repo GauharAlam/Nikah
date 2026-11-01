@@ -128,6 +128,24 @@ class FakeBackend implements Backend {
       _record('privacy:$photoPrivacy');
   @override
   Future<void> touchActive() => _record('touchActive');
+  final StreamController<FamilyState> familyStream = StreamController<FamilyState>.broadcast();
+  @override
+  Future<InviteInfo> getInviteCode() async => const InviteInfo('ABC234', 1, 2);
+  @override
+  Future<void> submitEdits() => _record('submitEdits');
+  @override
+  Stream<FamilyState> watchFamily(String member) => familyStream.stream;
+  @override
+  Future<String> createFamilyInvite() async => 'FAM234';
+  @override
+  Future<void> joinFamily(String code, String name) => _record('joinFamily:$code');
+  @override
+  Future<void> removeGuardian(String guardian, {String? member}) => _record('removeGuardian:$guardian');
+  @override
+  Future<void> shareWithFamily(String profileId) => _record('shareFamily:$profileId');
+  @override
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion) =>
+      _record('opinion:$member:$profileId:$opinion');
   final Map<String, Map<String, String>> answers = <String, Map<String, String>>{};
   @override
   Future<void> setJourneyStep(String pairId, String uid, String step) => _record('journey:$step');

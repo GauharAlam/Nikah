@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Header for the seven profile steps, with one progress segment per step.
@@ -48,7 +49,7 @@ class OnboardingShell extends StatelessWidget {
                 onPressed: onBack,
               ),
         title: Text(
-          'Complete your profile',
+          tr('Complete Your Profile'),
           style: AppTheme.ts(17, FontWeight.w800, color: AppTheme.slate900),
         ),
         actions: <Widget>[
@@ -93,11 +94,11 @@ class OnboardingShell extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        '$percent% Complete',
+                        '$percent% ${tr('Complete')}',
                         style: AppTheme.ts(11.5, FontWeight.w700, color: AppTheme.green),
                       ),
                       Text(
-                        _cheers[step - 1],
+                        tr(_cheers[step - 1]),
                         style: AppTheme.ts(11.5, FontWeight.w700, color: AppTheme.green),
                       ),
                     ],

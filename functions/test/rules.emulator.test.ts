@@ -114,6 +114,22 @@ test('answers stay hidden until you give yours', async () => {
   await assertFails(setDoc(doc(a, 'matches/a_c/answers/a'), { answers: {} }));
 });
 
+test('family summaries reach only the member and their guardians', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent'], names: { parent: 'Abu' } });
+    await setDoc(doc(c.firestore(), 'family/a/shortlist/b'), { firstName: 'B' });
+  });
+  await assertSucceeds(getDoc(doc(member('a'), 'family/a/shortlist/b')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('z'), 'family/a/shortlist/b')));
+  await assertFails(setDoc(doc(member('parent', false), 'family/a'), { guardians: ['z'] }));
+  await assertFails(updateDoc(doc(member('parent', false), 'family/a/shortlist/b'), { firstName: 'X' }));
+  await assertFails(getDoc(doc(member('parent', false), 'matches/a_b')));
+  await assertFails(getDoc(doc(member('parent', false), 'matches/a_b/messages/m')));
+  await assertFails(getDoc(doc(member('parent', false), 'accounts/a')));
+  await assertFails(getDoc(doc(member('parent', false), 'accounts/a/documents/name-proof')));
+});
+
 test('notifications: mark read only', async () => {
   await assertSucceeds(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { read: true }));
   await assertFails(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { title: 'x' }));

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_strings.dart';
 import '../../app_router.dart';
 import '../../data/backend.dart';
 import '../../data/option_lists.dart';
@@ -38,6 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final TextEditingController _name;
   late final TextEditingController _phone;
   late final TextEditingController _company;
+  late final TextEditingController _invite;
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _name = TextEditingController(text: _d.displayName);
     _phone = TextEditingController(text: _d.phone);
     _company = TextEditingController(text: _d.company);
+    _invite = TextEditingController(text: _d.inviteCode);
   }
 
   @override
@@ -54,6 +57,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _name.dispose();
     _phone.dispose();
     _company.dispose();
+    _invite.dispose();
     super.dispose();
   }
 
@@ -66,6 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         displayName: _name.text.trim(),
         phone: _phone.text.trim(),
         company: _company.text.trim(),
+        inviteCode: _invite.text.trim().toUpperCase(),
       );
 
   /// What stops the current step being completed, if anything.
@@ -99,7 +104,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (d.qualification.isEmpty) return 'Select your qualification.';
         if (context.read<AppStore>().graduatesOnly &&
             OptionLists.qualifications[d.qualification] == false) {
-          return 'This community is for graduates and degree students.';
+          return tr('This community is for graduates and degree students.');
         }
         if (d.profession.isEmpty) return 'Select your profession.';
       case 6:
@@ -253,7 +258,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                value.isEmpty ? hint : value,
+                value.isEmpty ? hint : tr(value),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTheme.ts(
@@ -318,8 +323,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Column(
       children: <Widget>[
-        option('self', Icons.person_outline_rounded, 'Myself', 'I am creating this profile for myself'),
-        option('family', Icons.people_outline_rounded, 'A family Member', 'I am helping a family member'),
+        option('self', Icons.person_outline_rounded, tr('Myself'), tr('I am creating this profile for myself')),
+        option('family', Icons.people_outline_rounded, tr('A family Member'), tr('I am helping a family member')),
         if (_d.managedBy == 'family')
           CheckboxListTile(
             key: const Key('candidate_consent'),
@@ -336,55 +341,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _label('Full name', required: true, count: _name.text.length, max: 20),
+        _label(tr('Full name'), required: true, count: _name.text.length, max: 20),
         TextField(
           key: const Key('full_name'),
           controller: _name,
           textCapitalization: TextCapitalization.words,
           inputFormatters: <TextInputFormatter>[LengthLimitingTextInputFormatter(20)],
-          decoration: const InputDecoration(hintText: 'Enter your full name'),
+          decoration: InputDecoration(hintText: tr('Enter your full name')),
           onChanged: (_) => setState(() {}),
         ),
-        _label('Gender', required: true),
+        _label(tr('Gender'), required: true),
         _picker(
           key: const Key('pick_gender'),
           icon: Icons.wc_rounded,
           value: _d.hasGender ? _d.gender.title : '',
-          hint: 'Select your gender',
-          onTap: () => _choose('Select gender', <String>['Male', 'Female'], (String v) {
+          hint: tr('Select your gender'),
+          onTap: () => _choose(tr('Select gender'), <String>['Male', 'Female'], (String v) {
             _set(_d.copyWith(
               hasGender: true,
               gender: v == 'Male' ? Gender.male : Gender.female,
             ));
           }),
         ),
-        _label('Marital status', required: true),
+        _label(tr('Marital status'), required: true),
         _picker(
           key: const Key('pick_marital'),
           icon: Icons.favorite_border_rounded,
           value: _d.maritalStatus,
-          hint: 'Select marital status',
+          hint: tr('Select marital status'),
           onTap: () => _choose('Marital Status', OptionLists.maritalStatus,
               (String v) => _set(_d.copyWith(maritalStatus: v))),
         ),
-        _label('Marriage readiness', required: true),
+        _label(tr('Marriage readiness'), required: true),
         _picker(
           key: const Key('pick_readiness'),
           icon: Icons.schedule_rounded,
           value: _d.marriageReadiness,
-          hint: 'Select marriage readiness',
-          onTap: () => _choose('Marriage readiness', OptionLists.marriageReadiness,
+          hint: tr('Select marriage readiness'),
+          onTap: () => _choose(tr('Marriage readiness'), OptionLists.marriageReadiness,
               (String v) => _set(_d.copyWith(marriageReadiness: v))),
         ),
         if (_d.maritalStatus.isNotEmpty &&
             _d.maritalStatus != OptionLists.maritalStatus.first) ...<Widget>[
-          _label('Children', required: true),
+          _label(tr('Children'), required: true),
           _picker(
             key: const Key('pick_children'),
             icon: Icons.child_care_rounded,
             value: _d.children,
-            hint: 'Select',
-            onTap: () => _choose('Children', OptionLists.children,
+            hint: tr('Select'),
+            onTap: () => _choose(tr('Children'), OptionLists.children,
                 (String v) => _set(_d.copyWith(children: v))),
           ),
         ],
@@ -399,12 +404,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _label('Home city', required: true),
+        _label(tr('Home city'), required: true),
         _picker(
           key: const Key('pick_home'),
           icon: Icons.home_outlined,
           value: home,
-          hint: 'Choose home city',
+          hint: tr('Choose home city'),
           onTap: () async {
             final PickedLocation? p = await showLocationSheet(
               context,
@@ -416,13 +421,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             }
           },
         ),
-        _label('Work city'),
+        _label(tr('Work city')),
         if (!_d.workSameAsHome)
           _picker(
             key: const Key('pick_work'),
             icon: Icons.work_outline_rounded,
             value: _d.workCity,
-            hint: 'Current city',
+            hint: tr('Current city'),
             onTap: () async {
               final PickedLocation? p =
                   await showLocationSheet(context, title: 'Your current city');
@@ -431,8 +436,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Same as home city'),
-          subtitle: const Text('Turn off if you live or work in a different city.'),
+          title: Text(tr('Same as home city')),
+          subtitle: Text(tr('Turn off if you live or work in a different city.')),
           value: _d.workSameAsHome,
           onChanged: (bool v) => _set(_d.copyWith(workSameAsHome: v)),
         ),
@@ -445,20 +450,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _label('Date of birth', required: true),
+        _label(tr('Date of birth'), required: true),
         _picker(
           key: const Key('pick_dob'),
           icon: Icons.calendar_month_outlined,
           value: dob == null ? '' : '${dob.day}/${dob.month}/${dob.year}',
-          hint: 'Select your date of birth',
+          hint: tr('Select your date of birth'),
           onTap: _pickDob,
         ),
-        _label('Caste (optional)'),
+        _label(tr('Caste (optional)')),
         _picker(
           key: const Key('pick_caste'),
           icon: Icons.people_outline_rounded,
           value: _d.caste,
-          hint: 'Select caste',
+          hint: tr('Select caste'),
           onTap: () => _choose('Caste', OptionLists.castes,
               (String v) => _set(_d.copyWith(caste: v))),
         ),
@@ -466,38 +471,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SwitchListTile(
             key: const Key('show_caste'),
             contentPadding: EdgeInsets.zero,
-            title: const Text('Show caste on my profile'),
+            title: Text(tr('Show caste on my profile')),
             value: _d.showCaste,
             onChanged: (bool v) => _set(_d.copyWith(showCaste: v)),
           ),
-        _label('Sect (optional)'),
+        _label(tr('Sect (optional)')),
         _picker(
           key: const Key('pick_sect'),
           icon: Icons.mosque_outlined,
           value: _d.sect,
-          hint: 'Select sect',
+          hint: tr('Select sect'),
           onTap: () => _choose('Sect', OptionLists.sects,
               (String v) => _set(_d.copyWith(sect: v))),
         ),
-        _label('Partner caste'),
+        _label(tr('Partner caste')),
         _picker(
           key: const Key('pick_partner_caste'),
           icon: Icons.favorite_border_rounded,
           value: _d.partnerCaste,
-          hint: 'No preference',
-          onTap: () => _choose('Partner caste', OptionLists.castes,
+          hint: tr('No preference'),
+          onTap: () => _choose(tr('Partner caste'), OptionLists.castes,
               (String v) => _set(_d.copyWith(partnerCaste: v))),
         ),
-        _label('Height', required: true),
+        _label(tr('Height'), required: true),
         _picker(
           key: const Key('pick_height'),
           icon: Icons.height_rounded,
           value: _d.height,
-          hint: 'Select your height',
-          onTap: () => _choose('Height', OptionLists.heights,
+          hint: tr('Select your height'),
+          onTap: () => _choose(tr('Height'), OptionLists.heights,
               (String v) => _set(_d.copyWith(height: v))),
         ),
-        _label('Contact number', required: true),
+        _label(tr('Contact number'), required: true),
         Row(
           children: <Widget>[
             DropdownButton<String>(
@@ -519,13 +524,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(13),
                 ],
-                decoration: const InputDecoration(hintText: 'Mobile number'),
+                decoration: InputDecoration(hintText: tr('Mobile number')),
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        Text('Your contact will never be shared without your consent.',
+        Text(tr('Your contact will never be shared without your consent.'),
             style: AppTheme.bodySmall),
       ],
     );
@@ -535,58 +540,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _label('Alma mater', required: true),
+        _label(tr('Alma mater'), required: true),
         _picker(
           key: const Key('pick_alma'),
           icon: Icons.account_balance_outlined,
           value: _d.almaMaters.join(', '),
-          hint: 'Select Alma Mater',
+          hint: tr('Select Alma Mater'),
           onTap: () async {
             final List<String>? v =
                 await showAlmaMaterSheet(context, selected: _d.almaMaters);
             if (v != null) _set(_d.copyWith(almaMaters: v));
           },
         ),
-        _label('Education (completed / pursuing)', required: true),
+        _label(tr('Education (completed / pursuing)'), required: true),
         _picker(
           key: const Key('pick_qualification'),
           icon: Icons.school_outlined,
           value: _d.qualification,
-          hint: 'Select qualification',
+          hint: tr('Select qualification'),
           onTap: () => _choose('Qualification', OptionLists.qualifications.keys.toList(),
               (String v) => _set(_d.copyWith(qualification: v))),
         ),
         if (OptionLists.qualifications[_d.qualification] == false) ...<Widget>[
           const SizedBox(height: 6),
           Text(
-            'This community is for graduates and degree students.',
+            tr('This community is for graduates and degree students.'),
             style: AppTheme.ts(12.5, FontWeight.w600, color: AppTheme.danger),
           ),
         ],
-        _label('Profession', required: true),
+        _label(tr('Profession'), required: true),
         _picker(
           key: const Key('pick_profession'),
           icon: Icons.work_outline_rounded,
           value: _d.profession,
-          hint: 'Select profession',
-          onTap: () => _choose('Profession', OptionLists.professions,
+          hint: tr('Select profession'),
+          onTap: () => _choose(tr('Profession'), OptionLists.professions,
               (String v) => _set(_d.copyWith(profession: v))),
         ),
-        _label('Income range'),
+        _label(tr('Income range')),
         _picker(
           key: const Key('pick_income'),
           icon: Icons.currency_rupee_rounded,
           value: _d.incomeRange,
-          hint: 'Select',
-          onTap: () => _choose('Income range', OptionLists.incomeRanges,
+          hint: tr('Select'),
+          onTap: () => _choose(tr('Income range'), OptionLists.incomeRanges,
               (String v) => _set(_d.copyWith(incomeRange: v))),
         ),
-        _label('Company / business name', count: _company.text.length, max: 40),
+        _label(tr('Company / business name'), count: _company.text.length, max: 40),
         TextField(
           key: const Key('company'),
           controller: _company,
           inputFormatters: <TextInputFormatter>[LengthLimitingTextInputFormatter(40)],
-          decoration: const InputDecoration(hintText: 'Employer, business, or institution'),
+          decoration: InputDecoration(hintText: tr('Employer, business, or institution')),
           onChanged: (_) => setState(() {}),
         ),
       ],
@@ -624,22 +629,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         SwitchListTile(
           key: const Key('photos_after_match'),
           contentPadding: EdgeInsets.zero,
-          title: const Text('Show my photos only after we match'),
-          subtitle: const Text('Others see your details, but not your face, until you match.'),
+          title: Text(tr('Show my photos only after we match')),
+          subtitle: Text(tr('Others see your details, but not your face, until you match.')),
           value: _d.photoPrivacy == 'matches',
           onChanged: (bool v) =>
               _set(_d.copyWith(photoPrivacy: v ? 'matches' : 'everyone')),
         ),
         const SizedBox(height: 18),
-        Text('PLEASE AVOID', style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.slate400)),
+        Text(tr('PLEASE AVOID'), style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.slate400)),
         const SizedBox(height: 10),
-        avoid('AI-edited or filtered photos'),
-        avoid('Blurry or dark photos'),
-        avoid('Group photos'),
+        avoid(tr('AI-edited or filtered photos')),
+        avoid(tr('Blurry or dark photos')),
+        avoid(tr('Group photos')),
         const SizedBox(height: 16),
-        Text('Screenshots are not allowed',
+        Text(tr('Screenshots are not allowed'),
             style: AppTheme.ts(13.5, FontWeight.w800, color: AppTheme.green)),
-        Text('Your pictures stay private and safe', style: AppTheme.bodySmall),
+        Text(tr('Your pictures stay private and safe'), style: AppTheme.bodySmall),
       ],
     );
   }
@@ -662,20 +667,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         row('Name', _d.displayName),
-        row('Status', _d.maritalStatus),
-        row('Readiness', _d.marriageReadiness),
+        row('Status', tr(_d.maritalStatus)),
+        row('Readiness', tr(_d.marriageReadiness)),
         row('Home', <String>[_d.city, _d.homeState, _d.country].where((String s) => s.isNotEmpty).join(', ')),
         row('Caste', _d.caste),
-        row('Height', _d.height),
-        row('Alma mater', _d.almaMaters.join(', ')),
+        row(tr('Height'), _d.height),
+        row(tr('Alma mater'), _d.almaMaters.join(', ')),
         row('Education', _d.qualification),
-        row('Profession', <String>[_d.profession, _d.company].where((String s) => s.isNotEmpty).join(', ')),
+        row(tr('Profession'), <String>[_d.profession, _d.company].where((String s) => s.isNotEmpty).join(', ')),
         row('Photos', '${_d.photos.length}'),
         ListTile(
           key: const Key('add_deen'),
           contentPadding: EdgeInsets.zero,
-          title: const Text('Deen and values (optional)'),
-          subtitle: const Text('Prayer, Quran and lifestyle'),
+          title: Text(tr('Deen and values (optional)')),
+          subtitle: Text(tr('Prayer, Quran and lifestyle')),
           trailing: const Icon(Icons.chevron_right_rounded),
           onTap: () async {
             final AppStore s = context.read<AppStore>();
@@ -686,7 +691,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           },
         ),
         const SizedBox(height: 14),
-        Text('Verification',
+        Text(tr('Verification'),
             style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900)),
         const SizedBox(height: 4),
         Text(
@@ -703,10 +708,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push(AppRoutes.verifyProfile),
           ),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('invite_code_input'),
+          controller: _invite,
+          maxLength: 6,
+          textCapitalization: TextCapitalization.characters,
+          decoration: InputDecoration(
+            hintText: tr('Invite code (optional)'),
+            counterText: '',
+          ),
+        ),
         CheckboxListTile(
           key: const Key('confirm_intent'),
           contentPadding: EdgeInsets.zero,
-          title: const Text('I am here for marriage, and my details are true.'),
+          title: Text(tr('I am here for marriage, and my details are true.')),
           value: _d.intentConfirmed,
           onChanged: (bool? v) => _set(_d.copyWith(intentConfirmed: v ?? false)),
         ),
@@ -727,13 +743,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final (String title, String? subtitle, Widget body) = switch (_step) {
-      1 => ('Who is looking for a Nikah match?', null, _whoStep()),
-      2 => ('Let\'s start with the basics', null, _basicsStep()),
-      3 => ('Choose your cities of residence & work', null, _citiesStep()),
-      4 => ('Personal details', null, _personalStep()),
-      5 => ('Education & profession', null, _educationStep()),
-      6 => ('Add your photos', 'A clear photo helps your profile get noticed.', _photoStep()),
-      _ => ('Review and submit', 'Our team reviews every profile before it goes live.', _reviewStep()),
+      1 => (tr('Who is looking for a Nikah match?'), null, _whoStep()),
+      2 => (tr('Let\'s start with the basics'), null, _basicsStep()),
+      3 => (tr('Choose your cities of residence & work'), null, _citiesStep()),
+      4 => (tr('Personal details'), null, _personalStep()),
+      5 => (tr('Education & profession'), null, _educationStep()),
+      6 => (tr('Add your photos'), 'A clear photo helps your profile get noticed.', _photoStep()),
+      _ => (tr('Review and submit'), 'Our team reviews every profile before it goes live.', _reviewStep()),
     };
     final bool needsPhotos = _step == 6 && _d.photos.isEmpty;
     return OnboardingShell(
@@ -757,12 +773,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           PrimaryButton(
             key: const Key('onboarding_next'),
             label: _busy
-                ? 'Please wait…'
+                ? tr('Please wait…')
                 : needsPhotos
-                    ? 'Add photos'
+                    ? tr('Add photos')
                     : _step == OnboardingShell.totalSteps
-                        ? 'Submit for review'
-                        : 'Next',
+                        ? tr('Submit for review')
+                        : tr('Next'),
             icon: needsPhotos ? Icons.add_photo_alternate_outlined : Icons.arrow_forward_rounded,
             progress: _busy,
             onPressed: _busy ? null : (needsPhotos ? _pickPhotos : _next),

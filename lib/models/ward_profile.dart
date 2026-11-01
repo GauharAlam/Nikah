@@ -108,6 +108,7 @@ class WardProfile {
   final bool intentConfirmed;
   final bool dataConsent;
   final bool candidateConsent;
+  final String inviteCode;
 
   const WardProfile({
     this.displayName = '',
@@ -155,6 +156,7 @@ class WardProfile {
     this.intentConfirmed = false,
     this.dataConsent = false,
     this.candidateConsent = false,
+    this.inviteCode = '',
   });
 
   WardProfile copyWith({
@@ -203,6 +205,7 @@ class WardProfile {
     bool? intentConfirmed,
     bool? dataConsent,
     bool? candidateConsent,
+    String? inviteCode,
   }) {
     return WardProfile(
       displayName: displayName ?? this.displayName,
@@ -250,6 +253,7 @@ class WardProfile {
       intentConfirmed: intentConfirmed ?? this.intentConfirmed,
       dataConsent: dataConsent ?? this.dataConsent,
       candidateConsent: candidateConsent ?? this.candidateConsent,
+      inviteCode: inviteCode ?? this.inviteCode,
     );
   }
 
@@ -311,6 +315,7 @@ class WardProfile {
     'intentConfirmed': intentConfirmed,
     'dataConsent': dataConsent,
     'candidateConsent': candidateConsent,
+    'inviteCode': inviteCode,
   };
 
   static WardProfile fromJson(Map<String, dynamic> json) => WardProfile(
@@ -370,6 +375,7 @@ class WardProfile {
     intentConfirmed: json['intentConfirmed'] as bool? ?? false,
     dataConsent: json['dataConsent'] as bool? ?? false,
     candidateConsent: json['candidateConsent'] as bool? ?? false,
+    inviteCode: json['inviteCode'] as String? ?? '',
   );
 
   /// Full E.164 number, or empty when unset.
@@ -416,6 +422,7 @@ class WardProfile {
         'intentConfirmed': intentConfirmed,
         'dataConsent': dataConsent,
         'candidateConsent': candidateConsent,
+        'inviteCode': inviteCode,
         'prayer': prayerFrequency.label,
         'prayerFrequency': prayerFrequency.name,
         'quranComfort': quranComfort.name,
@@ -460,6 +467,7 @@ class WardProfile {
         intentConfirmed: d['intentConfirmed'] as bool? ?? false,
         dataConsent: d['dataConsent'] as bool? ?? false,
         candidateConsent: d['candidateConsent'] as bool? ?? false,
+        inviteCode: d['inviteCode'] as String? ?? '',
         prayerFrequency: PrayerFrequency.values.asNameMap()[d['prayerFrequency']] ??
             PrayerFrequency.always,
         quranComfort: QuranComfort.values.asNameMap()[d['quranComfort']] ??

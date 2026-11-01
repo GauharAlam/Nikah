@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 
@@ -42,9 +43,9 @@ class HomeShell extends StatelessWidget {
             initialLocation: index == shell.currentIndex,
           ),
           items: <BottomNavigationBarItem>[
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.search_rounded),
-              label: 'Discover',
+              label: tr('Discover'),
             ),
             BottomNavigationBarItem(
               icon: Badge(
@@ -61,22 +62,22 @@ class HomeShell extends StatelessWidget {
                 textColor: Colors.white,
                 child: const Icon(Icons.favorite_rounded),
               ),
-              label: 'Proposals',
+              label: tr('Proposals'),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.people_outline_rounded),
               activeIcon: Icon(Icons.people_rounded),
-              label: 'Matches',
+              label: tr('Matches'),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.auto_awesome_outlined),
               activeIcon: Icon(Icons.auto_awesome_rounded),
-              label: 'Activities',
+              label: tr('Activities'),
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.diamond_outlined),
               activeIcon: Icon(Icons.diamond_rounded),
-              label: 'Premium',
+              label: tr('Premium'),
             ),
             BottomNavigationBarItem(
               icon: _ProfileAvatar(
@@ -87,7 +88,7 @@ class HomeShell extends StatelessWidget {
                 name: store.profile?.displayName ?? 'Amina Al-Mansoor',
                 active: true,
               ),
-              label: 'Profile',
+              label: tr('Profile'),
             ),
           ],
         ),

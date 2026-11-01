@@ -29,6 +29,8 @@ const profile = (id: string, gender: string, extra: object = {}) => ({
   university: 'AMU', education: 'MBA', profession: 'Doctor', location: 'Delhi', approvedAt: Timestamp.now(), ...extra,
 });
 
+const code_ = (p: Promise<unknown>) =>
+  p.then(() => 'ok', (e) => e.code as string);
 const code = (p: Promise<unknown>) => p.then(() => 'ok', (e) => e.code as string);
 let db: FirebaseFirestore.Firestore;
 
@@ -57,7 +59,7 @@ test('discovery only returns the opposite gender and hides private fields', asyn
   const m = await user('m', { approved: true });
   const { profiles } = await m('fetchIntroductions');
   assert.ok(profiles.length >= 1);
-  assert.ok(profiles.every((p: any) => p.id !== 'm' && p.id !== 'k'));
+  assert.ok(profiles.every((p: any) => p.id !== 'm' && p.id !== 'k'), 'male members see only women');
   assert.ok(profiles.every((p: any) => p.dateOfBirth === undefined && p.age >= 18));
 });
 
@@ -115,6 +117,13 @@ test('contact needs the recipient, and a repeat request is not charged twice', a
   assert.equal((await db.doc(`contactShares/${pair}`).get()).data()?.phones.h, '+911111111111');
 });
 
+test('same-gender proposals and contact requests are refused', async () => {
+  const m = await user('m', { approved: true });
+  assert.equal(await code(m('sendProposal', { to: 'k' })), 'functions/not-found');
+  assert.equal(await code(m('requestContact', { to: 'k' })), 'functions/not-found');
+  assert.equal((await db.doc('proposals/m_k').get()).exists, false);
+});
+
 test('a declined contact request gives the credit back', async () => {
   const k = await user('k', { approved: true });
   const g = await user('g', { approved: true });
@@ -129,6 +138,7 @@ test('a declined contact request gives the credit back', async () => {
 test('private photos stay hidden from a viewer who is not matched', async () => {
   await db.doc('profiles/p1').set(profile('p1', 'female', { photos: ['https://x/p.jpg'], photoPrivacy: 'matches', showCaste: false }));
   const k = await user('k', { approved: true });
+  await db.doc('accounts/k/viewed/p1').set({ at: Timestamp.now() });
   const [card] = (await k('getProfiles', { ids: ['p1'] })).profiles;
   assert.deepEqual(card.photos, []);
   assert.equal(card.photosHidden, true);
@@ -162,6 +172,92 @@ test('submission needs an ID document', async () => {
   assert.equal(await code(u('submitProfile')), 'functions/failed-precondition');
   await db.doc('accounts/sub/documents/name-proof').set({ status: 'pending' });
   assert.equal((await u('submitProfile')).stage, 'submitted');
+});
+
+test('free members stop at the limit, repeats are free, and premium is unlimited', async () => {
+  await db.doc('config/app').set({ limits: { freeProfileLimit: 2 } });
+  for (const id of ['v1', 'v2', 'v3', 'v4']) await db.doc(`profiles/${id}`).set(profile(id, 'female'));
+  await db.doc('profiles/viewer').set(profile('viewer', 'male'));
+  const free = await user('viewer', { approved: true });
+
+  const first = await free('fetchIntroductions');
+  assert.equal(first.profiles.length, 2);
+  assert.equal(first.freeLeft, 0);
+  assert.equal(first.limitReached, true);
+  const shown = first.profiles.map((p: any) => p.id).sort();
+
+  const again = await free('fetchIntroductions');
+  assert.deepEqual(again.profiles.map((p: any) => p.id).sort(), shown, 'a repeat shows nothing new');
+  assert.equal((await db.doc('accounts/viewer').get()).data()?.viewCount, 2);
+
+  const hiddenId = ['v1', 'v2', 'v3', 'v4'].find((id) => !shown.includes(id));
+  assert.equal((await free('getProfiles', { ids: [hiddenId] })).profiles.length, 0);
+  assert.equal((await free('getProfiles', { ids: [shown[0]] })).profiles.length, 1);
+
+  await db.doc('accounts/viewer').set({ premiumUntil: Timestamp.fromMillis(Date.now() + 86400000) }, { merge: true });
+  const paid = await free('fetchIntroductions');
+  assert.ok(paid.profiles.length > 2);
+  assert.equal(paid.limitReached, false);
+  assert.equal((await free('getProfiles', { ids: [hiddenId] })).profiles.length, 1);
+  await db.doc('config/app').delete();
+});
+
+test('a guardian joins once with a code, gives opinions, and can be removed', async () => {
+  await db.doc('profiles/mem').set(profile('mem', 'male'));
+  await db.doc('profiles/cand').set(profile('cand', 'female'));
+  await db.doc('profiles/nosh').set(profile('nosh', 'female', { allowFamilyShare: false }));
+  const m = await user('mem', { approved: true });
+  const parent = await user('parent', {});
+  const stranger = await user('stranger', {});
+  await db.doc('accounts/mem/viewed/cand').set({ at: Timestamp.now() });
+  await db.doc('accounts/mem/viewed/nosh').set({ at: Timestamp.now() });
+
+  const { code } = await m('createFamilyInvite');
+  assert.equal(await code_(m('joinFamily', { code, name: 'Me' })), 'functions/invalid-argument');
+  await parent('joinFamily', { code, name: 'Abu' });
+  assert.equal(await code_(stranger('joinFamily', { code, name: 'X' })), 'functions/not-found');
+
+  await m('shareWithFamily', { profile: 'cand' });
+  assert.equal(await code_(m('shareWithFamily', { profile: 'nosh' })), 'functions/permission-denied');
+  assert.equal(await code_(m('shareWithFamily', { profile: 'h' })), 'functions/not-found');
+  const summary = (await db.doc('family/mem/shortlist/cand').get()).data();
+  assert.equal(summary?.photos, undefined);
+  assert.equal(summary?.phone, undefined);
+
+  await parent('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'good' });
+  assert.equal(await code_(stranger('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'no' })), 'functions/permission-denied');
+  assert.equal(await code_(parent('sendProposal', { to: 'cand' })), 'functions/permission-denied');
+
+  await m('removeGuardian', { guardian: 'parent' });
+  assert.equal(await code_(parent('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'no' })), 'functions/permission-denied');
+});
+
+test('an invite earns credits once, only after approval, and not for yourself', async () => {
+  const a = await user('inviter', { approved: true });
+  const { code } = await a('getInviteCode');
+  assert.equal((await a('getInviteCode')).code, code);
+  await db.doc('drafts/inv1').set({ fullName: 'I', gender: 'male', dateOfBirth: Date.UTC(1998, 0, 1), photos: [], inviteCode: code });
+  await db.doc('accounts/inv1').set({ stage: 'submitted' });
+  await adminAuth().createUser({ uid: 'inv1' }).catch(() => undefined);
+  assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, undefined);
+  const rev = await user('rev', { reviewer: true });
+  await rev('reviewProfile', { uid: 'inv1', approve: true });
+  assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, 2);
+  await rev('reviewProfile', { uid: 'inv1', approve: true });
+  assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, 2);
+});
+
+test('approved edits wait for review, then publish', async () => {
+  const e = await user('editor', { approved: true });
+  await db.doc('accounts/editor').set({ stage: 'approved' });
+  await db.doc('profiles/editor').set(profile('editor', 'male', { name: 'Old' }));
+  await db.doc('drafts/editor').set({ fullName: 'New', gender: 'male', dateOfBirth: Date.UTC(1998, 0, 1), photos: [] });
+  await e('submitEdits');
+  assert.equal((await db.doc('profiles/editor').get()).data()?.name, 'Old');
+  const rev = await user('rev', { reviewer: true });
+  await rev('reviewProfile', { uid: 'editor', approve: true });
+  assert.equal((await db.doc('profiles/editor').get()).data()?.name, 'New');
+  assert.equal((await db.doc('accounts/editor').get()).data()?.editsPending, false);
 });
 
 test.after(async () => { /* client apps close with the process */ void deleteApp; });

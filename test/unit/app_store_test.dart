@@ -7,6 +7,7 @@ import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/models/match_profile.dart';
 import 'package:nikah_app/models/proposal.dart';
 import 'package:nikah_app/models/verification_doc.dart';
+import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/providers/app_store.dart';
 
 /// Builds a store over mock preferences representing a member who has already
@@ -410,6 +411,88 @@ void main() {
       expect(store.isLoggedIn, isFalse);
       expect(store.isBlocked('bilal-4'), isFalse);
       expect(store.reports, isEmpty);
+    });
+  });
+
+  group('gender', () {
+    Future<AppStore> storeFor(Gender gender) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'bk_stage': 'active',
+        'bk_onboarded': true,
+        'bk_profile': WardProfile.encode(
+          WardProfile(displayName: 'Test', hasGender: true, gender: gender),
+        ),
+      });
+      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      addTearDown(store.dispose);
+      return store;
+    }
+
+    test('men are shown only women', () async {
+      final AppStore store = await storeFor(Gender.male);
+      expect(store.discoveredProfiles, isNotEmpty);
+      expect(store.discoveredProfiles.every((MatchProfile p) => p.gender == 'female'), isTrue);
+      expect(store.chatMatches.every((MatchProfile p) => p.gender == 'female'), isTrue);
+      expect(store.incomingProposalProfiles.every((MatchProfile p) => p.gender == 'female'), isTrue);
+    });
+
+    test('women are shown only men', () async {
+      final AppStore store = await storeFor(Gender.female);
+      expect(store.discoveredProfiles, isNotEmpty);
+      expect(store.discoveredProfiles.every((MatchProfile p) => p.gender == 'male'), isTrue);
+      expect(store.incomingProposalProfiles.every((MatchProfile p) => p.gender == 'male'), isTrue);
+    });
+
+    test('an older install with the wrong sample data is corrected', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'bk_stage': 'active',
+        'bk_onboarded': true,
+        'bk_approved': 'zayd-1',
+        'bk_chats': '{}',
+        'bk_profile': WardProfile.encode(
+          const WardProfile(hasGender: true, gender: Gender.male),
+        ),
+      });
+      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      addTearDown(store.dispose);
+      expect(store.isApproved('zayd-1'), isFalse);
+      expect(store.chatMatches.single.gender, 'female');
+    });
+  });
+
+  group('free profile limit', () {
+    test('stops at the limit, and seen profiles stay available', () async {
+      final AppStore store = await _activeStore();
+      expect(store.freeProfilesLeft, AppStore.freeProfileLimit);
+
+      for (final MatchProfile p in store.discoveredProfiles.toList()) {
+        store.markProfileViewed(p.id);
+      }
+
+      expect(store.freeProfilesLeft, 0);
+      expect(store.reachedProfileLimit, isTrue);
+      expect(store.discoveredProfiles.length, AppStore.freeProfileLimit);
+
+      final int shown = store.discoveredProfiles.length;
+      store.markProfileViewed('demo-male-15');
+      expect(store.freeProfilesLeft, 0);
+      expect(store.discoveredProfiles.length, shown);
+    });
+
+    test('seeing the same profile twice counts once', () async {
+      final AppStore store = await _activeStore();
+      final String id = store.discoveredProfiles.first.id;
+      store.markProfileViewed(id);
+      store.markProfileViewed(id);
+      expect(store.freeProfilesLeft, AppStore.freeProfileLimit - 1);
+    });
+
+    test('the count survives a reload', () async {
+      final AppStore store = await _activeStore();
+      store.markProfileViewed(store.discoveredProfiles.first.id);
+      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      addTearDown(reloaded.dispose);
+      expect(reloaded.freeProfilesLeft, AppStore.freeProfileLimit - 1);
     });
   });
 

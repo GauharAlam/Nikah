@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../data/backend.dart';
 import '../providers/app_store.dart';
@@ -32,7 +33,7 @@ class ReviewStatusScreen extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                rejected ? 'Your profile needs changes' : 'Your profile is under review',
+                rejected ? tr('Your profile needs changes') : tr('Your profile is under review'),
                 textAlign: TextAlign.center,
                 style: AppTheme.ts(22, FontWeight.w800, color: AppTheme.slate900),
               ),
@@ -49,16 +50,16 @@ class ReviewStatusScreen extends StatelessWidget {
               if (rejected)
                 PrimaryButton(
                   key: const Key('edit_after_rejection'),
-                  label: 'Update my profile',
+                  label: tr('Update my profile'),
                   onPressed: () => context.go(AppRoutes.onboarding),
                 ),
               TextButton(
                 onPressed: () => context.push(AppRoutes.verifyProfile),
-                child: const Text('Add verification documents'),
+                child: Text(tr('Add verification documents')),
               ),
               TextButton(
                 onPressed: store.signOut,
-                child: const Text('Log out'),
+                child: Text(tr('Log out')),
               ),
             ],
           ),

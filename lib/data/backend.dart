@@ -34,6 +34,7 @@ class AccountState {
     this.contactCreditsLeft = 0,
     this.premiumUntil,
     this.plan = '',
+    this.familyOf,
   });
 
   final ReviewStage stage;
@@ -46,6 +47,9 @@ class AccountState {
   final int contactCreditsLeft;
   final DateTime? premiumUntil;
   final String plan;
+
+  /// The member whose circle this account belongs to, if any.
+  final String? familyOf;
 
   bool get isPremium =>
       premiumUntil != null && premiumUntil!.isAfter(DateTime.now());
@@ -67,8 +71,19 @@ class AppLimits {
 }
 
 class IntroductionPage {
-  const IntroductionPage(this.profiles, this.cursor);
+  const IntroductionPage(
+    this.profiles,
+    this.cursor, {
+    this.freeLeft,
+    this.freeLimit = 15,
+    this.limitReached = false,
+  });
   final List<MatchProfile> profiles;
+
+  /// Free views left. Null for premium members.
+  final int? freeLeft;
+  final int freeLimit;
+  final bool limitReached;
 
   /// Null when there is nothing further to load.
   final int? cursor;
@@ -107,6 +122,41 @@ class ContactRequestRecord {
   final String profileId;
   final bool isIncoming;
   final String status;
+}
+
+class InviteInfo {
+  const InviteInfo(this.code, this.invited, this.earned);
+  final String code;
+  final int invited;
+  final int earned;
+}
+
+/// A profile summary shared with family. Never holds a photo or contact.
+class FamilyPick {
+  const FamilyPick({
+    required this.id,
+    required this.title,
+    required this.summary,
+    this.opinions = const <String, String>{},
+  });
+
+  final String id;
+  final String title;
+  final String summary;
+
+  /// Guardian uid to opinion.
+  final Map<String, String> opinions;
+}
+
+class FamilyState {
+  const FamilyState({
+    this.guardians = const <String, String>{},
+    this.shortlist = const <FamilyPick>[],
+  });
+
+  /// Guardian uid to display name.
+  final Map<String, String> guardians;
+  final List<FamilyPick> shortlist;
 }
 
 /// Server failure with text that is safe to show a member.
@@ -167,6 +217,18 @@ abstract class Backend {
   Future<void> reportProfile(String target, String reason);
   Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
   Future<void> touchActive();
+
+  // Invites and edits
+  Future<InviteInfo> getInviteCode();
+  Future<void> submitEdits();
+
+  // Family Circle
+  Stream<FamilyState> watchFamily(String member);
+  Future<String> createFamilyInvite();
+  Future<void> joinFamily(String code, String name);
+  Future<void> removeGuardian(String guardian, {String? member});
+  Future<void> shareWithFamily(String profileId);
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion);
 
   // Nikah Journey
   Future<void> setJourneyStep(String pairId, String uid, String step);

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/backend.dart';
 import '../data/option_lists.dart';
+import '../l10n/app_strings.dart';
 import '../models/chat_message.dart';
 import '../models/filters.dart';
 import '../models/meeting.dart';
@@ -27,6 +28,7 @@ enum AuthStage { guest, onboarding, active }
 /// All sections are persisted through [SharedPreferences].
 class AppStore extends ChangeNotifier {
   AppStore(this._prefs) {
+    _restoreLanguage();
     if (usesLocalState) _load();
   }
 
@@ -40,7 +42,23 @@ class AppStore extends ChangeNotifier {
   final ValueNotifier<String?> errors = ValueNotifier<String?>(null);
 
   // ─── Directory ────────────────────────────────────────────────────────────
-  List<MatchProfile> get directory => MatchProfile.seeds;
+  /// Men see women and women see men. On a real backend the server applies this.
+  List<MatchProfile> get directory => _viewerIsMale ? _demoWomen : _demoMen;
+
+  static final List<MatchProfile> _demoWomen = <MatchProfile>[
+    ...MatchProfile.femaleSeeds,
+    ...MatchProfile.demoExtras('female'),
+  ];
+  static final List<MatchProfile> _demoMen = <MatchProfile>[
+    ...MatchProfile.seeds,
+    ...MatchProfile.demoExtras('male'),
+  ];
+
+  bool get _viewerIsMale =>
+      (_profile?.hasGender ?? false) && _profile!.gender == Gender.male;
+
+  /// The sample match in demo builds, always of the opposite gender.
+  MatchProfile get _demoMatch => directory.first;
   MatchProfile profileById(String id) => MatchProfile.byId(id);
 
   // ─── Sign-in ──────────────────────────────────────────────────────────────
@@ -106,6 +124,92 @@ class AppStore extends ChangeNotifier {
   /// Demo builds have no reviewer, so a submission is approved at once.
   Future<void> submitProfile() async {
     submitOnboarding();
+  }
+
+  // ─── Language ─────────────────────────────────────────────────────────────
+  static const String _kLanguage = 'bk_language';
+
+  void _restoreLanguage() {
+    AppStrings.current =
+        AppLanguage.values.asNameMap()[_prefs.getString(_kLanguage)] ?? AppLanguage.english;
+  }
+
+  AppLanguage get language => AppStrings.current;
+
+  void setLanguage(AppLanguage next) {
+    AppStrings.current = next;
+    unawaited(_prefs.setString(_kLanguage, next.name));
+    notifyListeners();
+  }
+
+  // ─── Invites, edits and family ────────────────────────────────────────────
+  String get uid => 'demo';
+
+  /// Demo builds have no server, so this code earns nothing.
+  Future<InviteInfo> inviteInfo() async => const InviteInfo('DEMO24', 0, 0);
+
+  /// Publishes profile edits. Demo builds have no review step.
+  void submitEdits() {}
+
+  FamilyState _family = const FamilyState();
+  FamilyState get family => _family;
+
+  /// The circle this account joined as a guardian, if any.
+  FamilyState? get guardianView => null;
+  bool get isGuardian => false;
+
+  Future<String> createFamilyInvite() async => 'DEMO24';
+
+  Future<void> joinFamily(String code, String name) async {
+    throw const BackendException('Family codes work once the app is connected.');
+  }
+
+  Future<void> removeGuardian(String guardian) async {}
+
+  Future<void> shareWithFamily(String profileId) async {
+    final MatchProfile p = profileById(profileId);
+    if (_family.shortlist.any((FamilyPick x) => x.id == profileId)) return;
+    _family = FamilyState(
+      guardians: _family.guardians,
+      shortlist: <FamilyPick>[
+        ..._family.shortlist,
+        FamilyPick(
+          id: p.id,
+          title: '${p.firstName}, ${p.age}',
+          summary: <String>[p.education, p.profession, p.location]
+              .where((String s) => s.isNotEmpty)
+              .join(' · '),
+        ),
+      ],
+    );
+    notifyListeners();
+  }
+
+  void giveFamilyOpinion(String profileId, String opinion) {}
+
+  // ─── Free profile limit ───────────────────────────────────────────────────
+  static const String _kViewed = 'bk_viewed';
+  static const int freeProfileLimit = 15;
+
+  Set<String> get _viewed => _decodeSet(_prefs.getString(_kViewed));
+
+  /// Free views left, or null for premium members.
+  int? get freeProfilesLeft {
+    if (isPremium) return null;
+    final int left = freeProfileLimit - _viewed.length;
+    return left < 0 ? 0 : left;
+  }
+
+  bool get reachedProfileLimit => freeProfilesLeft == 0;
+  int get freeProfileAllowance => freeProfileLimit;
+
+  /// Demo builds count a profile when it is first shown. Real builds count on
+  /// the server when a profile is delivered.
+  void markProfileViewed(String id) {
+    final Set<String> viewed = _viewed;
+    if (isPremium || viewed.contains(id) || viewed.length >= freeProfileLimit) return;
+    unawaited(_prefs.setString(_kViewed, <String>{...viewed, id}.join(',')));
+    notifyListeners();
   }
 
   // ─── Discovery paging ─────────────────────────────────────────────────────
@@ -288,6 +392,7 @@ class AppStore extends ChangeNotifier {
     unawaited(_prefs.setString(_kProfile, WardProfile.encode(_profile!)));
     unawaited(_prefs.setBool(_kOnboarded, true));
     unawaited(_prefs.setString(_kStage, 'active'));
+    _alignDemoData();
     notifyListeners();
   }
 
@@ -303,12 +408,22 @@ class AppStore extends ChangeNotifier {
   MatchFilters get filters => _filters;
 
   /// Cards still visible on the discovery deck (connected people leave it).
-  List<MatchProfile> get discoveredProfiles => directory
-      .where((p) => !_approved.contains(p.id))
-      .where((p) => !_skipped.contains(p.id))
-      .where((p) => !_blocked.contains(p.id))
-      .where((p) => _filters.acceptsProfile(p))
-      .toList();
+  List<MatchProfile> get discoveredProfiles {
+    final Set<String> viewed = _viewed;
+    int room = freeProfilesLeft ?? directory.length;
+    return directory
+        .where((p) => !_approved.contains(p.id))
+        .where((p) => !_skipped.contains(p.id))
+        .where((p) => !_blocked.contains(p.id))
+        .where((p) => _filters.acceptsProfile(p))
+        .where((p) {
+          if (viewed.contains(p.id)) return true;
+          if (room <= 0) return false;
+          room--;
+          return true;
+        })
+        .toList();
+  }
 
   List<MatchProfile> get introRequests =>
       directory.where((p) => _intros.contains(p.id)).toList();
@@ -1215,19 +1330,44 @@ class AppStore extends ChangeNotifier {
     if (_logs.isEmpty) _seedLogs();
     if (_notifications.isEmpty) _seedNotifications();
     if (_meetings.isEmpty) _seedMeeting();
+    _alignDemoData();
+  }
+
+  /// Keeps sample data on the opposite gender, including after a member's
+  /// gender is first set or an older install is reopened.
+  void _alignDemoData() {
+    final Set<String> allowed = directory.map((MatchProfile p) => p.id).toSet();
+    bool foreign(String id) =>
+        !allowed.contains(id) && MatchProfile.byId(id).id == id;
+    final bool stale = _approved.any(foreign) ||
+        _chats.keys.any(foreign) ||
+        _proposalRecords.any((Proposal p) => foreign(p.profileId));
+    if (stale) {
+      _approved = _approved.where((String id) => !foreign(id)).toSet();
+      _intros = _intros.where((String id) => !foreign(id)).toSet();
+      _likes = _likes.where((String id) => !foreign(id)).toSet();
+      _skipped = _skipped.where((String id) => !foreign(id)).toSet();
+      _chats = <String, List<ChatMessage>>{
+        for (final String id in _chats.keys)
+          if (!foreign(id)) id: _chats[id]!,
+      };
+      _proposalRecords = _proposalRecords
+          .where((Proposal p) => !foreign(p.profileId))
+          .toList();
+      _seedLogs();
+      _seedNotifications();
+      _seedMeeting();
+      _saveChats();
+      _saveBarkatState();
+    }
+    if (!_onboarded && _stage != AuthStage.active) return;
     if (_chats.isEmpty) {
-      if (_onboarded || _stage == AuthStage.active) {
-        seedThreadIfEmpty(MatchProfile.zayd.id);
-        _approved = <String>{..._approved, MatchProfile.zayd.id};
-        unawaited(_prefs.setString(
-            _kApproved, _approved.toList(growable: false).join(',')));
-      }
+      seedThreadIfEmpty(_demoMatch.id);
+      _approved = <String>{..._approved, _demoMatch.id};
     }
-    if (_intros.isEmpty && (_onboarded || _stage == AuthStage.active)) {
-      _intros = <String>{MatchProfile.zayd.id};
-      unawaited(
-          _prefs.setString(_kIntros, _intros.toList(growable: false).join(',')));
-    }
+    if (_intros.isEmpty) _intros = <String>{_demoMatch.id};
+    unawaited(_prefs.setString(_kApproved, _approved.toList(growable: false).join(',')));
+    unawaited(_prefs.setString(_kIntros, _intros.toList(growable: false).join(',')));
     _seedDemoIncomingProposals();
   }
 
@@ -1244,14 +1384,14 @@ class AppStore extends ChangeNotifier {
       ..._proposalRecords,
       Proposal(
         id: _nextId('prp'),
-        profileId: 'farhan-2',
+        profileId: directory[1].id,
         direction: ProposalDirection.incoming,
         status: ProposalStatus.pending,
         createdAt: now.subtract(const Duration(hours: 6)),
       ),
       Proposal(
         id: _nextId('prp'),
-        profileId: 'salman-5',
+        profileId: directory[4].id,
         direction: ProposalDirection.incoming,
         status: ProposalStatus.pending,
         createdAt: now.subtract(const Duration(days: 1, hours: 2)),
@@ -1421,8 +1561,8 @@ class AppStore extends ChangeNotifier {
         kind: ActivityKind.intro,
         title: 'Intro approved — Ta\'aruf open',
         detail:
-            '${MatchProfile.zayd.waliName} confirmed mutual intent; chaperoned '
-            'chat with ${MatchProfile.zayd.firstName} unlocked.',
+            '${_demoMatch.waliName} confirmed mutual intent; chaperoned '
+            'chat with ${_demoMatch.firstName} unlocked.',
         createdAt: DateTime.now().subtract(const Duration(hours: 21)),
       ),
       ActivityLogEntry(
@@ -1446,15 +1586,15 @@ class AppStore extends ChangeNotifier {
         body:
             'A wali-verified profile in Manchester fits your preferences well.',
         createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
-        deepLink: '/match/${MatchProfile.imran.id}',
+        deepLink: '/match/${directory[2].id}',
       ),
       NotificationItem(
         id: _nextId('ntf'),
         type: NotificationType.chat,
-        title: '${MatchProfile.zayd.firstName} sent a message',
+        title: '${_demoMatch.firstName} sent a message',
         body: 'Open the chaperoned thread within guardian supervision.',
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        deepLink: '/chat/${MatchProfile.zayd.id}',
+        deepLink: '/chat/${_demoMatch.id}',
       ),
       NotificationItem(
         id: _nextId('ntf'),
@@ -1471,7 +1611,7 @@ class AppStore extends ChangeNotifier {
         type: NotificationType.milestone,
         title: 'Upcoming chaperoned call',
         body:
-            'Virtual family call with ${MatchProfile.zayd.firstName} on '
+            'Virtual family call with ${_demoMatch.firstName} on '
             '${fmtDate(DateTime.now().add(const Duration(days: 3)))} at 6:30 PM.',
         createdAt: DateTime.now().subtract(const Duration(hours: 26)),
         isRead: true,
@@ -1495,7 +1635,7 @@ class AppStore extends ChangeNotifier {
     _meetings = <MeetingRequest>[
       MeetingRequest(
         id: _nextId('mtg'),
-        matchId: MatchProfile.zayd.id,
+        matchId: _demoMatch.id,
         format: MeetingFormat.video,
         scheduledAt: DateTime.now()
             .add(const Duration(days: 3))
@@ -1514,7 +1654,7 @@ class AppStore extends ChangeNotifier {
       _kLogs, _kMeetings, _kNotifications, _kSettings, _kSkipped,
       _kProposals, _kProposalDay, _kProposalCount, _kContactCredits,
       _kContactRequests, _kIncoming, _kDocs, _kSharedContacts, _kUnmatched,
-      _kProposalRecords, _kBlocked, _kReports, _kPledge,
+      _kProposalRecords, _kBlocked, _kReports, _kPledge, _kViewed,
     ]) {
       unawaited(_prefs.remove(key));
     }

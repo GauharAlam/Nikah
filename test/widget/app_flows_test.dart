@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
 import 'package:nikah_app/app_router.dart';
+import 'package:nikah_app/l10n/app_strings.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/models/verification_doc.dart';
+import 'package:nikah_app/models/match_profile.dart';
 import 'package:nikah_app/models/nikah_journey.dart';
 import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/widgets/app_switch.dart';
@@ -331,6 +333,56 @@ void main() {
 
     expect((await store.myAnswers('zayd-1'))['deen1'], 'Five prayers');
     expect(await store.theirAnswers('zayd-1'), isNull);
+    await drain(tester);
+  });
+
+  testWidgets('a member who used the free profiles sees the plans prompt', (
+    WidgetTester tester,
+  ) async {
+    final (AppStore store, _) = await pumpApp(tester, prefs: activePrefs);
+    expect(find.byKey(const Key('free_profiles_left')), findsOneWidget);
+    for (final MatchProfile p in store.discoveredProfiles.toList()) {
+      store.markProfileViewed(p.id);
+    }
+    for (final MatchProfile p in store.discoveredProfiles.toList()) {
+      store.markIncompatible(p.id);
+    }
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('unlock_more')), findsOneWidget);
+    await tap(tester, find.byKey(const Key('see_plans')));
+    expect(find.text('Plans'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('the app can be switched to Hindi from the first screen', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(() => AppStrings.current = AppLanguage.english);
+    await pumpApp(tester);
+    await tap(tester, find.byKey(const Key('landing_language')));
+    await tap(tester, find.text('हिन्दी'));
+    expect(find.text('फ़ोन से जारी रखें'), findsOneWidget);
+    expect(find.text('Continue with Phone'), findsNothing);
+    await drain(tester);
+  });
+
+  testWidgets('the profile tab links to the new features', (WidgetTester tester) async {
+    final (_, GoRouter router) = await pumpApp(tester, prefs: activePrefs);
+    router.go(AppRoutes.invite);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('invite_code')), findsOneWidget);
+    router.go(AppRoutes.familyCircle);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('invite_family')), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('a profile can be shared with the Family Circle', (WidgetTester tester) async {
+    final (AppStore store, GoRouter router) = await pumpApp(tester, prefs: activePrefs);
+    unawaited(router.push(AppRoutes.matchDetail('imran-3')));
+    await tester.pumpAndSettle();
+    await tap(tester, find.byKey(const Key('share_family_circle')));
+    expect(store.family.shortlist.single.id, 'imran-3');
     await drain(tester);
   });
 

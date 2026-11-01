@@ -12,6 +12,12 @@ class AppConfig {
   /// support yet, so they stay out of production builds.
   static bool get guardianFeatures => isDemo;
 
+  /// Shown in invites and on the biodata. Set to the store link before release.
+  static const String appLink = String.fromEnvironment(
+    'APP_LINK',
+    defaultValue: 'https://example.com/app',
+  );
+
   /// Where members and policies are sent. Set before release.
   static const String supportEmail = String.fromEnvironment(
     'SUPPORT_EMAIL',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../models/match_profile.dart';
 import '../models/proposal.dart';
@@ -40,7 +41,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Proposals',
+          tr('Proposals'),
           style: AppTheme.ts(17, FontWeight.w800, color: AppTheme.slate900),
         ),
       ),
@@ -72,9 +73,9 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
           const SizedBox(height: 14),
           if (_tab == _ProposalTab.sent)
             if (sent.isEmpty)
-              const EmptyState(
+              EmptyState(
                 icon: Icons.favorite_outline_rounded,
-                title: 'No proposals yet',
+                title: tr('No proposals yet'),
                 body: 'Tap the green heart on a profile to send your first '
                     'proposal.',
               )
@@ -88,9 +89,9 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
               ],
           if (_tab == _ProposalTab.received)
             if (received.isEmpty && store.incomingContactRequests.isEmpty)
-              const EmptyState(
+              EmptyState(
                 icon: Icons.mark_email_read_outlined,
-                title: 'No proposals received',
+                title: tr('No proposals received'),
                 body: 'When someone sends you a proposal it will appear here '
                     'for you to accept or decline.',
               )
@@ -112,7 +113,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     IconButton(
-                      tooltip: 'Decline',
+                      tooltip: tr('Decline'),
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => store.respondContact(p.id, accept: false),
                     ),
@@ -383,14 +384,14 @@ class _ReceivedProposalCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text('Decline'),
+                  child: Text(tr('Decline')),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: PrimaryButton(
                   key: Key('accept_proposal_${profile.id}'),
-                  label: 'Accept',
+                  label: tr('Accept'),
                   onPressed: () {
                     if (context.read<AppStore>().acceptProposal(profile.id)) {
                       showSuccessSnack(

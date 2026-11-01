@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
 import '../data/option_lists.dart';
@@ -95,14 +96,14 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
           padding: const EdgeInsets.all(22),
           children: <Widget>[
             Text(
-              codeStep ? 'Enter the code' : 'Your phone number',
+              codeStep ? tr('Enter the code') : tr('Your phone number'),
               style: AppTheme.ts(24, FontWeight.w800, color: AppTheme.slate900),
             ),
             const SizedBox(height: 8),
             Text(
               codeStep
                   ? 'We sent a 6-digit code to $_e164.'
-                  : 'We will text you a code to confirm it is you.',
+                  : tr('We will text you a code to confirm it is you.'),
               style: AppTheme.bodySmall,
             ),
             const SizedBox(height: 24),
@@ -133,7 +134,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(13),
                       ],
-                      decoration: const InputDecoration(hintText: 'Mobile number'),
+                      decoration: InputDecoration(hintText: tr('Mobile number')),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
@@ -150,7 +151,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(6),
                 ],
-                decoration: const InputDecoration(hintText: '6-digit code'),
+                decoration: InputDecoration(hintText: tr('6-digit code')),
                 onChanged: (_) => setState(() {}),
               ),
             if (_error != null) ...<Widget>[
@@ -164,7 +165,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
             const SizedBox(height: 22),
             PrimaryButton(
               key: const Key('auth_submit'),
-              label: _busy ? 'Please wait…' : (codeStep ? 'Verify' : 'Send code'),
+              label: _busy ? tr('Please wait…') : (codeStep ? tr('Verify') : tr('Send code')),
               onPressed: _busy
                   ? null
                   : codeStep
@@ -175,7 +176,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: _cooldown > 0 || _busy ? null : _send,
-                child: Text(_cooldown > 0 ? 'Resend in ${_cooldown}s' : 'Resend code'),
+                child: Text(_cooldown > 0 ? 'Resend in ${_cooldown}s' : tr('Resend code')),
               ),
               TextButton(
                 onPressed: _busy
@@ -185,7 +186,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
                           _code.clear();
                           _error = null;
                         }),
-                child: const Text('Change number'),
+                child: Text(tr('Change number')),
               ),
             ],
           ],

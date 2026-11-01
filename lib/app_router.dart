@@ -18,6 +18,8 @@ import 'screens/activities_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/chat_tab_screen.dart';
 import 'screens/discovery_screen.dart';
+import 'screens/family_circle_screen.dart';
+import 'screens/invite_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/filters_screen.dart';
 import 'screens/home_shell.dart';
@@ -64,6 +66,9 @@ class AppRoutes {
   static const String practice = '/profile/practice';
   static const String plans = '/plans';
   static const String safety = '/safety';
+  static const String invite = '/invite';
+  static const String familyCircle = '/family/circle';
+  static const String familyView = '/family/view';
   static const String contactDetails = '/profile/contact';
   static const String reviewQueue = '/admin/review';
   static const String waliHub = '/wali/hub';
@@ -110,8 +115,15 @@ String? guardRoute(AppStore store, String location) {
   }
 
   // Signed in, not approved.
-  if (at(AppRoutes.verifyProfile) || at(AppRoutes.practice) || at(AppRoutes.safety)) {
+  if (at(AppRoutes.verifyProfile) ||
+      at(AppRoutes.practice) ||
+      at(AppRoutes.safety) ||
+      at(AppRoutes.familyView)) {
     return null;
+  }
+  // Someone who joined only as family has no profile of their own to finish.
+  if (store.isGuardian && store.reviewStage == ReviewStage.draft) {
+    return AppRoutes.familyView;
   }
   return switch (store.reviewStage) {
     ReviewStage.submitted =>
@@ -157,6 +169,15 @@ GoRouter buildRouter(AppStore store) {
       GoRoute(
         path: AppRoutes.contactDetails,
         builder: (_, _) => const ContactDetailsScreen(),
+      ),
+      GoRoute(path: AppRoutes.invite, builder: (_, _) => const InviteScreen()),
+      GoRoute(
+        path: AppRoutes.familyCircle,
+        builder: (_, _) => const FamilyCircleScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.familyView,
+        builder: (_, _) => const FamilyViewScreen(),
       ),
       GoRoute(path: AppRoutes.safety, builder: (_, _) => const SafetyCenterScreen()),
       GoRoute(

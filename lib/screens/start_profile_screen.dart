@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../providers/app_store.dart';
@@ -54,25 +55,30 @@ class StartProfileScreen extends StatelessWidget {
                 style: AppTheme.bodySmall,
               ),
               const Spacer(),
-              _row(Icons.school_outlined, 'Profiles from top universities.'),
-              _row(Icons.verified_user_outlined, 'Each profile is manually reviewed.'),
-              _row(Icons.tune_rounded, 'Curated profiles everyday.'),
+              _row(Icons.school_outlined, tr('Profiles from top universities.')),
+              _row(Icons.verified_user_outlined, tr('Each profile is manually reviewed.')),
+              _row(Icons.tune_rounded, tr('Curated profiles everyday.')),
               const Spacer(flex: 2),
               PrimaryButton(
                 key: const Key('start_profile'),
-                label: 'Complete Your Profile',
+                label: tr('Complete Your Profile'),
                 icon: Icons.arrow_forward_rounded,
                 onPressed: () => context.go(AppRoutes.onboarding),
               ),
               const SizedBox(height: 10),
               Text(
-                'Takes a few minutes. Reviewed before you go live.',
+                tr('Takes a few minutes. Reviewed before you go live.'),
                 textAlign: TextAlign.center,
                 style: AppTheme.bodySmall,
               ),
               TextButton(
+                key: const Key('have_family_code'),
+                onPressed: () => context.push(AppRoutes.familyView),
+                child: Text(tr('I have a family code')),
+              ),
+              TextButton(
                 onPressed: () => context.read<AppStore>().signOut(),
-                child: const Text('Log out'),
+                child: Text(tr('Log out')),
               ),
             ],
           ),

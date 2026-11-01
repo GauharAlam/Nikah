@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../models/match_profile.dart';
 import '../models/nikah_journey.dart';
 import '../providers/app_store.dart';
@@ -98,7 +99,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
         color: done ? AppTheme.green : AppTheme.slate300,
       ),
-      title: Text(step.title),
+      title: Text(tr(step.title)),
       subtitle: Text(
         theirs != null && step.index <= theirs.index
             ? '${step.detail} They have reached this step too.'
@@ -124,7 +125,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                 for (final JourneyStep step in JourneyStep.values) _stepRow(store, step),
                 const SizedBox(height: 16),
                 Text(
-                  'Important Questions',
+                  tr('Important Questions'),
                   style: AppTheme.ts(18, FontWeight.w800, color: AppTheme.slate900),
                 ),
                 const SizedBox(height: 4),

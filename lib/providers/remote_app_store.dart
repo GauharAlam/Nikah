@@ -30,9 +30,21 @@ class RemoteAppStore extends AppStore {
   bool _exhausted = false;
   bool _loadingIntros = false;
   String? _introError;
+  int? _freeLeft;
+  int _freeLimit = 15;
+  bool _limitReached = false;
+  FamilyState? _guardianView;
+  StreamSubscription<FamilyState>? _guardianSub;
+  String? _watchedFamilyOf;
 
   @override
   Backend? get backend => _backend;
+  @override
+  String get uid => _user?.uid ?? '';
+  @override
+  FamilyState? get guardianView => _guardianView;
+  @override
+  bool get isGuardian => _account.familyOf != null;
   @override
   bool get usesLocalState => false;
   @override
@@ -101,6 +113,7 @@ class RemoteAppStore extends AppStore {
       await s.cancel();
     }
     _subs.clear();
+    _watchGuardianCircle(null);
     for (final StreamSubscription<List<ChatMessage>> s in _threadSubs.values) {
       await s.cancel();
     }
@@ -109,6 +122,7 @@ class RemoteAppStore extends AppStore {
 
   void _clearMemberState() {
     _account = const AccountState();
+    _family = const FamilyState();
     _profile = null;
     _proposalRecords = <Proposal>[];
     _approved = <String>{};
@@ -149,6 +163,10 @@ class RemoteAppStore extends AppStore {
     final String uid = user.uid;
     _subs.addAll(<StreamSubscription<dynamic>>[
       _backend.watchAccount(uid).listen(_onAccount, onError: _report),
+      _backend.watchFamily(uid).listen((FamilyState f) {
+        _family = f;
+        notifyListeners();
+      }, onError: (Object _) {}),
       _backend.watchLimits().listen((AppLimits l) {
         _limits = l;
         notifyListeners();
@@ -197,9 +215,24 @@ class RemoteAppStore extends AppStore {
     }
   }
 
+  void _watchGuardianCircle(String? member) {
+    if (member == _watchedFamilyOf) return;
+    _watchedFamilyOf = member;
+    unawaited(_guardianSub?.cancel());
+    _guardianSub = null;
+    _guardianView = null;
+    if (member != null) {
+      _guardianSub = _backend.watchFamily(member).listen((FamilyState f) {
+        _guardianView = f;
+        notifyListeners();
+      }, onError: _report);
+    }
+  }
+
   void _onAccount(AccountState account) {
     final ReviewStage before = _account.stage;
     _account = account;
+    _watchGuardianCircle(account.familyOf);
     final bool approved = account.stage == ReviewStage.approved;
     _onboarded = approved;
     _stage = approved ? AuthStage.active : AuthStage.onboarding;
@@ -352,6 +385,15 @@ class RemoteAppStore extends AppStore {
   @override
   List<MatchProfile> get discoveredProfiles => _introductions;
   @override
+  int? get freeProfilesLeft => isPremium ? null : _freeLeft;
+  @override
+  bool get reachedProfileLimit => !isPremium && _limitReached;
+  @override
+  int get freeProfileAllowance => _freeLimit;
+  @override
+  void markProfileViewed(String id) {}
+
+  @override
   bool get isLoadingIntroductions => _loadingIntros;
   @override
   String? get introductionsError => _introError;
@@ -382,6 +424,9 @@ class RemoteAppStore extends AppStore {
       _introductions = <MatchProfile>[..._introductions, ...fresh];
       _cursor = page.cursor;
       _exhausted = page.cursor == null;
+      _freeLeft = page.freeLeft;
+      _freeLimit = page.freeLimit;
+      _limitReached = page.limitReached;
     } on Object catch (e) {
       _introError = e is BackendException
           ? e.message
@@ -515,6 +560,36 @@ class RemoteAppStore extends AppStore {
             showCaste: showCaste,
             allowFamilyShare: allowFamilyShare,
           ));
+    }
+  }
+
+  // ─── Invites, edits and family ────────────────────────────────────────────
+
+  @override
+  Future<InviteInfo> inviteInfo() => _backend.getInviteCode();
+
+  @override
+  void submitEdits() {
+    if (isLoggedIn) _send(_backend.submitEdits);
+  }
+
+  @override
+  Future<String> createFamilyInvite() => _backend.createFamilyInvite();
+
+  @override
+  Future<void> joinFamily(String code, String name) => _backend.joinFamily(code, name);
+
+  @override
+  Future<void> removeGuardian(String guardian) => _backend.removeGuardian(guardian);
+
+  @override
+  Future<void> shareWithFamily(String profileId) => _backend.shareWithFamily(profileId);
+
+  @override
+  void giveFamilyOpinion(String profileId, String opinion) {
+    final String? member = _account.familyOf;
+    if (member != null) {
+      _send(() => _backend.giveFamilyOpinion(member, profileId, opinion));
     }
   }
 

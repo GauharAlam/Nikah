@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_card.dart';
 
@@ -33,12 +34,12 @@ class SafetyCenterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
-      appBar: AppBar(title: const Text('Safety Centre')),
+      appBar: AppBar(title: Text(tr('Safety Centre'))),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: <Widget>[
           Text(
-            'Warning signs',
+            tr('Warning signs'),
             style: AppTheme.ts(18, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 10),
@@ -55,7 +56,7 @@ class SafetyCenterScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(title, style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900)),
+                          Text(tr(title), style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900)),
                           const SizedBox(height: 3),
                           Text(body, style: AppTheme.bodySmall),
                         ],
@@ -67,7 +68,7 @@ class SafetyCenterScreen extends StatelessWidget {
             ),
           const SizedBox(height: 10),
           Text(
-            'Stay safe',
+            tr('Stay safe'),
             style: AppTheme.ts(18, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
@@ -85,7 +86,7 @@ class SafetyCenterScreen extends StatelessWidget {
             ),
           const SizedBox(height: 14),
           Text(
-            'If you lost money',
+            tr('If you lost money'),
             style: AppTheme.ts(18, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 6),

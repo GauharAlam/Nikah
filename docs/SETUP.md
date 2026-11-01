@@ -46,8 +46,11 @@ Create `config/app` in Firestore. Anything you leave out uses the default.
 { "limits": { "proposalsPerDay": 5, "decisionsPerDay": 10, "pendingLimit": 15,
               "monthlyContactCredits": 30, "hideDays": 7, "proposalExpiryDays": 30, "minPhotos": 1,
               "requireIdProof": true, "graduatesOnly": true, "staleDays": 45,
-              "reportHoldThreshold": 3, "contactExpiryDays": 14 } }
+              "reportHoldThreshold": 3, "contactExpiryDays": 14,
+              "freeProfileLimit": 15, "freeProfileWindow": "total" } }
 ```
+
+`freeProfileWindow` can be `total`, `month` or `day`.
 
 5, 10 and 15 were seen in the Barkat app. The others are placeholders for you to decide.
 

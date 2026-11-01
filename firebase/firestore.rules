@@ -106,6 +106,20 @@ service cloud.firestore {
       }
     }
 
+    // Family Circle: the member and their guardians read short summaries only.
+    match /family/{member} {
+      function inCircle() {
+        return signedIn() && (request.auth.uid == member
+          || request.auth.uid in get(/databases/$(database)/documents/family/$(member)).data.guardians);
+      }
+      allow read: if inCircle();
+      allow write: if false;
+      match /shortlist/{profile} {
+        allow read: if inCircle();
+        allow write: if false;
+      }
+    }
+
     // Reports, blocks, hidden profiles and everything else: server only.
     match /{document=**} {
       allow read, write: if false;

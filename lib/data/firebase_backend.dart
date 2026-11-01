@@ -170,6 +170,7 @@ class FirebaseBackend implements Backend {
               (d['creditMonth'] == month ? (d['creditsSpent'] as int? ?? 0) : 0),
           premiumUntil: (d['premiumUntil'] as Timestamp?)?.toDate(),
           plan: d['plan'] as String? ?? '',
+          familyOf: d['familyOf'] as String?,
         );
       });
 
@@ -235,7 +236,13 @@ class FirebaseBackend implements Backend {
       },
       'cursor': cursor,
     });
-    return IntroductionPage(_cards(res['profiles']), (res['cursor'] as num?)?.toInt());
+    return IntroductionPage(
+      _cards(res['profiles']),
+      (res['cursor'] as num?)?.toInt(),
+      freeLeft: (res['freeLeft'] as num?)?.toInt(),
+      freeLimit: (res['freeLimit'] as num?)?.toInt() ?? 15,
+      limitReached: res['limitReached'] as bool? ?? false,
+    );
   }
 
   static List<MatchProfile> _cards(dynamic list) => (list as List? ?? const <dynamic>[])
@@ -438,6 +445,85 @@ class FirebaseBackend implements Backend {
 
   @override
   Future<void> touchActive() => _call('touchActive');
+
+  // ─── Invites and edits ─────────────────────────────────────────────────────
+
+  @override
+  Future<InviteInfo> getInviteCode() async {
+    final Map<String, dynamic> res = await _call('getInviteCode');
+    return InviteInfo(
+      res['code'] as String,
+      (res['invited'] as num?)?.toInt() ?? 0,
+      (res['earned'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  Future<void> submitEdits() => _call('submitEdits');
+
+  // ─── Family Circle ─────────────────────────────────────────────────────────
+
+  @override
+  Stream<FamilyState> watchFamily(String member) {
+    final DocumentReference<Map<String, dynamic>> root = _db.doc('family/$member');
+    Map<String, String> names = <String, String>{};
+    List<FamilyPick> picks = <FamilyPick>[];
+    late final StreamController<FamilyState> out;
+    StreamSubscription<dynamic>? a;
+    StreamSubscription<dynamic>? b;
+    void emit() => out.add(FamilyState(guardians: names, shortlist: picks));
+    out = StreamController<FamilyState>(
+      onListen: () {
+        a = root.snapshots().listen((DocumentSnapshot<Map<String, dynamic>> s) {
+          names = (s.data()?['names'] as Map?)?.cast<String, String>() ?? <String, String>{};
+          emit();
+        }, onError: out.addError);
+        b = root.collection('shortlist').snapshots().listen((QuerySnapshot<Map<String, dynamic>> q) {
+          picks = q.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> s) {
+            final Map<String, dynamic> d = s.data();
+            return FamilyPick(
+              id: s.id,
+              title: '${d['firstName']}, ${d['age']}',
+              summary: <dynamic>[d['education'], d['university'], d['profession'], d['location'], d['maritalStatus']]
+                  .where((dynamic v) => v is String && v.isNotEmpty)
+                  .join(' · '),
+              opinions: (d['opinions'] as Map?)?.cast<String, String>() ?? const <String, String>{},
+            );
+          }).toList();
+          emit();
+        }, onError: out.addError);
+      },
+      onCancel: () async {
+        await a?.cancel();
+        await b?.cancel();
+      },
+    );
+    return out.stream;
+  }
+
+  @override
+  Future<String> createFamilyInvite() async =>
+      (await _call('createFamilyInvite'))['code'] as String;
+
+  @override
+  Future<void> joinFamily(String code, String name) =>
+      _call('joinFamily', <String, dynamic>{'code': code, 'name': name});
+
+  @override
+  Future<void> removeGuardian(String guardian, {String? member}) =>
+      _call('removeGuardian', <String, dynamic>{'guardian': guardian, 'member': ?member});
+
+  @override
+  Future<void> shareWithFamily(String profileId) =>
+      _call('shareWithFamily', <String, dynamic>{'profile': profileId});
+
+  @override
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion) =>
+      _call('giveFamilyOpinion', <String, dynamic>{
+        'member': member,
+        'profile': profileId,
+        'opinion': opinion,
+      });
 
   // ─── Nikah Journey ─────────────────────────────────────────────────────────
 

@@ -113,6 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         );
     showSuccessSnack(context, 'Biodata updated, barakallahu feek.');
+    context.read<AppStore>().submitEdits();
     context.pop();
   }
 

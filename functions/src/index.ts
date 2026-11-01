@@ -9,11 +9,14 @@ import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import { google } from 'googleapis';
+import { randomInt } from 'node:crypto';
 import * as R from './rules';
 
 initializeApp();
 setGlobalOptions({ region: 'asia-south1', maxInstances: 20 });
 const db = getFirestore();
+// A missing optional field must not fail a whole write.
+db.settings({ ignoreUndefinedProperties: true });
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -118,7 +121,7 @@ function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[]) {
     university: universities.join(', '), location, country: d.homeCountry ?? '', caste: d.caste,
     maritalStatus: d.maritalStatus, marriageReadiness: d.marriageReadiness, height: d.height,
     aboutMe: d.aboutMe ?? '', selfManaged: d.managedBy !== 'family', verified: false, live: true,
-    sect: d.sect ?? '', prayer: d.prayer ?? '', practices: d.practices ?? [], children: d.children ?? '',
+    partnerCaste: d.partnerCaste ?? '', sect: d.sect ?? '', prayer: d.prayer ?? '', practices: d.practices ?? [], children: d.children ?? '',
     photoPrivacy: d.photoPrivacy === 'matches' ? 'matches' : 'everyone',
     showCaste: d.showCaste !== false, allowFamilyShare: d.allowFamilyShare !== false,
     approvedAt: FieldValue.serverTimestamp(), lastActiveAt: FieldValue.serverTimestamp(),
@@ -127,14 +130,16 @@ function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[]) {
 
 export const listReviewQueue = onCall(async (req) => {
   reviewerUid(req);
-  const queued = await db.collection('accounts').where('stage', '==', 'submitted')
+  const submitted = await db.collection('accounts').where('stage', '==', 'submitted')
     .orderBy('submittedAt').limit(50).get();
   const held = await db.collection('profiles').where('held', '==', true).limit(50).get();
+  const edits = await db.collection('accounts').where('editsPending', '==', true).limit(50).get();
+  const queued = { docs: [...submitted.docs, ...edits.docs] };
   const drafts = await Promise.all(queued.docs.map((d) => db.doc(`drafts/${d.id}`).get()));
   const docs = await Promise.all(queued.docs.map((d) => d.ref.collection('documents').get()));
   return {
     items: queued.docs.map((d, i) => ({
-      uid: d.id, draft: drafts[i].data() ?? {},
+      uid: d.id, draft: drafts[i].data() ?? {}, isEdit: d.data().editsPending === true,
       documents: docs[i].docs.map((x) => ({ type: x.id, status: x.data().status, count: (x.data().paths ?? []).length })),
     })),
     held: held.docs.map((d) => ({ uid: d.id, name: d.data().name, reports: d.data().reportCount ?? 0 })),
@@ -167,17 +172,27 @@ export const reviewProfile = onCall(async (req) => {
   if (!paths.every((p) => p.startsWith(`photos/${uid}/`) && !p.includes('..'))) {
     throw new HttpsError('failed-precondition', 'Photos must belong to this member.');
   }
-  const bucket = getStorage().bucket();
-  const photoUrls = approve ? await Promise.all(paths.map((p) => getDownloadURL(bucket.file(p)))) : [];
+  const photoUrls = approve && paths.length > 0
+    ? await Promise.all(paths.map((p) => getDownloadURL(getStorage().bucket().file(p))))
+    : [];
 
+  const account = (await accountRef(uid).get()).data() ?? {};
+  const isEdit = account.editsPending === true && account.stage === 'approved';
   const batch = db.batch();
+  if (isEdit && !approve) {
+    batch.set(accountRef(uid), { editsPending: false, rejectionReason: reason }, { merge: true });
+    notify(batch, uid, 'review', 'Your changes were not published', reason, '/profile/edit');
+    await batch.commit();
+    return { ok: true };
+  }
   if (approve) {
     batch.set(db.doc(`profiles/${uid}`), { ...cardFrom(uid, draft, photoUrls), held: FieldValue.delete() }, { merge: true });
     batch.set(accountRef(uid), {
       stage: 'approved', approvedAt: FieldValue.serverTimestamp(), reviewedBy: reviewer,
-      phone: draft.phone ?? '',
+      phone: draft.phone ?? '', editsPending: false,
     }, { merge: true });
-    notify(batch, uid, 'review', 'Your profile is approved', 'Your profile is now live.', '/home/discovery');
+    notify(batch, uid, 'review', isEdit ? 'Your changes are live' : 'Your profile is approved',
+      isEdit ? 'Your profile was updated.' : 'Your profile is now live.', '/home/discovery');
   } else {
     batch.set(accountRef(uid), { stage: 'rejected', rejectionReason: reason, reviewedBy: reviewer }, { merge: true });
     if ((await db.doc(`profiles/${uid}`).get()).exists) batch.update(db.doc(`profiles/${uid}`), { live: false });
@@ -187,12 +202,139 @@ export const reviewProfile = onCall(async (req) => {
   // The claim opens member-only rules, so it follows the committed decision.
   const user = await getAuth().getUser(uid);
   await getAuth().setCustomUserClaims(uid, { ...(user.customClaims ?? {}), approved: approve });
+  if (approve && !isEdit) await rewardInviter(uid, draft.inviteCode);
+  return { ok: true };
+});
+
+/** Paid once, only when the invited member passes review, so fake sign-ups earn nothing. */
+async function rewardInviter(uid: string, rawCode: unknown): Promise<void> {
+  const code = R.normalizeCode(rawCode);
+  if (!code) return;
+  const lim = await limits();
+  await db.runTransaction(async (tx) => {
+    const invite = await tx.get(db.doc(`inviteCodes/${code}`));
+    const inviter = invite.data()?.uid as string | undefined;
+    const claim = db.doc(`inviteClaims/${uid}`);
+    if (!inviter || inviter === uid || (await tx.get(claim)).exists) return;
+    const acc = (await tx.get(accountRef(inviter))).data() ?? {};
+    const reward = R.inviteReward(acc.inviteCredits, lim);
+    tx.set(claim, { inviter, reward, createdAt: FieldValue.serverTimestamp() });
+    tx.set(accountRef(inviter), {
+      invitedCount: FieldValue.increment(1), inviteCredits: FieldValue.increment(reward),
+      purchasedCredits: FieldValue.increment(reward),
+    }, { merge: true });
+    if (reward > 0) notify(tx, inviter, 'contact', 'You earned contact credits', 'Someone you invited was approved.', '/invite');
+  });
+}
+
+async function newCode(collection: string, data: Record<string, unknown>): Promise<string> {
+  for (let i = 0; i < 6; i++) {
+    const code = R.makeCode(() => randomInt(0, 1_000_000) / 1_000_000);
+    try {
+      await db.doc(`${collection}/${code}`).create(data);
+      return code;
+    } catch {
+      // Taken. Try another.
+    }
+  }
+  throw new HttpsError('unavailable', 'Please try again.');
+}
+
+export const getInviteCode = onCall(async (req) => {
+  const uid = approvedUid(req);
+  const acc = (await accountRef(uid).get()).data() ?? {};
+  if (acc.inviteCode) return { code: acc.inviteCode, invited: acc.invitedCount ?? 0, earned: acc.inviteCredits ?? 0 };
+  const code = await newCode('inviteCodes', { uid });
+  await accountRef(uid).set({ inviteCode: code }, { merge: true });
+  return { code, invited: 0, earned: 0 };
+});
+
+// ─── Family Circle ───────────────────────────────────────────────────────────
+// A guardian sees only what the member shares: short summaries with no photo
+// or contact. They never reach conversations, documents or the account.
+
+export const createFamilyInvite = onCall(async (req) => {
+  const uid = approvedUid(req);
+  const code = await newCode('familyInvites', {
+    member: uid, expiresAt: Timestamp.fromMillis(Date.now() + 7 * 86400000),
+  });
+  return { code };
+});
+
+export const joinFamily = onCall(async (req) => {
+  const uid = uidOf(req);
+  const code = R.normalizeCode(req.data?.code);
+  const name = stringArg(req.data?.name, 'name', 40);
+  if (!code) throw new HttpsError('invalid-argument', 'That code is not valid.');
+  const ref = db.doc(`familyInvites/${code}`);
+  const member = await db.runTransaction(async (tx) => {
+    const invite = (await tx.get(ref)).data();
+    if (!invite || (invite.expiresAt as Timestamp).toMillis() < Date.now()) {
+      throw new HttpsError('not-found', 'That code is not valid or has expired.');
+    }
+    if (invite.member === uid) throw new HttpsError('invalid-argument', 'You cannot join your own family circle.');
+    tx.delete(ref); // Single use, so a forwarded code cannot admit anyone else.
+    tx.set(db.doc(`family/${invite.member}`), {
+      guardians: FieldValue.arrayUnion(uid), names: { [uid]: name },
+    }, { merge: true });
+    tx.set(accountRef(uid), { familyOf: invite.member }, { merge: true });
+    return invite.member as string;
+  });
+  return { member };
+});
+
+export const removeGuardian = onCall(async (req) => {
+  const uid = uidOf(req);
+  const guardian = idArg(req.data?.guardian, 'guardian');
+  const member = (req.data?.member as string | undefined) ?? uid;
+  if (uid !== member && uid !== guardian) throw new HttpsError('permission-denied', 'Not allowed.');
+  await db.doc(`family/${idArg(member, 'member')}`).update({
+    guardians: FieldValue.arrayRemove(guardian), [`names.${guardian}`]: FieldValue.delete(),
+  });
+  await accountRef(guardian).set({ familyOf: FieldValue.delete() }, { merge: true });
+  return { ok: true };
+});
+
+export const shareWithFamily = onCall(async (req) => {
+  const uid = approvedUid(req);
+  const id = idArg(req.data?.profile, 'profile');
+  const [snap, blocked, viewed] = await Promise.all([
+    db.doc(`profiles/${id}`).get(), blockedEitherWay(uid, id),
+    accountRef(uid).collection('viewed').doc(id).get(),
+  ]);
+  const d = snap.data();
+  if (!d || blocked || !viewed.exists && !(await isPremium(uid))) throw new HttpsError('not-found', 'This profile is unavailable.');
+  if (d.allowFamilyShare === false) throw new HttpsError('permission-denied', 'This member has turned off sharing.');
+  await db.doc(`family/${uid}/shortlist/${id}`).set({
+    firstName: String(d.name).split(' ')[0], age: R.ageOn(d.dateOfBirth, new Date()), education: d.education ?? '',
+    university: d.university ?? '', profession: d.profession ?? '', location: d.location ?? '',
+    maritalStatus: d.maritalStatus ?? '', sharedAt: FieldValue.serverTimestamp(),
+  });
+  return { ok: true };
+});
+
+export const giveFamilyOpinion = onCall(async (req) => {
+  const uid = uidOf(req);
+  const member = idArg(req.data?.member, 'member');
+  const id = idArg(req.data?.profile, 'profile');
+  const opinion = req.data?.opinion;
+  if (!R.FAMILY_OPINIONS.includes(opinion)) throw new HttpsError('invalid-argument', 'Unknown opinion.');
+  const family = (await db.doc(`family/${member}`).get()).data();
+  if (!(family?.guardians as string[] | undefined)?.includes(uid)) throw new HttpsError('permission-denied', 'Not allowed.');
+  await db.doc(`family/${member}/shortlist/${id}`).update({ [`opinions.${uid}`]: opinion });
   return { ok: true };
 });
 
 // ─── Verification documents ──────────────────────────────────────────────────
 
 const DOC_TYPES = ['name-proof', 'education-proof', 'employment-proof'];
+
+/** An approved member's changes stay private until a reviewer publishes them. */
+export const submitEdits = onCall(async (req) => {
+  const uid = approvedUid(req);
+  await accountRef(uid).set({ editsPending: true, editsAt: FieldValue.serverTimestamp() }, { merge: true });
+  return { ok: true };
+});
 
 export const submitDocument = onCall(async (req) => {
   const uid = uidOf(req);
@@ -238,11 +380,19 @@ export const reviewDocument = onCall(async (req) => {
 
 // ─── Discovery ───────────────────────────────────────────────────────────────
 
-function toPublicCard(id: string, d: Record<string, any>, now: Date, viewerMatched: boolean) {
-  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, ...rest } = d;
+function toPublicCard(
+  id: string, d: Record<string, any>, now: Date, viewerMatched: boolean, viewer?: Record<string, any>,
+) {
+  const { dateOfBirth, live, approvedAt, gender, lastActiveAt, held, reportCount, partnerCaste, ...rest } = d;
   const active = (lastActiveAt as Timestamp | undefined)?.toMillis();
+  const age = R.ageOn(dateOfBirth, now);
+  const score = viewer ? R.matchScore(
+    { ...viewer, age: viewer.dateOfBirth ? R.ageOn(viewer.dateOfBirth, now) : undefined },
+    { age, location: d.location, country: d.country, sect: d.sect, marriageReadiness: d.marriageReadiness,
+      maritalStatus: d.maritalStatus, caste: d.showCaste === false ? undefined : d.caste },
+  ) : undefined;
   return {
-    ...R.redactCard(rest, viewerMatched), id, age: R.ageOn(dateOfBirth, now),
+    ...R.redactCard(rest, viewerMatched), id, age, matchPercent: score,
     activeDaysAgo: active === undefined ? null : Math.floor((now.getTime() - active) / 86400000),
     isNew: (approvedAt as Timestamp | undefined)?.toMillis() !== undefined &&
       now.getTime() - (approvedAt as Timestamp).toMillis() < 7 * 86400000,
@@ -254,18 +404,26 @@ export const fetchIntroductions = onCall(async (req) => {
   const now = new Date();
   const me = (await db.doc(`profiles/${uid}`).get()).data();
   if (!me) throw new HttpsError('failed-precondition', 'Your profile is not live.');
-  const filters = R.allowedFilters((req.data?.filters ?? {}) as R.Filters, await isPremium(uid));
+  const premium = await isPremium(uid);
+  const filters = R.allowedFilters((req.data?.filters ?? {}) as R.Filters, premium);
   const lim = await limits();
+  const viewKey = R.windowKey(lim.freeProfileWindow, now);
   const pageSize = Math.min(Number(req.data?.limit ?? 10), 20);
 
-  const [blocksOut, blocksIn, hidden, sent, received, matches] = await Promise.all([
+  const [blocksOut, blocksIn, hidden, sent, received, matches, viewedSnap, accSnap] = await Promise.all([
     accountRef(uid).collection('blocks').get(),
     db.collectionGroup('blocks').where('target', '==', uid).get(),
     accountRef(uid).collection('hidden').get(),
     db.collection('proposals').where('from', '==', uid).get(),
     db.collection('proposals').where('to', '==', uid).get(),
     db.collection('matches').where('users', 'array-contains', uid).get(),
+    accountRef(uid).collection('viewed').get(),
+    accountRef(uid).get(),
   ]);
+  const viewed = new Set(viewedSnap.docs.map((d) => d.id));
+  let remaining = premium ? Number.POSITIVE_INFINITY : R.viewsLeft(
+    lim.freeProfileLimit, R.countFor(accSnap.data()?.viewKey, accSnap.data()?.viewCount, viewKey),
+  );
   const blocked = new Set([...blocksOut.docs.map((d) => d.id), ...blocksIn.docs.map((d) => d.ref.parent.parent!.id)]);
   const proposed = new Set([...sent.docs.map((d) => d.data().to), ...received.docs.map((d) => d.data().from)]);
   const matched = new Set(matches.docs.flatMap((d) => d.data().users as string[]));
@@ -278,7 +436,8 @@ export const fetchIntroductions = onCall(async (req) => {
   const cursor = req.data?.cursor;
   if (typeof cursor === 'number') query = query.startAfter(Timestamp.fromMillis(cursor));
 
-  const out: unknown[] = [];
+  const out: { id: string }[] = [];
+  const fresh: string[] = [];
   let last: number | null = null;
   const scanned = await query.get();
   for (const doc of scanned.docs) {
@@ -290,12 +449,39 @@ export const fetchIntroductions = onCall(async (req) => {
       lastActiveAt: (doc.data().lastActiveAt as Timestamp | undefined)?.toMillis(), staleDays: lim.staleDays,
     }, now.getTime());
     if (!visible) continue;
-    const card = toPublicCard(doc.id, doc.data(), now, false);
+    const card = toPublicCard(doc.id, doc.data(), now, false, me);
     if (!R.matchesFilters(card as unknown as R.Card, filters)) continue;
-    out.push(card);
+    // A profile counts once. Ones already seen stay free to see again.
+    if (!premium && !viewed.has(doc.id)) {
+      if (remaining <= 0) continue;
+      remaining--;
+      fresh.push(doc.id);
+    }
+    out.push(card as { id: string });
     if (out.length === pageSize) break;
   }
-  return { profiles: out, cursor: scanned.size === 60 || out.length === pageSize ? last : null };
+
+  // Re-checked in a transaction, so parallel calls cannot pass the limit.
+  let granted = new Set(fresh);
+  let left: number | null = null;
+  if (!premium) {
+    left = await db.runTransaction(async (tx) => {
+      const acc = (await tx.get(accountRef(uid))).data() ?? {};
+      const used = R.countFor(acc.viewKey, acc.viewCount, viewKey);
+      const allowed = fresh.slice(0, R.viewsLeft(lim.freeProfileLimit, used));
+      granted = new Set(allowed);
+      if (allowed.length > 0) {
+        tx.set(accountRef(uid), { viewKey, viewCount: used + allowed.length }, { merge: true });
+        allowed.forEach((id) => tx.set(accountRef(uid).collection('viewed').doc(id), { at: Timestamp.now() }));
+      }
+      return R.viewsLeft(lim.freeProfileLimit, used + allowed.length);
+    });
+  }
+  return {
+    profiles: out.filter((p) => viewed.has(p.id) || premium || granted.has(p.id)),
+    cursor: left === 0 ? null : scanned.size === 60 || out.length === pageSize ? last : null,
+    freeLeft: left, freeLimit: lim.freeProfileLimit, limitReached: left === 0,
+  };
 });
 
 export const getProfiles = onCall(async (req) => {
@@ -304,6 +490,7 @@ export const getProfiles = onCall(async (req) => {
   if (!Array.isArray(ids) || ids.length > 30) throw new HttpsError('invalid-argument', 'Too many profiles.');
   const now = new Date();
   const me = (await db.doc(`profiles/${uid}`).get()).data();
+  const premium = await isPremium(uid);
   const results = await Promise.all(ids.map(async (raw) => {
     const id = idArg(raw, 'id');
     const [snap, blocked, match] = await Promise.all([
@@ -311,7 +498,18 @@ export const getProfiles = onCall(async (req) => {
     ]);
     const d = snap.data();
     if (!d || blocked || d.gender === me?.gender) return null;
-    return toPublicCard(id, d, now, match.data()?.status === 'active');
+    if (!premium && !match.exists) {
+      // Free members may open a profile they were shown or have a connection with.
+      const links = await Promise.all([
+        accountRef(uid).collection('viewed').doc(id).get(),
+        db.doc(`proposals/${R.proposalId(uid, id)}`).get(),
+        db.doc(`proposals/${R.proposalId(id, uid)}`).get(),
+        db.doc(`contactRequests/${R.proposalId(uid, id)}`).get(),
+        db.doc(`contactRequests/${R.proposalId(id, uid)}`).get(),
+      ]);
+      if (!links.some((l) => l.exists)) return null;
+    }
+    return toPublicCard(id, d, now, match.data()?.status === 'active', me);
   }));
   return { profiles: results.filter(Boolean) };
 });
@@ -346,8 +544,10 @@ export const sendProposal = onCall(async (req) => {
 
   return db.runTransaction(async (tx) => {
     if (await blockedEitherWay(uid, to, tx)) throw new HttpsError('not-found', 'This profile is unavailable.');
-    const target = await tx.get(db.doc(`profiles/${to}`));
-    if (!target.exists || target.data()?.live !== true) throw new HttpsError('not-found', 'This profile is unavailable.');
+    const [target, self] = await Promise.all([tx.get(db.doc(`profiles/${to}`)), tx.get(db.doc(`profiles/${uid}`))]);
+    if (target.data()?.live !== true || !R.gendersCompatible(self.data()?.gender, target.data()?.gender)) {
+      throw new HttpsError('not-found', 'This profile is unavailable.');
+    }
 
     const ref = db.doc(`proposals/${R.proposalId(uid, to)}`);
     const reverseRef = db.doc(`proposals/${R.proposalId(to, uid)}`);
@@ -429,7 +629,12 @@ export const requestContact = onCall(async (req) => {
   return db.runTransaction(async (tx) => {
     if (await blockedEitherWay(uid, to, tx)) throw new HttpsError('not-found', 'This profile is unavailable.');
     const ref = db.doc(`contactRequests/${R.proposalId(uid, to)}`);
-    const [existing, acc] = await Promise.all([tx.get(ref), tx.get(accountRef(uid))]);
+    const [existing, acc, self, target] = await Promise.all([
+      tx.get(ref), tx.get(accountRef(uid)), tx.get(db.doc(`profiles/${uid}`)), tx.get(db.doc(`profiles/${to}`)),
+    ]);
+    if (target.data()?.live !== true || !R.gendersCompatible(self.data()?.gender, target.data()?.gender)) {
+      throw new HttpsError('not-found', 'This profile is unavailable.');
+    }
     if (existing.data()?.status === 'pending') return { status: 'pending' }; // No second charge.
     const a = acc.data() ?? {};
     const spent = R.countFor(a.creditMonth, a.creditsSpent, month);
