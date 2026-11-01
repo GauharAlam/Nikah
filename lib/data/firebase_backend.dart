@@ -357,6 +357,18 @@ class FirebaseBackend implements Backend {
   Future<void> hideProfile(String target) =>
       _call('hideProfile', <String, dynamic>{'target': target});
 
+  @override
+  Stream<List<String>> watchBookmarks(String uid) => _db
+      .collection('accounts/$uid/bookmarks')
+      .orderBy('createdAt', descending: true)
+      .limit(200)
+      .snapshots()
+      .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.map((s) => s.id).toList());
+
+  @override
+  Future<void> setBookmark(String target, {required bool saved}) =>
+      _call('setBookmark', <String, dynamic>{'target': target, 'saved': saved});
+
   // ─── Proposals and contact ─────────────────────────────────────────────────
 
   @override

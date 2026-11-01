@@ -789,6 +789,15 @@ class AppStrings {
     'Not taken forward': <String>['आगे नहीं बढ़ाया गया', 'Aage nahi badhaya gaya'],
     'Expired without a reply': <String>['बिना जवाब के समाप्त', 'Bina jawab ke khatam'],
     'You withdrew this proposal': <String>['आपने यह प्रस्ताव वापस लिया', 'Aapne ye proposal wapas liya'],
+    'Saved profiles': <String>['सहेजी गई प्रोफ़ाइल', 'Saved profiles'],
+    'Only you can see this list': <String>['यह सूची केवल आप देख सकते हैं', 'Ye list sirf aap dekh sakte hain'],
+    'Nothing saved yet': <String>['अभी कुछ सहेजा नहीं गया', 'Abhi kuch save nahi kiya'],
+    'Tap the bookmark on a profile to keep it here. Only you can see this list.': <String>['प्रोफ़ाइल को यहाँ रखने के लिए उस पर बुकमार्क टैप करें। यह सूची केवल आप देख सकते हैं।', 'Profile ko yahan rakhne ke liye us par bookmark tap karein. Ye list sirf aap dekh sakte hain.'],
+    'Saved.': <String>['सहेजा गया।', 'Save ho gaya.'],
+    'Removed from saved profiles.': <String>['सहेजी गई प्रोफ़ाइल से हटाया गया।', 'Saved profiles se hataya gaya.'],
+    'Save profile': <String>['प्रोफ़ाइल सहेजें', 'Profile save karein'],
+    'Remove from saved': <String>['सहेजी गई सूची से हटाएँ', 'Saved list se hatayein'],
+    'Your saved list is full. Remove a profile first.': <String>['आपकी सूची भर गई है। पहले कोई प्रोफ़ाइल हटाएँ।', 'Aapki list bhar gayi hai. Pehle koi profile hatayein.'],
   };
 }
 

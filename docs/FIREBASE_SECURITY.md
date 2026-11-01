@@ -64,7 +64,7 @@ These are engineering defaults, and need legal review (blocker X-4).
 | Proposals, contact requests, shares | Deleted |
 | Conversations | Deleted for both sides. Neither person can open a conversation after a match ends |
 | Family circle, memberships, history, invitations, shared summaries | Deleted |
-| Blocks and hidden records pointing at the member | Deleted |
+| Blocks, hidden records and saved profiles pointing at the member | Deleted |
 | Reports made by the member | Reporter removed; report stays for safety review |
 | Reports about the member | Kept for safety review |
 | Purchases and credit ledger | Kept for payment law, with the uid replaced by a hash |

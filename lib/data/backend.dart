@@ -403,6 +403,10 @@ abstract class Backend {
   Future<List<MatchProfile>> getProfiles(List<String> ids);
   Future<void> hideProfile(String target);
 
+  /// Ids this member saved, newest first.
+  Stream<List<String>> watchBookmarks(String uid);
+  Future<void> setBookmark(String target, {required bool saved});
+
   // Proposals and contact
   Stream<List<Proposal>> watchProposals(String uid);
   Future<void> sendProposal(String to);

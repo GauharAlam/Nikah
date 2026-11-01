@@ -18,6 +18,7 @@ import 'package:nikah_app/screens/match_detail_screen.dart';
 import 'package:nikah_app/screens/phone_signin_screen.dart';
 import 'package:nikah_app/screens/proposals_screen.dart';
 import 'package:nikah_app/screens/review_status_screen.dart';
+import 'package:nikah_app/screens/saved_profiles_screen.dart';
 import 'package:nikah_app/screens/search_screen.dart';
 import 'package:nikah_app/screens/verification_screen.dart';
 import 'package:provider/provider.dart';
@@ -70,6 +71,57 @@ void main() {
     ));
     await tester.pumpAndSettle();
   }
+
+  group('saved profiles', () {
+    Future<void> saved(WidgetTester tester, List<String> ids) => tester.runAsync(() async {
+          backend.bookmarks.add(ids);
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        });
+
+    testWidgets('the bookmark follows the server, not the tap', (WidgetTester tester) async {
+      await signIn(tester);
+      await show(tester, const MatchDetailScreen(matchId: 'p'));
+      await tester.tap(find.byKey(const Key('detail_save')));
+      await tester.pumpAndSettle();
+      expect(backend.calls, contains('bookmark:p:true'));
+      expect(store.isBookmarked('p'), isFalse);
+
+      await saved(tester, <String>['p']);
+      await tester.pump();
+      expect(store.isBookmarked('p'), isTrue);
+    });
+
+    testWidgets('a refused save says why', (WidgetTester tester) async {
+      await signIn(tester);
+      await show(tester, const MatchDetailScreen(matchId: 'p'));
+      backend.failOn = 'bookmark';
+      await tester.tap(find.byKey(const Key('detail_save')));
+      await tester.pumpAndSettle();
+      expect(find.text('refused'), findsOneWidget);
+      expect(find.text('Saved.'), findsNothing);
+    });
+
+    testWidgets('the list shows only profiles the server returns', (WidgetTester tester) async {
+      await signIn(tester);
+      await show(tester, const SavedProfilesScreen());
+      expect(find.text('Nothing saved yet'), findsOneWidget);
+
+      backend.hiddenProfiles.add('gone');
+      await saved(tester, <String>['a', 'gone']);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('saved_a')), findsOneWidget);
+      expect(find.byKey(const Key('saved_gone')), findsNothing);
+    });
+
+    testWidgets('more than a server page of saved profiles still loads', (WidgetTester tester) async {
+      await signIn(tester);
+      await show(tester, const SavedProfilesScreen());
+      await saved(tester, <String>[for (int i = 0; i < 45; i++) 'p$i']);
+      await tester.pumpAndSettle();
+      expect(backend.calls.where((String c) => c == 'getProfiles').length, 2);
+      expect(store.bookmarkedProfiles, hasLength(45));
+    });
+  });
 
   group('withdrawing a proposal', () {
     Proposal sent(ProposalStatus status) => Proposal(

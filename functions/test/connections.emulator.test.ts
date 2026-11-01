@@ -146,3 +146,45 @@ test('a decline tells the sender without saying who else was involved', async ()
   const n = await db.collection('accounts/p1/notifications').where('type', '==', 'proposal').get();
   assert.ok(n.docs.some((d) => d.data().title === 'Proposal update'));
 });
+
+test('a saved profile is private, and only an available profile can be saved', async () => {
+  const [a] = await pair('b1', 'b2');
+  await a('setBookmark', { target: 'b2', saved: true });
+  assert.equal((await db.doc('accounts/b1/bookmarks/b2').get()).data()?.profileId, 'b2');
+
+  assert.equal(await code(a('setBookmark', { target: 'b1', saved: true })), 'functions/not-found');
+  assert.equal(await code(a('setBookmark', { target: 'nobody', saved: true })), 'functions/not-found');
+
+  await db.doc('profiles/b2').update({ live: false });
+  await a('setBookmark', { target: 'b2', saved: false });
+  assert.equal(await code(a('setBookmark', { target: 'b2', saved: true })), 'functions/not-found');
+  assert.equal((await db.doc('accounts/b1/bookmarks/b2').get()).exists, false);
+});
+
+test('a member who is not approved cannot save a profile', async () => {
+  await pair('b3', 'b4');
+  const stranger = await user('b5', {});
+  assert.equal(await code(stranger('setBookmark', { target: 'b4', saved: true })), 'functions/permission-denied');
+});
+
+test('a block clears saved profiles in both directions, and stops new ones', async () => {
+  const [a, b] = await pair('b6', 'b7');
+  await a('setBookmark', { target: 'b7', saved: true });
+  await b('setBookmark', { target: 'b6', saved: true });
+  await a('blockProfile', { target: 'b7' });
+  assert.equal((await db.doc('accounts/b6/bookmarks/b7').get()).exists, false);
+  assert.equal((await db.doc('accounts/b7/bookmarks/b6').get()).exists, false);
+  assert.equal(await code(b('setBookmark', { target: 'b6', saved: true })), 'functions/not-found');
+});
+
+test('the saved list has a limit, and saving again is harmless', async () => {
+  const [a] = await pair('b8', 'b9');
+  await a('setBookmark', { target: 'b9', saved: true });
+  await a('setBookmark', { target: 'b9', saved: true });
+  const batch = db.batch();
+  for (let i = 0; i < 199; i++) batch.set(db.doc(`accounts/b8/bookmarks/x${i}`), { profileId: `x${i}` });
+  await batch.commit();
+  await db.doc('profiles/ba').set(profile('ba', 'female'));
+  assert.equal(await code(a('setBookmark', { target: 'ba', saved: true })), 'functions/resource-exhausted');
+  await a('setBookmark', { target: 'b9', saved: true });
+});

@@ -39,6 +39,10 @@ export const blockProfile = onCall(async (req) => {
   if (target === uid) throw new HttpsError('invalid-argument', 'You cannot block yourself.');
   await blockRef(uid, target).set({ target, createdAt: FieldValue.serverTimestamp() });
   await closeMatch(uid, target, 'blocked');
+  await Promise.all([
+    accountRef(uid).collection('bookmarks').doc(target).delete(),
+    accountRef(target).collection('bookmarks').doc(uid).delete(),
+  ]);
   // Nothing already in flight may survive the block, in either direction.
   await Promise.all([R.proposalId(uid, target), R.proposalId(target, uid)].map((id) => db.runTransaction(async (tx) => {
     const ref = db.doc(`contactRequests/${id}`);

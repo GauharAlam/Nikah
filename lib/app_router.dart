@@ -14,6 +14,7 @@ import 'screens/plans_screen.dart';
 import 'screens/review_queue_screen.dart';
 import 'screens/review_status_screen.dart';
 import 'screens/safety_center_screen.dart';
+import 'screens/saved_profiles_screen.dart';
 import 'screens/start_profile_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/activities_screen.dart';
@@ -76,6 +77,7 @@ class AppRoutes {
   static const String familyView = '/family/view';
   static const String deleteAccount = '/settings/delete';
   static const String blockedMembers = '/settings/blocked';
+  static const String savedProfiles = '/saved';
   static const String contactDetails = '/profile/contact';
   static const String verifyPhone = '/profile/phone';
   static const String reviewQueue = '/admin/review';
@@ -284,6 +286,7 @@ GoRouter buildRouter(AppStore store) {
       GoRoute(path: AppRoutes.settings, builder: (_, _) => const SettingsScreen()),
       GoRoute(path: AppRoutes.deleteAccount, builder: (_, _) => const DeleteAccountScreen()),
       GoRoute(path: AppRoutes.blockedMembers, builder: (_, _) => const BlockedMembersScreen()),
+      GoRoute(path: AppRoutes.savedProfiles, builder: (_, _) => const SavedProfilesScreen()),
       GoRoute(path: AppRoutes.about, builder: (_, _) => const AboutScreen()),
       GoRoute(
         path: AppRoutes.editProfile,

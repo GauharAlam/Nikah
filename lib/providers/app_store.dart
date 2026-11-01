@@ -140,6 +140,11 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> loadMoreIntroductions();
   void markProfileViewed(String id);
   void markIncompatible(String matchId);
+  List<MatchProfile> get bookmarkedProfiles;
+  bool get isLoadingBookmarks;
+  bool isBookmarked(String id);
+  Future<void> loadBookmarks();
+  Future<void> setBookmark(String id, {required bool saved});
 
   /// One page of Search Rishtey results.
   Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor});

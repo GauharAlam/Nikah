@@ -562,6 +562,33 @@ screens. Picker options such as "Open to discuss" are stored values and stay in 
 
 Functions were not changed, so their tests were not run again.
 
+### Withdraw, landing actions and saved profiles
+
+- A pending sent proposal now has a Withdraw button. The server supported this, but no screen
+  offered it. `withdraw` used to report success without waiting, so it now waits for the server.
+- The landing page offers Create Account and Sign in. Both use the same verified phone flow,
+  because a phone number either finds the account or starts one.
+- Saved profiles are real: `setBookmark`, an owner-only `accounts/{uid}/bookmarks` list and a Saved
+  profiles screen from the Profile tab. The list holds ids only, and cards still load through
+  `getProfiles`, so saving exposes nothing new. A profile the server will not return drops out.
+- A block clears saved profiles both ways. Deleting an account clears them from other members'
+  lists too, and the data export includes them.
+
+**Existing issue fixed:** `ensure` could ask for more than the 30 profiles `getProfiles` accepts.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 250 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 118 passed |
+
+Device tests were not run again for this work. Saved profiles have not run on a device.
+
+**Needed at first deployment:** the new rules and the `bookmarks` index, using the usual deploy.
+
 ## Definition of Done
 
 Status is what was run. Emulator means local Firebase emulators, on an Android virtual device

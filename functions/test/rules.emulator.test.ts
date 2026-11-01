@@ -57,6 +57,16 @@ test('accounts are private to their owner', async () => {
   await assertFails(getDoc(doc(member('b'), 'accounts/a')));
 });
 
+test('saved profiles are private, and no client can write them', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'accounts/a/bookmarks/b'), { profileId: 'b' });
+  });
+  await assertSucceeds(getDoc(doc(member('a'), 'accounts/a/bookmarks/b')));
+  await assertFails(getDoc(doc(member('b'), 'accounts/a/bookmarks/b')));
+  await assertFails(setDoc(doc(member('a'), 'accounts/a/bookmarks/c'), { profileId: 'c' }));
+  await assertFails(deleteDoc(doc(member('a'), 'accounts/a/bookmarks/b')));
+});
+
 test('published profiles cannot be read directly', async () => {
   await assertFails(getDoc(doc(member('a'), 'profiles/b')));
 });

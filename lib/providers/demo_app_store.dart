@@ -224,6 +224,24 @@ class DemoAppStore extends AppStore {
     notifyListeners();
   }
 
+  // ─── Saved profiles ───────────────────────────────────────────────────────
+  final List<String> _bookmarks = <String>[];
+
+  @override
+  List<MatchProfile> get bookmarkedProfiles => _bookmarks.map(profileById).toList();
+  @override
+  bool get isLoadingBookmarks => false;
+  @override
+  bool isBookmarked(String id) => _bookmarks.contains(id);
+  @override
+  Future<void> loadBookmarks() async {}
+  @override
+  Future<void> setBookmark(String id, {required bool saved}) async {
+    _bookmarks.remove(id);
+    if (saved) _bookmarks.insert(0, id);
+    notifyListeners();
+  }
+
   // ─── Discovery paging ─────────────────────────────────────────────────────
   @override
   bool get isLoadingIntroductions => false;

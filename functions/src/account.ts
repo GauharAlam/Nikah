@@ -25,6 +25,7 @@ const STEPS: Record<string, (uid: string) => Promise<void>> = {
   },
   relations: async (uid) => {
     await Promise.all([
+      deleteAll(db.collectionGroup('bookmarks').where('profileId', '==', uid)),
       deleteAll(db.collection('proposals').where('from', '==', uid)),
       deleteAll(db.collection('proposals').where('to', '==', uid)),
       deleteAll(db.collection('contactRequests').where('from', '==', uid)),
@@ -168,6 +169,7 @@ export const exportMyData = onCall(async (req) => {
   const messages = await Promise.all(matches.docs.map((m) => m.ref.collection('messages')
     .where('sender', '==', uid).orderBy('sentAt', 'desc').limit(1000).get()));
   const { reviewedBy, ...ownAccount } = account.data() ?? {};
+  const bookmarks = await accountRef(uid).collection('bookmarks').limit(200).get();
   const plain = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (_, x) => (x instanceof Timestamp ? x.toDate().toISOString() : x)));
   return plain({
     exportedAt: new Date().toISOString(), account: ownAccount, draft: draft.data() ?? null,
@@ -177,6 +179,7 @@ export const exportMyData = onCall(async (req) => {
     proposals: [...sent.docs, ...received.docs].map((d) => ({
       direction: d.data().from === uid ? 'sent' : 'received', status: d.data().status,
     })),
+    savedProfiles: bookmarks.docs.map((d) => d.id),
     messages: messages.flatMap((q) => q.docs.map((d) => ({ text: d.data().text, sentAt: d.data().sentAt }))),
   });
 });

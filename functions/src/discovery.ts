@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import * as R from './rules';
 import { accountRef, approvedUid, blockedEitherWay, db, idArg, isPremium, limits, readUrl } from './shared';
@@ -119,6 +119,32 @@ export const fetchIntroductions = onCall(async (req) => {
     cursor: left === 0 ? null : scanned.size === 60 || out.length === pageSize ? last : null,
     freeLeft: left, freeLimit: lim.freeProfileLimit, limitReached: left === 0,
   };
+});
+
+const MAX_BOOKMARKS = 200;
+
+/** Private to the member. Saved cards are still read through getProfiles, so this reveals nothing. */
+export const setBookmark = onCall(async (req) => {
+  const uid = approvedUid(req);
+  const target = idArg(req.data?.target, 'target');
+  const ref = accountRef(uid).collection('bookmarks').doc(target);
+  if (req.data?.saved !== true) {
+    await ref.delete();
+    return { saved: false };
+  }
+  const [snap, me, blocked, existing, count] = await Promise.all([
+    db.doc(`profiles/${target}`).get(), db.doc(`profiles/${uid}`).get(), blockedEitherWay(uid, target),
+    ref.get(), accountRef(uid).collection('bookmarks').count().get(),
+  ]);
+  const d = snap.data();
+  if (target === uid || !d || d.live !== true || blocked || !R.gendersCompatible(me.data()?.gender, d.gender)) {
+    throw new HttpsError('not-found', 'This profile is unavailable.');
+  }
+  if (!existing.exists && count.data().count >= MAX_BOOKMARKS) {
+    throw new HttpsError('resource-exhausted', 'Your saved list is full. Remove a profile first.');
+  }
+  await ref.set({ profileId: target, createdAt: FieldValue.serverTimestamp() });
+  return { saved: true };
 });
 
 export const getProfiles = onCall(async (req) => {

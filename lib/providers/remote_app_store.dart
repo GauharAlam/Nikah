@@ -294,6 +294,17 @@ class RemoteAppStore extends AppStore {
   @override
   void markIncompatible(String matchId) => discovery.markIncompatible(matchId);
   @override
+  List<MatchProfile> get bookmarkedProfiles => discovery.bookmarked;
+  @override
+  bool get isLoadingBookmarks => discovery.isLoadingBookmarks;
+  @override
+  bool isBookmarked(String id) => discovery.isBookmarked(id);
+  @override
+  Future<void> loadBookmarks() => discovery.loadBookmarks();
+  @override
+  Future<void> setBookmark(String id, {required bool saved}) =>
+      discovery.setBookmark(id, saved: saved);
+  @override
   Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor}) =>
       discovery.search(query: query, nearby: nearby, cursor: cursor);
 

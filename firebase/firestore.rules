@@ -58,6 +58,10 @@ service cloud.firestore {
         allow read: if isUser(uid);
         allow write: if false;
       }
+      match /bookmarks/{id} {
+        allow read: if isUser(uid);
+        allow write: if false;
+      }
       match /notifications/{id} {
         allow read: if isUser(uid);
         allow update: if isUser(uid)

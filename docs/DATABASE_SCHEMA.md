@@ -46,6 +46,7 @@ erDiagram
 | `accounts/{uid}/blocks/{other}` | Blocks made | server | server | deleted with account, or kept hashed per policy |
 | `accounts/{uid}/hidden/{other}` | "Don't show" | server | server | deleted with account |
 | `accounts/{uid}/viewed/{other}` | Free view record | server | server | deleted with account |
+| `accounts/{uid}/bookmarks/{other}` | Saved profile, id only, at most 200 | owner | server | deleted with either account, or by a block |
 | `profiles/{uid}` | Published card | owner, served through functions | server | deleted with account |
 | `proposals/{from}_{to}` | Proposal state machine | the two people | server | deleted with account |
 | `contactRequests/{from}_{to}` | Contact request state | the two people | server | deleted with account |

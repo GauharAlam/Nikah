@@ -21,6 +21,7 @@ class FakeBackend implements Backend {
   final StreamController<AccountState> account = StreamController<AccountState>.broadcast();
   final StreamController<AppLimits> limits = StreamController<AppLimits>.broadcast();
   final StreamController<List<Proposal>> proposals = StreamController<List<Proposal>>.broadcast();
+  final StreamController<List<String>> bookmarks = StreamController<List<String>>.broadcast();
   final StreamController<List<MatchThread>> matches = StreamController<List<MatchThread>>.broadcast();
   final StreamController<List<ChatMessage>> messages = StreamController<List<ChatMessage>>.broadcast();
   final StreamController<Map<String, String>> shares = StreamController<Map<String, String>>.broadcast();
@@ -32,6 +33,9 @@ class FakeBackend implements Backend {
   Map<String, dynamic>? draft;
   Map<String, dynamic>? savedDraft;
   List<IntroductionPage> pages = <IntroductionPage>[];
+
+  /// Profiles the server refuses to return.
+  final Set<String> hiddenProfiles = <String>{};
 
   /// Full profiles, in place of the one-photo card.
   Map<String, MatchProfile> fullProfiles = <String, MatchProfile>{};
@@ -119,11 +123,18 @@ class FakeBackend implements Backend {
   @override
   Future<List<MatchProfile>> getProfiles(List<String> ids) async {
     await _record('getProfiles');
-    return ids.map((String id) => fullProfiles[id] ?? card(id)).toList();
+    return ids
+        .where((String id) => !hiddenProfiles.contains(id))
+        .map((String id) => fullProfiles[id] ?? card(id))
+        .toList();
   }
 
   @override
   Future<void> hideProfile(String target) => _record('hide:$target');
+  @override
+  Stream<List<String>> watchBookmarks(String uid) => bookmarks.stream;
+  @override
+  Future<void> setBookmark(String target, {required bool saved}) => _record('bookmark:$target:$saved');
   @override
   Stream<List<Proposal>> watchProposals(String uid) => proposals.stream;
   @override

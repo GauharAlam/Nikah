@@ -199,6 +199,14 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 SettingsTile(
+                  key: const Key('open_saved_profiles'),
+                  icon: Icons.bookmark_border_rounded,
+                  title: tr('Saved profiles'),
+                  subtitle: tr('Only you can see this list'),
+                  onTap: () => context.push(AppRoutes.savedProfiles),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
                   icon: Icons.mosque_outlined,
                   title: tr('Deen and values'),
                   subtitle: tr('Prayer, Quran and lifestyle'),

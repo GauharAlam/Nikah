@@ -23,6 +23,7 @@ class DiscoveryController extends FeatureController {
   final Map<String, DateTime> _fetchedAt = <String, DateTime>{};
   final Set<String> _fetching = <String>{};
   Set<String> _blocked = <String>{};
+  List<String> _bookmarks = <String>[];
   List<MatchProfile> _introductions = <MatchProfile>[];
   MatchFilters _filters = const MatchFilters();
   int? _cursor;
@@ -45,7 +46,30 @@ class DiscoveryController extends FeatureController {
 
   String get _filtersKey => 'bk_filters_${_session.uid}';
 
+  /// Saved profiles the server still lets this member see. One that was hidden
+  /// or deleted drops out, because it never reaches the cache.
+  List<MatchProfile> get bookmarked => _bookmarks
+      .where((String id) => !_blocked.contains(id))
+      .map((String id) => _cache[id])
+      .whereType<MatchProfile>()
+      .toList();
+  bool get isLoadingBookmarks => _bookmarks.any(_fetching.contains);
+  bool isBookmarked(String id) => _bookmarks.contains(id);
+
+  /// The server reads at most this many profiles in one call.
+  static const int _pageSize = 30;
+
+  Future<void> loadBookmarks() => ensure(_bookmarks);
+
+  Future<void> setBookmark(String id, {required bool saved}) =>
+      backend.setBookmark(id, saved: saved);
+
   void start() {
+    follow(backend.watchBookmarks(_session.uid), (List<String> ids) {
+      _bookmarks = ids;
+      notifyListeners();
+      unawaited(ensure(ids));
+    });
     final String? raw = _prefs.getString(_filtersKey);
     if (raw == null) return;
     final dynamic decoded = jsonDecode(raw);
@@ -61,14 +85,17 @@ class DiscoveryController extends FeatureController {
     if (missing.isEmpty) return;
     _fetching.addAll(missing);
     try {
-      for (final MatchProfile p in await backend.getProfiles(missing)) {
-        _remember(p);
+      for (int i = 0; i < missing.length; i += _pageSize) {
+        final int end = i + _pageSize < missing.length ? i + _pageSize : missing.length;
+        for (final MatchProfile p in await backend.getProfiles(missing.sublist(i, end))) {
+          _remember(p);
+        }
       }
-      notifyListeners();
     } on Object catch (e) {
       report(e);
     } finally {
       _fetching.removeAll(missing);
+      notifyListeners();
     }
   }
 
@@ -201,6 +228,7 @@ class DiscoveryController extends FeatureController {
     _cache.clear();
     _fetchedAt.clear();
     _blocked = <String>{};
+    _bookmarks = <String>[];
     _introductions = <MatchProfile>[];
     _filters = const MatchFilters();
     _cursor = null;

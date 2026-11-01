@@ -38,7 +38,7 @@ class MatchDetailScreen extends StatefulWidget {
 class _MatchDetailScreenState extends State<MatchDetailScreen> {
   final PageController _photoController = PageController();
   int _photoIndex = 0;
-  bool _saved = false;
+  bool _savingBookmark = false;
 
   @override
   void initState() {
@@ -60,6 +60,27 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       '?url=${Uri.encodeComponent(url)}'
       '&name=${Uri.encodeComponent(match.firstName)}',
     );
+  }
+
+  /// The icon follows the server, so a refused save never looks saved.
+  Future<void> _toggleBookmark(MatchProfile match) async {
+    final AppStore store = context.read<AppStore>();
+    final bool saved = !store.isBookmarked(match.id);
+    setState(() => _savingBookmark = true);
+    try {
+      await store.setBookmark(match.id, saved: saved);
+      if (mounted) {
+        showAppSnack(
+          context,
+          saved ? 'Saved.' : 'Removed from saved profiles.',
+          icon: saved ? Icons.bookmark_added_rounded : Icons.bookmark_remove_rounded,
+        );
+      }
+    } on BackendException catch (e) {
+      if (mounted) showAppSnack(context, e.message);
+    } finally {
+      if (mounted) setState(() => _savingBookmark = false);
+    }
   }
 
   void _sendProposal(MatchProfile match) {
@@ -438,6 +459,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   }
 
   Widget _buildHeader(MatchProfile match) {
+    final bool saved = context.watch<AppStore>().isBookmarked(match.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 2, 18, 0),
       child: Column(
@@ -453,8 +475,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (AppConfig.guardianFeatures) const SizedBox(width: 10),
-              if (AppConfig.guardianFeatures) Material(
+              const SizedBox(width: 10),
+              Material(
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
@@ -463,26 +485,16 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                 child: InkWell(
                   key: const Key('detail_save'),
                   customBorder: const CircleBorder(),
-                  onTap: () {
-                    setState(() => _saved = !_saved);
-                    showAppSnack(
-                      context,
-                      _saved
-                          ? 'Saved to your shortlist.'
-                          : 'Removed from your shortlist.',
-                      icon: _saved
-                          ? Icons.bookmark_added_rounded
-                          : Icons.bookmark_remove_rounded,
-                    );
-                  },
+                  onTap: _savingBookmark ? null : () => _toggleBookmark(match),
                   child: Padding(
                     padding: const EdgeInsets.all(9),
                     child: Icon(
-                      _saved
+                      saved
                           ? Icons.bookmark_rounded
                           : Icons.bookmark_border_rounded,
                       size: 19,
-                      color: _saved ? AppTheme.green : AppTheme.slate600,
+                      color: saved ? AppTheme.green : AppTheme.slate600,
+                      semanticLabel: tr(saved ? 'Remove from saved' : 'Save profile'),
                     ),
                   ),
                 ),

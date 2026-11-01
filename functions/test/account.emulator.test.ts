@@ -29,6 +29,8 @@ async function seedEverything(uid: string, other: string) {
   await db.doc(`accounts/${other}/blocks/${uid}`).set({ target: uid });
   await db.doc(`accounts/${other}/hidden/${uid}`).set({ target: uid });
   await db.doc(`accounts/${other}/viewed/${uid}`).set({ target: uid });
+  await db.doc(`accounts/${other}/bookmarks/${uid}`).set({ profileId: uid });
+  await db.doc(`accounts/${uid}/bookmarks/${other}`).set({ profileId: other });
   await db.doc(`family/${other}/shortlist/${uid}`).set({ profileId: uid, firstName: 'Del' });
   await db.doc(`family/${uid}`).set({ guardians: ['gx'], names: { gx: 'G' } });
   await db.doc(`family/${uid}/memberships/gx`).set({ permissions: ['view_shortlist'] });
@@ -50,7 +52,8 @@ async function assertGone(uid: string, other: string) {
     `accounts/${uid}/notifications/n`, `accounts/${uid}/devices/token`, `proposals/${uid}_${other}`,
     `proposals/${other}_${uid}x`, `contactRequests/${uid}_${other}`, `contactShares/${other}_${uid}`,
     `matches/${other}_${uid}`, `matches/${other}_${uid}/messages/m`, `accounts/${other}/blocks/${uid}`,
-    `accounts/${other}/hidden/${uid}`, `accounts/${other}/viewed/${uid}`, `family/${other}/shortlist/${uid}`,
+    `accounts/${other}/hidden/${uid}`, `accounts/${other}/viewed/${uid}`, `accounts/${other}/bookmarks/${uid}`,
+    `accounts/${uid}/bookmarks/${other}`, `family/${other}/shortlist/${uid}`,
     `family/${uid}`, `family/${uid}/memberships/gx`, `familyLinks/gx/circles/${uid}`, `inviteClaims/${uid}`,
   ]) assert.equal((await db.doc(path).get()).exists, false, `${path} should be gone`);
   assert.equal((await db.doc('accounts/gx').get()).data()?.familyOf, undefined);
