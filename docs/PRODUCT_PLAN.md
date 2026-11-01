@@ -76,7 +76,7 @@ Each item says what it does and why. **Now** means it is being built in this rou
 | **Nikah Journey** | Shared steps after a match: talk, families meet, istikhara, decision | Now |
 | **Important Questions** | Both answer questions on deen, money, mahr, children and family. Answers show only after you answer | Now |
 | **Deen and values** | Optional prayer, Quran and lifestyle details on the profile, plus a sect filter | Now |
-| Family Circle | A linked parent with limited access. Needs its own permission design | Next |
+| Family Circle | A linked parent sees shared summaries and gives an opinion, never chats or documents | Done |
 | Scholar and counsellor directory | Needs real partners | Later |
 
 ## Decisions for you

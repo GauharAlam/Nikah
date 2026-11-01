@@ -47,7 +47,8 @@ Create `config/app` in Firestore. Anything you leave out uses the default.
               "monthlyContactCredits": 30, "hideDays": 7, "proposalExpiryDays": 30, "minPhotos": 1,
               "requireIdProof": true, "graduatesOnly": true, "staleDays": 45,
               "reportHoldThreshold": 3, "contactExpiryDays": 14,
-              "freeProfileLimit": 15, "freeProfileWindow": "total" } }
+              "freeProfileLimit": 15, "freeProfileWindow": "total",
+              "inviteRewardCredits": 2, "inviteRewardCap": 10 } }
 ```
 
 `freeProfileWindow` can be `total`, `month` or `day`.
@@ -82,6 +83,7 @@ service account also needs Play Developer API access.
 ## 6. Before release
 
 - Replace `support@example.com` and the example URLs: `--dart-define=SUPPORT_EMAIL=… TERMS_URL=… PRIVACY_URL=…`
+- Set `APP_LINK` to the Play Store link. It appears in invites and on every biodata.
 - Choose the final name in `AppBrand`, the platform labels and the app IDs.
 - Add a release signing config. `android/app/build.gradle.kts` still signs with debug keys.
 - Replace the landing artwork and the default launcher icon.
