@@ -15,6 +15,7 @@ import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
+import '../widgets/app_brand.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_images.dart';
@@ -948,11 +949,8 @@ class _MiniCrest extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(
-        Icons.mosque_rounded,
-        size: 18,
-        color: AppTheme.green,
-      ),
+      alignment: Alignment.center,
+      child: const NikahWordmark(size: 22, green: true),
     );
   }
 }

@@ -11,6 +11,7 @@ import '../data/backend.dart';
 import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_brand.dart';
 import '../widgets/app_snacks.dart';
 import '../widgets/picker_sheets.dart';
 
@@ -119,11 +120,7 @@ class _LandingScreenState extends State<LandingScreen> {
                               ),
                             ),
                             const Spacer(flex: 2),
-                            const Icon(
-                              Icons.mosque_rounded,
-                              size: 72,
-                              color: AppTheme.gold,
-                            ),
+                            const NikahLogo(size: 118),
                             const SizedBox(height: 12),
                             Text(
                               AppBrand.name,

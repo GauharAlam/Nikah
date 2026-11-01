@@ -5,6 +5,7 @@ import '../config/app_config.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
+import '../widgets/app_brand.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_snacks.dart';
 
@@ -129,7 +130,8 @@ class _BrandHero extends StatelessWidget {
               border: Border.all(
                   color: AppTheme.gold.withValues(alpha: 0.6), width: 1.5),
             ),
-            child: const Icon(Icons.mosque, color: AppTheme.gold, size: 28),
+            alignment: Alignment.center,
+            child: const NikahWordmark(size: 46),
           ),
           const SizedBox(height: 12),
           Text(

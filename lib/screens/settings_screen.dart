@@ -16,6 +16,7 @@ import '../providers/app_store.dart';
 import '../services/app_lock.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
+import '../widgets/app_brand.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_snacks.dart';
@@ -240,16 +241,7 @@ class SettingsScreen extends StatelessWidget {
           Center(
             child: Column(
               children: <Widget>[
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.emeraldDeep,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.mosque,
-                      size: 20, color: AppTheme.gold),
-                ),
+                const NikahLogoMark(size: 40),
                 const SizedBox(height: 8),
                 Text(
                   'Nikah · v1.0.0+1',

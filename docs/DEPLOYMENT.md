@@ -20,7 +20,7 @@ Use one Firebase project per environment, and never share data between them.
 | Firebase project on Blaze, config files added | Not done | You |
 | Final name and id. The app is `Nikah`, id `com.gauharalam.nikah`, which cannot change after first publish | Please confirm | You |
 | Terms, privacy policy, retention periods reviewed by a lawyer | Not done | You |
-| Real launcher icon and landing artwork | Not done | You |
+| Launcher icon and logo | Done, the نکاح arch. Landing artwork is still yours | You |
 | Reviewers named, and a real support address | Not done | You |
 | Real institution list and quota decisions | Not done | You |
 

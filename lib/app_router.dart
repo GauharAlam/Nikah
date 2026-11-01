@@ -44,6 +44,7 @@ import 'screens/wali_hub_screen.dart';
 import 'screens/wali_onboarding_screen.dart';
 import 'screens/wali_sms_portal_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_brand.dart';
 
 /// Central table of routes. Replaces the old boolean-flag router and
 /// restores system back-gesture behaviour on every sub-page.
@@ -350,7 +351,7 @@ class _SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.mosque, size: 48, color: AppTheme.gold),
+              const NikahLogo(size: 110),
               const SizedBox(height: 14),
               Text(AppBrand.name, style: AppTheme.ts(24, FontWeight.w800, color: Colors.white)),
               const SizedBox(height: 26),

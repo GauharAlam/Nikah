@@ -2,8 +2,39 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Rounded-square forest-green app mark with the white mosque glyph —
-/// the logo lockup.
+/// The نکاح arch logo, in gold, for dark surfaces at 40 and above. Smaller than
+/// that the arch fades, so use [NikahWordmark].
+class NikahLogo extends StatelessWidget {
+  const NikahLogo({super.key, this.size = 96});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        'assets/brand/nikah-logo.png',
+        width: size,
+        height: size,
+        semanticLabel: 'Nikah logo',
+      );
+}
+
+/// نکاح on its own, for small marks. Gold on dark, or green on light.
+class NikahWordmark extends StatelessWidget {
+  const NikahWordmark({super.key, this.size = 24, this.green = false});
+
+  final double size;
+  final bool green;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        'assets/brand/nikah-word-${green ? 'green' : 'gold'}.png',
+        width: size,
+        height: size,
+        excludeFromSemantics: true,
+      );
+}
+
+/// Rounded-square forest-green app mark with the gold نکاح.
 class NikahLogoMark extends StatelessWidget {
   const NikahLogoMark({super.key, this.size = 34});
 
@@ -25,11 +56,8 @@ class NikahLogoMark extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        Icons.mosque_rounded,
-        size: size * 0.56,
-        color: Colors.white,
-      ),
+      alignment: Alignment.center,
+      child: NikahWordmark(size: size * 0.8),
     );
   }
 }

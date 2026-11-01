@@ -39,6 +39,19 @@ void main() {
     });
   }
 
+  test('the app carries its own logo, not the Flutter default', () {
+    for (final String name in <String>['nikah-logo', 'nikah-word-gold', 'nikah-word-green']) {
+      expect(File('assets/brand/$name.png').existsSync(), isTrue, reason: name);
+    }
+    const String res = 'android/app/src/main/res';
+    final String icon = File('$res/mipmap-anydpi-v26/ic_launcher.xml').readAsStringSync();
+    expect(icon, contains('ic_launcher_foreground'));
+    for (final String d in <String>['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
+      expect(File('$res/mipmap-$d/ic_launcher_foreground.png').existsSync(), isTrue, reason: d);
+    }
+    expect(File('$res/drawable/launch_background.xml').readAsStringSync(), contains('launch_logo'));
+  });
+
   test('fonts are bundled, not fetched while a member waits', () {
     expect(File('pubspec.yaml').readAsStringSync().contains('google_fonts'), isFalse);
     for (final File f in sources) {

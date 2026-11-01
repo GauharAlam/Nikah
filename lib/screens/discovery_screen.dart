@@ -200,27 +200,30 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Flexible(
-                      child: Text.rich(
-                        TextSpan(
-                          children: <InlineSpan>[
-                            TextSpan(text: tr('Introductions ')),
-                            TextSpan(
-                              text: tr('for you'),
-                              style: AppTheme.ts(
-                                23,
-                                FontWeight.w800,
-                                color: AppTheme.green,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text.rich(
+                          TextSpan(
+                            children: <InlineSpan>[
+                              TextSpan(text: tr('Introductions ')),
+                              TextSpan(
+                                text: tr('for you'),
+                                style: AppTheme.ts(
+                                  23,
+                                  FontWeight.w800,
+                                  color: AppTheme.green,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          style: AppTheme.ts(
+                            23,
+                            FontWeight.w800,
+                            color: AppTheme.slate900,
+                          ),
+                          maxLines: 1,
                         ),
-                        style: AppTheme.ts(
-                          23,
-                          FontWeight.w800,
-                          color: AppTheme.slate900,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -735,11 +738,8 @@ class _CrestBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(
-        Icons.mosque_rounded,
-        size: 20,
-        color: AppTheme.green,
-      ),
+      alignment: Alignment.center,
+      child: const NikahWordmark(size: 24, green: true),
     );
   }
 }
