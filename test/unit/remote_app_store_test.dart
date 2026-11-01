@@ -196,16 +196,19 @@ void main() {
 
   test('matches and messages arrive from the server', () async {
     await signIn();
-    backend.matches.add(const <MatchThread>[MatchThread(pairId: 'p', otherId: 'a', isOpen: true)]);
+    backend.matches.add(<MatchThread>[
+      MatchThread(pairId: 'p', otherId: 'a', isOpen: true, lastMessageAt: DateTime(2026)),
+    ]);
     await settle();
     expect(store.isApproved('a'), isTrue);
+    expect(store.chatThreadIds, contains('a'));
 
+    store.openThread('a');
     backend.messages.add(<ChatMessage>[
       ChatMessage(id: '1', text: 'Salam', time: '', createdAt: DateTime(2026), sender: MessageSender.match),
     ]);
     await settle();
     expect(store.messages('a').single.text, 'Salam');
-    expect(store.chatThreadIds, contains('a'));
 
     store.sendMessage('a', 'Wa alaikum salam');
     await settle();
@@ -271,7 +274,7 @@ void main() {
   test('deleting the account calls the server and clears preferences', () async {
     await signIn();
     store.acceptPledge();
-    store.resetAll();
+    await store.deleteAccount();
     await settle();
     await settle();
     expect(backend.calls, contains('deleteAccount'));
@@ -362,8 +365,8 @@ void main() {
 
   test('purchases are granted by the server only', () async {
     await signIn();
-    await store.validatePurchase(productId: 'barkat_monthly', platform: 'android', token: 't');
-    expect(backend.calls, contains('purchase:barkat_monthly'));
+    await store.validatePurchase(productId: 'nikah_monthly', platform: 'android', token: 't');
+    expect(backend.calls, contains('purchase:nikah_monthly:android'));
     expect(store.isPremium, isFalse);
     backend.account.add(AccountState(
       stage: ReviewStage.approved,

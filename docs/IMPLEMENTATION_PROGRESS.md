@@ -11,7 +11,11 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 1 Audit and architecture | Done |
 | 2 Architecture refactor | Done |
 | 3 Authentication, onboarding, review | Done |
-| 4 Discovery, proposals, matches, chat | Next |
+| 4 Discovery, proposals, matches, chat | Done |
+| 5 Family, privacy, deletion | Done |
+| 6 Trust and safety | Done |
+| 7 Notifications and premium | Done |
+| 8 Quality assurance | Next |
 
 ## Phase 0 — Baseline
 
@@ -172,3 +176,202 @@ files, which made `git status` and `tsc` hang. Work continues in a clone outside
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 4.
+
+## Phase 4 — Discovery, proposals, matches and chat
+
+**Security findings proved first.** 14 emulator and rules tests failed on the old code,
+including a blocked pair still able to exchange phone numbers (SEC-05), held profiles served
+to anyone who had viewed them (SEC-10), and messaging after losing approval (SEC-13). All pass.
+
+**Implemented**
+
+- SEC-05: blocks close pending contact requests with a refund, and `respondContact` checks
+  blocks in its transaction.
+- SEC-10: one `canViewProfile` rule for every read.
+- SEC-13: messages need an active match and approval, for reading and writing.
+- SEC-20: discovery cards carry a first name. Full name, employer and family details are for
+  active matches.
+- SEC-21: expiry runs per document in a draining loop. SEC-25: a decline stays declined.
+- ARC-05: refused proposals and contact requests restore the card and report why. Report and
+  block complete only on server success.
+- ARC-07: reads and listeners are bounded. Messages stream only while a chat is open.
+- FLOW-07: Search Rishtey with text search, Suggestions and Nearby. Nearby is opt-in on both
+  sides, compares home city only, and never uses GPS. It is reached from Filters for now,
+  because `discovery_screen.dart` has uncommitted work from another session.
+- FLOW-08: removed the fake online dot and fake "seen". Seen now follows the other member's
+  real read time, and unread counts live on the match document.
+- FLOW-09: sending, failed and retry states with client-chosen ids, older-message paging,
+  an ended-conversation state, and report from the conversation.
+- FLOW-10: Pending and Closed views. FLOW-11: the timeline shows real notifications.
+- FLOW-14: block copy no longer says "on this device".
+
+**Existing issues fixed:** the Location filter offered countries but the server compared them
+with city strings, so it could never match. Unread counts only ever rose, and a reinstall
+marked every message unread.
+
+**Files created:** `lib/screens/search_screen.dart`, `functions/src/expiry.ts`,
+`functions/test/connections.emulator.test.ts`, `test/unit/phase4_test.dart`.
+
+**Tests added:** 16 Flutter, 3 logic, 17 emulator and rules.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 154 passed |
+| `npm run test:unit` | 28 passed |
+| `npm run test:emulator` | 69 passed |
+
+**Not done here:** skeleton loaders and pull-to-refresh on the Discover deck, and Filters
+copy for premium rows, all in `discovery_screen.dart` or Phase 8. Photos are still token URLs
+until Phase 5.
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 5.
+
+## Phase 5 — Family, privacy and deletion
+
+**Implemented**
+
+- SEC-11: phone-bound invitations, hashed codes and numbers, relationship and permissions on
+  each membership, an owner-only history, resend limits and attempt limits. Permissions name
+  only features that exist. See `FAMILY_ACCESS_MODEL.md`.
+- FLOW-19: a family-made profile needs the subject's confirmation from their own phone, and
+  the subject can refuse or withdraw at any time.
+- SEC-08, FLOW-13: deletion needs a recent sign-in, ends access at once, and runs named,
+  resumable, paged steps with hourly retries. It has its own screen explaining what is deleted
+  and what is kept. Report and payment records follow the table in `FIREBASE_SECURITY.md`.
+- SEC-01: cards hold no URLs. Each viewer gets one-hour signed links for permitted photos, so a
+  privacy change stops new links at once.
+- SEC-24: data export. FLOW-12: pause, blocked list and unblock, contact-request switch, nearby
+  switch. SEC-22: optional app lock using the phone's own lock.
+- SEC-16, in part: a shared transactional rate limiter, used for family codes.
+
+**Existing issues fixed:** removal from one circle cleared a guardian's link to another.
+Leaving a circle targeted the wrong member. App lock did not ask again on returning to the app.
+
+**Files created:** `functions/src/family.ts` (rewritten), `functions/src/account.ts` (rewritten),
+`lib/screens/account_screens.dart`, `lib/services/app_lock.dart`,
+`functions/test/family.emulator.test.ts`, `functions/test/account.emulator.test.ts`,
+`test/unit/phase5_test.dart`, `docs/FAMILY_ACCESS_MODEL.md`, `docs/FIREBASE_SECURITY.md`.
+
+**Tests added:** 13 Flutter, 3 logic, 19 emulator and rules, including Journey 4, Journey 7 and
+every guardian denial. The old guardian test was replaced by the new suite.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 167 passed |
+| `npm run test:unit` | 31 passed |
+| `npm run test:emulator` | 88 passed |
+| `flutter build apk --release` | built, after moving to `FlutterFragmentActivity` |
+
+**Not verified:** signed URLs on real Storage, re-authentication, and the biometric prompt on a
+device. The iOS privacy shield remains uncompiled (X-2).
+
+**Decision for the user:** retention periods and the choice to delete conversations for both
+sides are engineering defaults that need legal review (X-4).
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 6.
+
+## Phase 6 — Trust and safety
+
+**Security findings proved first.** 10 emulator tests failed on the old code, including three
+fresh accounts able to take any profile down (SEC-09). All pass now.
+
+**Implemented**
+
+- SEC-09: only approved members can report, a member cannot report themselves, and a repeat
+  never reopens a closed report. Reasons are structured, with optional details and context.
+- Reviewers get a Reports tab, without the reporter's identity. They can dismiss, uphold and
+  release a hold, never about themselves. Every decision is audited (SEC-12).
+- A hold now takes the approved claim as well, so a held member loses messaging (SEC-13). The
+  claim reaches the device on its next token refresh, within an hour.
+- SEC-16: limits on reports, submissions and exports. App Check is wired in the app and off on
+  the server until `ENFORCE_APP_CHECK=true`.
+- Unusual message volume raises a flag for reviewers. Nothing happens to the member
+  automatically.
+- FLOW-17: notification links pass an allow-list. Report sheet shared by profile and chat.
+
+**Existing issues fixed**
+
+- **The production FAQ told members every conversation was visible to guardians and archived,
+  that every account has a Wali overseeing it, and that a scholar-supervised team answers in 24
+  hours. None of this was true, and the first contradicts the rule against sharing conversations
+  with guardians.** It now describes the real behaviour.
+- The photo viewer claimed photos were checked by both Walis, and showed disabled like buttons.
+
+**Files created:** `lib/widgets/report_sheet.dart`, `functions/test/safety.emulator.test.ts`,
+`test/unit/phase6_test.dart`, `docs/SAFETY_ESCALATION.md`.
+
+**Tests added:** 6 Flutter, 10 emulator.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 173 passed |
+| `npm run test:unit` | 31 passed |
+| `npm run test:emulator` | 98 passed |
+| `flutter build apk --release` | built |
+
+**Not verified:** App Check needs a real Firebase project. Reviewer screens have widget tests,
+but no real device run yet.
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 7.
+
+## Phase 7 — Notifications and premium
+
+**Implemented**
+
+- SEC-07: purchases rewritten. Each store transaction has one record, keyed by a hash of the
+  transaction id. The product and expiry come from the store. Credits move through a ledger.
+  Refunds reverse exactly what was granted. Product ids and the app id come from `config/app`.
+- Apple now uses the App Store Server API, replacing the deprecated `verifyReceipt`.
+- Play and App Store notifications are handled. A notification is only a hint: the purchase is
+  read back from the store, so a forged request changes nothing.
+- A purchase finishes on the device only after the server verifies it, so a failed check is
+  retried by the store rather than lost.
+- SEC-19: push preferences per category, enforced on the server. Account notices always send,
+  and the in-app record stays. One device belongs to one account, and token rotation is handled.
+- FLOW-18: renewal terms before buying, purchase history, and a pending state.
+
+**Existing issues fixed:** every Android purchase failed, because the app never sent
+`packageName`. A cheap token could claim a more expensive product. An expired Apple receipt
+granted a new period. Different Apple purchases could collide on one key. The app finished
+purchases even when verification failed, so the buyer could pay and receive nothing.
+
+**Files created:** `functions/src/stores.ts`, `functions/test/purchases.emulator.test.ts`,
+`test/unit/phase7_test.dart`.
+
+**Tests added:** 8 Flutter, 2 logic, 14 emulator and rules, including all of Journey 8.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 181 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 112 passed |
+| `flutter build apk --release` | built |
+
+**Test seam:** the emulator reads store answers from `emulatorStore/{token}`. That path needs
+`FUNCTIONS_EMULATOR=true`, which a deployed function never has.
+
+**Not verified, and cannot be from here:** any real Apple or Google call, store notification,
+real FCM delivery, or real product. The verifiers in `stores.ts` have never run against a store.
+Journey 8 proves the logic around them, not the stores themselves.
+
+**Outstanding blockers:** X-1, X-3.
+
+**Next priority:** Phase 8.

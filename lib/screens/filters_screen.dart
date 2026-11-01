@@ -153,6 +153,12 @@ class _FiltersScreenState extends State<FiltersScreen> {
           style: AppTheme.ts(16.5, FontWeight.w800, color: AppTheme.slate900),
         ),
         actions: <Widget>[
+          IconButton(
+            key: const Key('open_search'),
+            tooltip: 'Search Rishtey',
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () => context.push(AppRoutes.search),
+          ),
           TextButton(
             key: const Key('reset_filters'),
             onPressed: _clearAll,

@@ -71,8 +71,9 @@ abstract class AppStore extends ChangeNotifier {
   void signOut();
   void enterOnboarding();
 
-  /// Deletes the member's account and clears this device.
-  void resetAll();
+  /// Deletes the member's account and clears this device. Fails, leaving
+  /// everything in place, if the session is not recent enough.
+  Future<void> deleteAccount();
 
   // ─── Limits ───────────────────────────────────────────────────────────────
   int get dailyProposalLimit;
@@ -100,7 +101,27 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> removePhoto(String stored);
   Future<void> submitProfile();
   void submitEdits();
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
+  void updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  });
+  bool get isPaused => false;
+  Future<void> setPaused(bool paused) async {}
+  Future<List<BlockedMember>> blockedMembers() async => const <BlockedMember>[];
+  Future<void> unblockProfile(String id) async {}
+
+  /// The member's own data as one JSON document.
+  Future<String> exportData();
+
+  /// For a family-made profile: the code the person enters on their phone.
+  String get subjectCode => '';
+  bool get subjectConfirmed => false;
+  bool get isSubjectOfProfile => false;
+  Future<void> confirmSubject(String code, {required bool agree}) async {}
+  Future<void> withdrawSubject() async {}
   List<VerificationDoc> get verificationDocs;
   bool get isBarkatVerified;
   int get verificationProgress;
@@ -109,6 +130,7 @@ abstract class AppStore extends ChangeNotifier {
   // ─── Discovery ────────────────────────────────────────────────────────────
   List<MatchProfile> get directory;
   MatchProfile profileById(String id);
+  Future<void> loadFullProfile(String id) async {}
   List<MatchProfile> get discoveredProfiles;
   MatchFilters get filters;
   void setFilters(MatchFilters next);
@@ -118,6 +140,9 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> loadMoreIntroductions();
   void markProfileViewed(String id);
   void markIncompatible(String matchId);
+
+  /// One page of Search Rishtey results.
+  Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor});
 
   // ─── Proposals and contact ────────────────────────────────────────────────
   Proposal? incomingProposal(String matchId);
@@ -150,8 +175,23 @@ abstract class AppStore extends ChangeNotifier {
   void sendMessage(String matchId, String text);
   void unmatch(String matchId);
   bool isBlocked(String matchId);
-  void blockProfile(String matchId);
-  void reportProfile(String matchId, String reason);
+
+  /// Both complete only once the server has accepted the action.
+  Future<void> blockProfile(String matchId);
+  Future<void> reportProfile(String matchId, String reason, {String details = '', String context = 'profile'});
+
+  /// Conversations stream only while on screen.
+  void openThread(String matchId) {}
+  void closeThread() {}
+  bool isThreadOpen(String matchId) => isApproved(matchId);
+  bool isSeen(String matchId, ChatMessage message) => false;
+  void retryMessage(String matchId, String messageId) {}
+  Future<void> loadOlderMessages() async {}
+  bool get reachedChatStart => true;
+
+  /// Relationships that ended, and contact requests still waiting.
+  List<MatchProfile> get closedMatches => const <MatchProfile>[];
+  List<MatchProfile> get pendingContacts => const <MatchProfile>[];
 
   // ─── Nikah Journey ────────────────────────────────────────────────────────
   JourneyStep journeyStep(String matchId);
@@ -165,9 +205,24 @@ abstract class AppStore extends ChangeNotifier {
   FamilyState get family;
   FamilyState? get guardianView;
   bool get isGuardian;
-  Future<String> createFamilyInvite();
-  Future<void> joinFamily(String code, String name);
+  FamilyAdmin get familyAdmin => const FamilyAdmin();
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  });
+  Future<void> joinFamily(String code);
+  Future<void> rejectFamilyInvite(String code) async {}
+  Future<void> cancelFamilyInvite(String id) async {}
+  Future<String> resendFamilyInvite(String id) async => '';
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions) async {}
+  Future<FamilyOverview?> familyOverview() async => null;
+  Future<void> answerForMember(String from, {required bool accept}) async {}
   Future<void> removeGuardian(String guardian);
+
+  /// A family member leaves the circle they joined.
+  Future<void> leaveFamily() async {}
   Future<void> shareWithFamily(String profileId);
   void giveFamilyOpinion(String profileId, String opinion);
   Future<InviteInfo> inviteInfo();
@@ -186,8 +241,14 @@ abstract class AppStore extends ChangeNotifier {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   });
+  Set<String> get subscriptionProductIds => const AppLimits().subscriptionIds;
+  Set<String> get creditProductIds => const AppLimits().creditIds;
+  List<PurchaseRecord> get purchases => const <PurchaseRecord>[];
+
+  /// Whether a member wants push for a category. Everything starts on.
+  bool wantsNotification(String category) => true;
+  void setWantsNotification(String category, bool on) {}
 
   // ─── Demo-only surfaces ───────────────────────────────────────────────────
   // Guardian portal, meetings and the local timeline have no server support.
@@ -207,6 +268,9 @@ abstract class AppStore extends ChangeNotifier {
   void setPushEnabled(bool value) {}
   bool get emailDigest => false;
   void setEmailDigest(bool value) {}
+
+  /// Redraws after a change saved outside the store, such as app lock.
+  void settingsChanged() => notifyListeners();
 
   // ─── Formatting helpers shared with screens ───────────────────────────────
   static String privacyLabel(String key) => switch (key) {

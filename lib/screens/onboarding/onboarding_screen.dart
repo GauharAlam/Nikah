@@ -43,6 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final TextEditingController _familyBackground;
   late final TextEditingController _familyLocation;
   late final TextEditingController _career;
+  late final TextEditingController _subjectPhone;
   double? _uploadProgress;
 
   @override
@@ -57,6 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _familyBackground = TextEditingController(text: _d.familyBackground);
     _familyLocation = TextEditingController(text: _d.familyLocation);
     _career = TextEditingController(text: _d.careerDescription);
+    _subjectPhone = TextEditingController(text: _d.subjectPhone);
   }
 
   @override
@@ -68,6 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _familyBackground.dispose();
     _familyLocation.dispose();
     _career.dispose();
+    _subjectPhone.dispose();
     super.dispose();
   }
 
@@ -84,6 +87,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         familyBackground: _familyBackground.text.trim(),
         familyLocation: _familyLocation.text.trim(),
         careerDescription: _career.text.trim(),
+        subjectPhone: _subjectPhone.text.trim(),
       );
 
   /// What stops the current step being completed, if anything.
@@ -105,6 +109,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 2:
         if (d.managedBy == 'family' && !d.candidateConsent) {
           return 'Confirm that the person has agreed to this profile.';
+        }
+        if (d.managedBy == 'family' && !RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(d.subjectPhone)) {
+          return 'Enter their phone number, starting with the country code.';
         }
         if (d.height.isEmpty) return 'Select your height.';
       case 3:
@@ -375,6 +382,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             value: _d.candidateConsent,
             onChanged: (bool? v) => _set(_d.copyWith(candidateConsent: v ?? false)),
           ),
+        if (_d.managedBy == 'family') ...<Widget>[
+          _label(tr('Their phone number'), required: true),
+          TextField(
+            key: const Key('subject_phone'),
+            controller: _subjectPhone,
+            keyboardType: TextInputType.phone,
+            inputFormatters: <TextInputFormatter>[LengthLimitingTextInputFormatter(16)],
+            decoration: const InputDecoration(hintText: '+91…'),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tr('They will confirm this profile from their own phone before it can go live.'),
+            style: AppTheme.bodySmall,
+          ),
+        ],
       ],
     );
   }

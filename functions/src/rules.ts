@@ -1,4 +1,5 @@
 // Decision logic with no Firebase dependency, so every rule is unit-testable.
+import { createHash } from 'node:crypto';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
 
@@ -23,6 +24,7 @@ export interface Limits {
   inviteRewardCap: number;
   minAge: number;
   firstMarriageOnly: boolean;
+  suspiciousMessagesPerDay: number;
 }
 
 // 5 (0/5 PROPOSALS SENT), 10 decisions and 15 waiting are observed in the
@@ -47,6 +49,7 @@ export const DEFAULT_LIMITS: Limits = {
   inviteRewardCap: 10,
   minAge: 18,
   firstMarriageOnly: false,
+  suspiciousMessagesPerDay: 300,
 };
 
 /** Version of the terms and privacy policy a member accepts. Overridden by config/app. */
@@ -56,7 +59,45 @@ export const CONSENTS: Record<string, string> = {
   data_processing: 'Use of profile details, photos and documents for review and matching',
   marriage_intent: 'Confirmation that this profile is for marriage and is accurate',
   family_authorised: 'Confirmation by a family member that the person agreed to this profile',
+  subject_confirmed: 'Confirmation by the person themselves, from their own phone',
 };
+
+export type StoreState = 'active' | 'expired' | 'refunded' | 'pending';
+
+/** What a store says about one transaction. */
+export interface VerifiedPurchase {
+  transactionId: string; productId: string; state: StoreState; expiresAt?: number;
+}
+
+export interface Product { kind: 'subscription' | 'credits'; credits?: number }
+
+// Placeholders until the store listings exist. config/app `products` overrides them.
+export const DEFAULT_PRODUCTS: Record<string, Product> = {
+  nikah_monthly: { kind: 'subscription' },
+  nikah_weekly: { kind: 'subscription' },
+  nikah_credit_single: { kind: 'credits', credits: 1 },
+  nikah_credits_small: { kind: 'credits', credits: 5 },
+};
+
+/** Why a store record grants nothing, or null when it is good. */
+export function purchaseProblem(productId: string, v: VerifiedPurchase | null, now: number): string | null {
+  if (!v) return 'Purchase could not be verified.';
+  if (v.productId !== productId) return 'Purchase is for a different product.';
+  if (v.state !== 'active') return 'This purchase is not active.';
+  if (v.expiresAt !== undefined && v.expiresAt <= now) return 'This purchase has expired.';
+  return null;
+}
+
+export const NOTIFICATION_CATEGORIES: Record<string, string> = {
+  review: 'account', verification: 'account', proposal: 'proposals', match: 'matches', message: 'messages',
+  contact: 'contacts', family: 'family', subscription: 'account',
+};
+
+/** Whether a member wants a push for this kind of event. Everything is on by default. */
+export function wantsPush(prefs: Record<string, unknown> | undefined, type: string): boolean {
+  const category = NOTIFICATION_CATEGORIES[type];
+  return category === 'account' || prefs?.[category] !== false;
+}
 
 /** A profile can be sent for review from these stages. */
 export const canSubmit = (stage: string): boolean =>
@@ -141,6 +182,25 @@ export function inviteReward(earnedSoFar: number | undefined, limits: Limits): n
 
 export const FAMILY_OPINIONS = ['good', 'discuss', 'no'];
 
+/** Only permissions with a real, enforced feature behind them. */
+export const FAMILY_PERMISSIONS = ['view_shortlist', 'view_profile', 'view_proposals', 'manage_proposals'];
+export const DEFAULT_FAMILY_PERMISSIONS = ['view_shortlist'];
+export const FAMILY_RELATIONSHIPS = ['father', 'mother', 'brother', 'sister', 'uncle', 'aunt', 'guardian', 'other'];
+export const FAMILY_INVITE_DAYS = 7;
+export const FAMILY_INVITE_RESENDS = 3;
+
+export const validPermissions = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((p) => FAMILY_PERMISSIONS.includes(p));
+
+/** Phone numbers and codes are compared by hash, so neither is stored. */
+export const hashOf = (value: string): string => createHash('sha256').update(value).digest('hex');
+
+export const RECENT_SIGN_IN_MS = 10 * 60 * 1000;
+export const recentlySignedIn = (signedInAt: number, now: number): boolean =>
+  now - signedInAt <= RECENT_SIGN_IN_MS;
+
+export const PHOTO_URL_MINUTES = 60;
+
 export interface ScoreInput {
   age?: number; country?: string; location?: string; sect?: string; caste?: string;
   marriageReadiness?: string; maritalStatus?: string; partnerCaste?: string;
@@ -203,7 +263,7 @@ export interface Draft {
   fullName?: string; gender?: string; maritalStatus?: string; marriageReadiness?: string;
   homeCity?: string; homeCountry?: string; dateOfBirth?: number; caste?: string; height?: string;
   almaMaters?: string[]; qualification?: string; qualificationGraduate?: boolean;
-  profession?: string; photos?: string[];
+  profession?: string; photos?: string[]; subjectPhone?: string;
   managedBy?: string; intentConfirmed?: boolean; dataConsent?: boolean; candidateConsent?: boolean;
 }
 
@@ -238,15 +298,17 @@ export function draftProblems(d: Draft, limits: Limits, now: Date): string[] {
   if (d.managedBy === 'family' && d.candidateConsent !== true) {
     out.push('Confirm that the person has agreed to this profile');
   }
+  if (d.managedBy === 'family' && !d.subjectPhone) out.push('Enter the phone number of the person this profile is for');
   return out;
 }
 
 export interface Filters {
   minAge?: number; maxAge?: number; maritalStatus?: string; caste?: string; almaMater?: string;
   education?: string; profession?: string; location?: string; sect?: string;
+  country?: string; query?: string;
 }
 export const ANY = 'No preference';
-export const PREMIUM_FILTERS: (keyof Filters)[] = ['education', 'profession', 'location'];
+export const PREMIUM_FILTERS: (keyof Filters)[] = ['education', 'profession', 'location', 'country'];
 
 /** Premium-gated filters are dropped server-side for free members. */
 export function allowedFilters(f: Filters, premium: boolean): Filters {
@@ -258,7 +320,28 @@ export function allowedFilters(f: Filters, premium: boolean): Filters {
 
 export interface Card {
   age: number; maritalStatus: string; caste: string; university: string;
-  education: string; profession: string; location: string; sect?: string;
+  education: string; profession: string; location: string; sect?: string; country?: string;
+}
+
+/** The first part of a location, which is the coarsest thing nearby ever compares. */
+export const cityOf = (location?: string): string => (location ?? '').split(',')[0].trim().toLowerCase();
+
+export const DEFAULT_PAGE = 10;
+export const MAX_PAGE = 20;
+
+/** A page size, or null when the value is not one. */
+export function pageSize(raw: unknown): number | null {
+  if (raw === undefined || raw === null) return DEFAULT_PAGE;
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) return null;
+  return Math.min(raw, MAX_PAGE);
+}
+
+/** The single rule for who may be served a stored card. */
+export function canViewProfile(v: {
+  live: boolean; activeMatch: boolean; blocked: boolean; oppositeGender: boolean;
+}): boolean {
+  if (v.blocked || !v.oppositeGender) return false;
+  return v.live || v.activeMatch;
 }
 
 export function matchesFilters(c: Card, f: Filters): boolean {
@@ -272,6 +355,11 @@ export function matchesFilters(c: Card, f: Filters): boolean {
   if (on(f.sect) && c.sect !== f.sect) return false;
   if (on(f.profession) && c.profession !== f.profession) return false;
   if (on(f.location) && !c.location.toLowerCase().includes(f.location!.toLowerCase())) return false;
+  if (on(f.country) && c.country !== f.country) return false;
+  if (on(f.query)) {
+    const text = [c.university, c.profession, c.education, c.location].join(' ').toLowerCase();
+    if (!text.includes(f.query!.trim().toLowerCase())) return false;
+  }
   return true;
 }
 
@@ -287,24 +375,32 @@ export function visibleInDiscovery(h: Hidden, nowMillis: number): boolean {
   return !(h.hiddenUntil !== undefined && h.hiddenUntil > nowMillis);
 }
 
-export const REPORT_REASON_MAX = 200;
+export const REPORT_REASONS = ['Asked for money', 'Pushed investment or crypto', 'Asked to leave the app quickly', 'Fake profile', 'Already married', 'Inappropriate photos or messages', 'Harassment'];
+export const REPORT_DETAILS_MAX = 500;
+export const REPORT_DECISIONS: Record<string, string> = { dismiss: 'dismissed', uphold: 'upheld' };
 
 export type PhotoPrivacy = 'everyone' | 'matches';
 
 /** What a viewer may see of a stored card. Applied before any card leaves the server. */
+/** Which stored photos a viewer may receive links for. */
+export function visiblePhotos(paths: string[] | undefined, privacy: unknown, viewerMatched: boolean): string[] {
+  return privacy === 'matches' && !viewerMatched ? [] : paths ?? [];
+}
+
 export function redactCard<T extends {
   photos?: string[]; caste?: string; photoPrivacy?: string; showCaste?: boolean; photoPaths?: string[];
-  family?: Record<string, unknown>;
+  family?: Record<string, unknown>; name?: string; employer?: string;
 }>(
   card: T, viewerMatched: boolean,
 ): T & { photosHidden: boolean } {
   const hide = card.photoPrivacy === 'matches' && !viewerMatched;
-  const { photoPrivacy, showCaste, photoPaths, family, ...rest } = card;
+  const { photoPrivacy, showCaste, photoPaths, family, employer, ...rest } = card;
   return {
-    ...(rest as T), photos: hide ? [] : card.photos ?? [], photosHidden: hide,
+    ...(rest as T), photos: visiblePhotos(card.photos, card.photoPrivacy, viewerMatched), photosHidden: hide,
     caste: showCaste === false ? '' : card.caste ?? '',
-    // Family details are for matched members only.
-    ...(viewerMatched && family ? { family } : {}),
+    // Full name, employer and family details are for matched members only.
+    name: viewerMatched ? card.name : String(card.name ?? '').split(' ')[0],
+    ...(viewerMatched ? { family, employer: employer ?? '' } : {}),
   };
 }
 

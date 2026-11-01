@@ -21,6 +21,7 @@ class ReviewQueueScreen extends StatefulWidget {
 
 class _ReviewQueueScreenState extends State<ReviewQueueScreen> {
   List<Map<String, dynamic>>? _items;
+  List<ReportItem>? _reports;
   String? _error;
   bool _busy = false;
 
@@ -38,9 +39,11 @@ class _ReviewQueueScreenState extends State<ReviewQueueScreen> {
   Future<void> _load() async {
     try {
       final List<Map<String, dynamic>> items = await _backend.listReviewQueue();
+      final List<ReportItem> reports = await _backend.listReports();
       if (mounted) {
         setState(() {
           _items = items;
+          _reports = reports;
           _error = null;
         });
       }
@@ -260,36 +263,91 @@ class _ReviewQueueScreenState extends State<ReviewQueueScreen> {
     );
   }
 
+  Widget _reportCard(ReportItem r) {
+    return Card(
+      key: Key('report_${r.id}'),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              r.name.isEmpty ? r.target : r.name,
+              style: AppTheme.ts(16, FontWeight.w800, color: AppTheme.slate900),
+            ),
+            Text('${r.reason} (${r.context})'),
+            if (r.details.isNotEmpty) Text(r.details, style: AppTheme.bodySmall),
+            Text('${r.count} open · ${r.held ? 'held' : 'live'}', style: AppTheme.bodySmall),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                if (r.held)
+                  TextButton(
+                    key: Key('release_${r.target}'),
+                    onPressed: _busy ? null : () => _act(() => _backend.releaseHold(r.target)),
+                    child: const Text('Release hold'),
+                  ),
+                TextButton(
+                  key: Key('dismiss_${r.id}'),
+                  onPressed: _busy ? null : () => _act(() => _backend.resolveReport(r.id, decision: 'dismiss')),
+                  child: const Text('Dismiss'),
+                ),
+                FilledButton(
+                  key: Key('uphold_${r.id}'),
+                  onPressed: _busy ? null : () => _act(() => _backend.resolveReport(r.id, decision: 'uphold')),
+                  child: const Text('Uphold'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _list(List<Widget> cards, String empty) => cards.isEmpty
+      ? EmptyState(icon: Icons.task_alt_rounded, title: 'Queue is empty', body: empty)
+      : RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(padding: const EdgeInsets.all(14), children: cards),
+        );
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>>? items = _items;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Review queue')),
-      body: _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(_error!),
-                  TextButton(onPressed: _load, child: const Text('Try again')),
-                ],
-              ),
-            )
-          : items == null
-              ? const Center(child: CircularProgressIndicator())
-              : items.isEmpty
-                  ? const EmptyState(
-                      icon: Icons.task_alt_rounded,
-                      title: 'Queue is empty',
-                      body: 'No profiles are waiting for review.',
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView(
-                        padding: const EdgeInsets.all(14),
-                        children: items.map(_card).toList(),
-                      ),
-                    ),
+    final List<ReportItem>? reports = _reports;
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Review queue'),
+          bottom: TabBar(
+            tabs: <Widget>[
+              Tab(text: 'Profiles (${items?.length ?? 0})'),
+              Tab(key: const Key('reports_tab'), text: 'Reports (${reports?.length ?? 0})'),
+            ],
+          ),
+        ),
+        body: _error != null
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(_error!),
+                    TextButton(onPressed: _load, child: const Text('Try again')),
+                  ],
+                ),
+              )
+            : items == null || reports == null
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    children: <Widget>[
+                      _list(items.map(_card).toList(), 'No profiles are waiting for review.'),
+                      _list(reports.map(_reportCard).toList(), 'No reports are open.'),
+                    ],
+                  ),
+      ),
     );
   }
 }

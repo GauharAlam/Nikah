@@ -14,11 +14,11 @@ import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_images.dart';
+import '../widgets/report_sheet.dart';
 
 part 'chat_screen_parts.dart';
 
-/// Sends are safe to build against the seed length; once the thread grows
-/// beyond it, the hadith quote strip is retired.
+/// The hadith quote strip shows only while a conversation is new.
 const int _seedMessageCount = 4;
 
 /// Full chat screen for one [MatchProfile], showing messages from
@@ -38,6 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final FocusNode _focusNode = FocusNode();
 
   int _seenCount = 0;
+  late final AppStore _store = context.read<AppStore>();
 
   @override
   void initState() {
@@ -45,14 +46,15 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final AppStore store = context.read<AppStore>();
-      store.markThreadRead(widget.matchId);
+      _store.openThread(widget.matchId);
+      _store.markThreadRead(widget.matchId);
       _scrollToBottom();
     });
   }
 
   @override
   void dispose() {
+    _store.closeThread();
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _scrollController.dispose();
@@ -66,8 +68,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (mounted) setState(() {});
   }
 
-  // Rebuilds on any store change cause this to run; when the thread grows
-  // (send or auto-reply), jump to bottom and clear the unread badge.
+  // Rebuilds on any store change cause this to run; when the thread grows,
+  // jump to the bottom and clear the unread badge.
   void _listenForNewMessages(List<ChatMessage> messages) {
     if (messages.length == _seenCount) return;
     _seenCount = messages.length;
@@ -99,6 +101,9 @@ class _ChatScreenState extends State<ChatScreen> {
     _focusNode.requestFocus();
   }
 
+  Future<void> _reportConversation() =>
+      showReportSheet(context, _store, widget.matchId, reportContext: 'conversation');
+
   void _sendMessage() {
     final String text = _textController.text.trim();
     if (text.isEmpty) return;
@@ -113,6 +118,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final AppStore store = context.watch<AppStore>();
     final MatchProfile match = store.profileById(widget.matchId);
     final List<ChatMessage> messages = store.messages(widget.matchId);
+    final bool open = store.isThreadOpen(widget.matchId);
+    final bool canLoadOlder = messages.length >= 50 && !store.reachedChatStart;
     _listenForNewMessages(messages);
 
     return Scaffold(
@@ -149,15 +156,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.green,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -178,6 +176,12 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: () =>
                 context.push(AppRoutes.matchDetail(widget.matchId)),
           ),
+          IconButton(
+            key: const Key('report_conversation'),
+            tooltip: 'Report this conversation',
+            icon: const Icon(Icons.flag_outlined, size: 22),
+            onPressed: _reportConversation,
+          ),
         ],
       ),
       body: SafeArea(
@@ -192,14 +196,20 @@ class _ChatScreenState extends State<ChatScreen> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                itemCount: messages.length,
+                itemCount: messages.length + (canLoadOlder ? 1 : 0),
                 itemBuilder: (BuildContext context, int index) {
-                  final ChatMessage message = messages[index];
+                  if (canLoadOlder && index == 0) {
+                    return TextButton(
+                      key: const Key('load_older'),
+                      onPressed: store.loadOlderMessages,
+                      child: const Text('Load earlier messages'),
+                    );
+                  }
+                  final ChatMessage message = messages[index - (canLoadOlder ? 1 : 0)];
                   return _MessageBubble(
                     message: message,
-                    showSeen:
-                        message.sender == MessageSender.match &&
-                        store.privacy('readReceipts'),
+                    showSeen: store.isSeen(widget.matchId, message),
+                    onRetry: () => store.retryMessage(widget.matchId, message.id),
                   );
                 },
               ),
@@ -208,13 +218,24 @@ class _ChatScreenState extends State<ChatScreen> {
               const _ScamWarning()
             else if (messages.length <= _seedMessageCount)
               const _HadithQuoteStrip(),
-            _IcebreakerChips(onPick: _insertIcebreaker),
-            _ChatInputBar(
-              controller: _textController,
-              focusNode: _focusNode,
-              canSend: _canSend,
-              onSend: _sendMessage,
-            ),
+            if (open) ...<Widget>[
+              _IcebreakerChips(onPick: _insertIcebreaker),
+              _ChatInputBar(
+                controller: _textController,
+                focusNode: _focusNode,
+                canSend: _canSend,
+                onSend: _sendMessage,
+              ),
+            ] else
+              Padding(
+                key: const Key('chat_closed'),
+                padding: const EdgeInsets.all(18),
+                child: Text(
+                  'This conversation has ended.',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.bodySmall,
+                ),
+              ),
           ],
         ),
       ),

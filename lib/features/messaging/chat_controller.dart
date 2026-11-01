@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/backend.dart';
 import '../../models/chat_message.dart';
@@ -10,110 +7,186 @@ import '../core/feature_controller.dart';
 import '../discovery/discovery_controller.dart';
 import '../session/session_controller.dart';
 
-/// Matches, their conversations, and the shared Nikah Journey.
+/// Matches, the open conversation, and the shared Nikah Journey.
+///
+/// The match list comes from one bounded stream. Messages stream only while a
+/// conversation is on screen, so twenty matches never mean twenty listeners.
 class ChatController extends FeatureController {
-  ChatController(super.backend, super.report, this._session, this._discovery, this._prefs);
+  ChatController(super.backend, super.report, this._session, this._discovery);
 
   final SessionController _session;
   final DiscoveryController _discovery;
-  final SharedPreferences _prefs;
 
-  final Map<String, StreamSubscription<List<ChatMessage>>> _threadSubs =
-      <String, StreamSubscription<List<ChatMessage>>>{};
   Map<String, MatchThread> _threads = <String, MatchThread>{};
-  Map<String, List<ChatMessage>> _chats = <String, List<ChatMessage>>{};
-  Map<String, DateTime> _readAt = <String, DateTime>{};
   Set<String> _open = <String>{};
 
-  String get _readKey => 'bk_read_at_${_session.uid}';
+  String? _activeId;
+  StreamSubscription<List<ChatMessage>>? _activeSub;
+  List<ChatMessage> _live = <ChatMessage>[];
+  List<ChatMessage> _older = <ChatMessage>[];
+  List<ChatMessage> _outbox = <ChatMessage>[];
+  bool _reachedStart = false;
+  bool _loadingOlder = false;
+  int _seq = 0;
 
   /// Members this member has an open match with.
   Set<String> get openMatches => _open;
   bool isMatched(String id) => _open.contains(id);
+  bool get reachedStart => _reachedStart;
+  bool get isLoadingOlder => _loadingOlder;
 
-  void start(String uid) {
-    final String? raw = _prefs.getString(_readKey);
-    if (raw != null) {
-      _readAt = (jsonDecode(raw) as Map<String, dynamic>).map<String, DateTime>(
-        (String k, dynamic v) => MapEntry<String, DateTime>(
-          k,
-          DateTime.fromMillisecondsSinceEpoch(v as int),
-        ),
-      );
-    }
-    follow(backend.watchMatches(uid), _onMatches);
-  }
+  /// Ended relationships, for the history view.
+  List<String> get closedIds =>
+      _threads.values.where((MatchThread t) => !t.isOpen).map((MatchThread t) => t.otherId).toList();
+
+  void start(String uid) => follow(backend.watchMatches(uid), _onMatches);
 
   void _onMatches(List<MatchThread> threads) {
     _threads = <String, MatchThread>{for (final MatchThread t in threads) t.otherId: t};
     _open = threads.where((MatchThread t) => t.isOpen).map((MatchThread t) => t.otherId).toSet();
-    unawaited(_discovery.ensure(_open));
-    final String uid = _session.uid;
-    for (final MatchThread t in threads.where((MatchThread t) => t.isOpen)) {
-      _threadSubs.putIfAbsent(
-        t.otherId,
-        () => backend.watchMessages(t.pairId, uid).listen((List<ChatMessage> messages) {
-          _chats = <String, List<ChatMessage>>{..._chats, t.otherId: messages};
-          notifyListeners();
-        }, onError: report),
-      );
-    }
-    for (final MatchThread t in threads.where((MatchThread t) => !t.isOpen)) {
-      unawaited(_threadSubs.remove(t.otherId)?.cancel());
-      _chats = <String, List<ChatMessage>>{..._chats}..remove(t.otherId);
+    unawaited(_discovery.ensure(_threads.keys));
+    if (_activeId != null && !_open.contains(_activeId)) {
+      _live = <ChatMessage>[];
+      unawaited(_activeSub?.cancel());
+      _activeSub = null;
     }
     notifyListeners();
   }
+
+  // ─── Conversation lifecycle ──────────────────────────────────────────────
+
+  /// Starts streaming the conversation with [id], when the match is open.
+  void openThread(String id) {
+    if (_activeId == id) return;
+    closeThread();
+    _activeId = id;
+    final MatchThread? thread = _threads[id];
+    if (thread == null || !thread.isOpen) return;
+    _activeSub = backend.watchMessages(thread.pairId, _session.uid).listen((List<ChatMessage> m) {
+      _live = m;
+      final Set<String> arrived = m.map((ChatMessage x) => x.id).toSet();
+      _outbox = _outbox.where((ChatMessage x) => !arrived.contains(x.id)).toList();
+      notifyListeners();
+    }, onError: report);
+  }
+
+  void closeThread() {
+    unawaited(_activeSub?.cancel());
+    _activeSub = null;
+    _activeId = null;
+    _live = <ChatMessage>[];
+    _older = <ChatMessage>[];
+    _outbox = <ChatMessage>[];
+    _reachedStart = false;
+  }
+
+  Future<void> loadOlder() async {
+    final MatchThread? thread = _threads[_activeId];
+    if (thread == null || _loadingOlder || _reachedStart) return;
+    final List<ChatMessage> shown = <ChatMessage>[..._older, ..._live];
+    if (shown.isEmpty) return;
+    _loadingOlder = true;
+    notifyListeners();
+    try {
+      final List<ChatMessage> page =
+          await backend.olderMessages(thread.pairId, _session.uid, shown.first.createdAt);
+      _older = <ChatMessage>[...page, ..._older];
+      _reachedStart = page.isEmpty;
+    } on Object catch (e) {
+      report(e);
+    } finally {
+      _loadingOlder = false;
+      notifyListeners();
+    }
+  }
+
+  // ─── Reading ─────────────────────────────────────────────────────────────
 
   List<String> get threadIds {
-    final Iterable<String> visible = _chats.keys
-        .where((String id) => !_discovery.isBlocked(id) && _chats[id]!.isNotEmpty);
-    final List<String> sorted = visible.toList()
-      ..sort((String a, String b) =>
-          _chats[b]!.last.createdAt.compareTo(_chats[a]!.last.createdAt));
-    return sorted;
+    final List<MatchThread> withMessages = _threads.values
+        .where((MatchThread t) => t.isOpen && t.lastMessageAt != null)
+        .where((MatchThread t) => !_discovery.isBlocked(t.otherId))
+        .toList()
+      ..sort((MatchThread a, MatchThread b) => b.lastMessageAt!.compareTo(a.lastMessageAt!));
+    return withMessages.map((MatchThread t) => t.otherId).toList();
   }
 
-  List<ChatMessage> messages(String id) =>
-      List<ChatMessage>.unmodifiable(_chats[id] ?? const <ChatMessage>[]);
+  List<ChatMessage> messages(String id) => id == _activeId
+      ? List<ChatMessage>.unmodifiable(<ChatMessage>[..._older, ..._live, ..._outbox])
+      : const <ChatMessage>[];
 
   String preview(String id) {
-    final List<ChatMessage> thread = _chats[id] ?? const <ChatMessage>[];
-    return thread.isEmpty ? 'Say salam to begin your conversation' : thread.last.text;
+    final String text = _threads[id]?.lastMessage ?? '';
+    return text.isEmpty ? 'Say salam to begin your conversation' : text;
   }
 
-  int unreadCount(String id) {
-    final DateTime? read = _readAt[id];
-    return (_chats[id] ?? const <ChatMessage>[])
-        .where((ChatMessage m) => m.sender == MessageSender.match)
-        .where((ChatMessage m) => read == null || m.createdAt.isAfter(read))
-        .length;
-  }
+  int unreadCount(String id) => _threads[id]?.unread ?? 0;
 
   int get totalUnread =>
-      _chats.keys.fold(0, (int sum, String id) => sum + unreadCount(id));
+      _threads.values.fold(0, (int sum, MatchThread t) => sum + t.unread);
+
+  /// True once the other member has actually read [message].
+  bool isSeen(String id, ChatMessage message) {
+    final DateTime? read = _threads[id]?.theirReadAt;
+    return read != null &&
+        message.sender == MessageSender.user &&
+        message.state == MessageState.sent &&
+        !message.createdAt.isAfter(read);
+  }
 
   void markRead(String id) {
-    _readAt = <String, DateTime>{..._readAt, id: DateTime.now()};
-    unawaited(_prefs.setString(_readKey, jsonEncode(<String, int>{
-      for (final MapEntry<String, DateTime> e in _readAt.entries)
-        e.key: e.value.millisecondsSinceEpoch,
-    })));
-    notifyListeners();
     final MatchThread? thread = _threads[id];
-    if (thread != null && _session.user != null) {
-      send(() => backend.markThreadRead(thread.pairId, _session.uid));
-    }
+    if (thread == null || !thread.isOpen || _session.user == null || thread.unread == 0) return;
+    send(() => backend.markThreadRead(thread.pairId, _session.uid));
   }
+
+  // ─── Sending ─────────────────────────────────────────────────────────────
 
   void sendMessage(String id, String text) {
     final String trimmed = text.trim();
     final MatchThread? thread = _threads[id];
     if (trimmed.isEmpty || thread == null || !thread.isOpen || _session.user == null) return;
-    send(() => backend.sendMessage(thread.pairId, _session.uid, trimmed));
+    final DateTime now = DateTime.now();
+    final ChatMessage message = ChatMessage(
+      id: '${_session.uid}_${now.microsecondsSinceEpoch}_${_seq++}',
+      text: trimmed,
+      time: '',
+      createdAt: now,
+      sender: MessageSender.user,
+      state: MessageState.sending,
+    );
+    _outbox = <ChatMessage>[..._outbox, message];
+    notifyListeners();
+    unawaited(_deliver(thread, message));
+  }
+
+  /// Sends again with the same id, so a retry can never duplicate a message.
+  void retry(String id, String messageId) {
+    final MatchThread? thread = _threads[id];
+    final Iterable<ChatMessage> found = _outbox.where((ChatMessage m) => m.id == messageId);
+    if (thread == null || found.isEmpty) return;
+    _setState(messageId, MessageState.sending);
+    unawaited(_deliver(thread, found.first));
+  }
+
+  void _setState(String messageId, MessageState state) {
+    _outbox = _outbox
+        .map((ChatMessage m) => m.id == messageId ? m.withState(state) : m)
+        .toList();
+    notifyListeners();
+  }
+
+  Future<void> _deliver(MatchThread thread, ChatMessage message) async {
+    try {
+      await backend.sendMessage(thread.pairId, _session.uid, message.text, id: message.id);
+    } on Object {
+      _setState(message.id, MessageState.failed);
+    }
   }
 
   void unmatch(String id) => send(() => backend.unmatch(id));
+
+  // ─── Nikah Journey ───────────────────────────────────────────────────────
 
   JourneyStep journeyStep(String id) =>
       JourneyStep.values.asNameMap()[_threads[id]?.myStep] ?? JourneyStep.talking;
@@ -149,13 +222,8 @@ class ChatController extends FeatureController {
   @override
   Future<void> stop() async {
     await super.stop();
-    for (final StreamSubscription<List<ChatMessage>> s in _threadSubs.values) {
-      await s.cancel();
-    }
-    _threadSubs.clear();
+    closeThread();
     _threads = <String, MatchThread>{};
-    _chats = <String, List<ChatMessage>>{};
-    _readAt = <String, DateTime>{};
     _open = <String>{};
   }
 }

@@ -241,10 +241,13 @@ class _ChatInputBar extends StatelessWidget {
 
 /// Rendered variant for each [MessageSender] with a per-message key.
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message, required this.showSeen});
+  const _MessageBubble({required this.message, required this.showSeen, required this.onRetry});
 
   final ChatMessage message;
+
+  /// True only once the other member has really read this message.
   final bool showSeen;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -290,9 +293,22 @@ class _MessageBubble extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              message.time,
+              switch (message.state) {
+                MessageState.sending => 'Sending…',
+                MessageState.failed => 'Not sent',
+                MessageState.sent => showSeen ? '${message.time} · Seen' : message.time,
+              },
               style: AppTheme.ts(10, FontWeight.w500, color: Colors.white70),
             ),
+            if (message.state == MessageState.failed)
+              GestureDetector(
+                key: Key('retry_${message.id}'),
+                onTap: onRetry,
+                child: Text(
+                  'Tap to retry',
+                  style: AppTheme.ts(11, FontWeight.w800, color: Colors.white),
+                ),
+              ),
           ],
         ),
       ),
@@ -342,21 +358,7 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
 
-    if (!showSeen) return bubble;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        bubble,
-        Padding(
-          padding: const EdgeInsets.only(left: 20, bottom: 2),
-          child: Text(
-            'Seen ✓✓',
-            style: AppTheme.ts(10, FontWeight.w600, color: AppTheme.slate400),
-          ),
-        ),
-      ],
-    );
+    return bubble;
   }
 
   Widget _chaperoneShell(BuildContext context) {

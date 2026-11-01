@@ -89,7 +89,8 @@ test('intent and consent are required, and family profiles need the person\'s ag
   assert.ok(p({ intentConfirmed: false }).some((x) => x.includes('marriage')));
   assert.ok(p({ dataConsent: false }).some((x) => x.includes('Agree')));
   assert.ok(p({ managedBy: 'family' }).some((x) => x.includes('agreed')));
-  assert.deepEqual(p({ managedBy: 'family', candidateConsent: true }), []);
+  assert.ok(p({ managedBy: 'family', candidateConsent: true }).some((x) => x.includes('phone')));
+  assert.deepEqual(p({ managedBy: 'family', candidateConsent: true, subjectPhone: '+919000000000' }), []);
 });
 
 test('caste is optional, and the graduate rule is a setting', () => {
@@ -197,4 +198,63 @@ test('eligibility is configurable but never below 18', () => {
   assert.ok(r.draftProblems(d, { ...r.DEFAULT_LIMITS, minAge: 16 }, now).some((p) => p.includes('at least 18')));
   assert.ok(r.draftProblems(d, { ...r.DEFAULT_LIMITS, firstMarriageOnly: true }, now).some((p) => p.includes('first-time')));
   assert.ok(!r.draftProblems(d, r.DEFAULT_LIMITS, now).some((p) => p.includes('first-time')));
+});
+
+test('one visibility rule decides who may be served a card', () => {
+  const base = { live: true, activeMatch: false, blocked: false, oppositeGender: true };
+  assert.ok(r.canViewProfile(base));
+  assert.ok(!r.canViewProfile({ ...base, live: false }));
+  assert.ok(r.canViewProfile({ ...base, live: false, activeMatch: true }));
+  assert.ok(!r.canViewProfile({ ...base, blocked: true, activeMatch: true }));
+  assert.ok(!r.canViewProfile({ ...base, oppositeGender: false }));
+});
+
+test('page sizes are bounded and junk is refused', () => {
+  assert.equal(r.pageSize(undefined), r.DEFAULT_PAGE);
+  assert.equal(r.pageSize(500), r.MAX_PAGE);
+  assert.equal(r.pageSize(NaN), null);
+  assert.equal(r.pageSize('5'), null);
+  assert.equal(r.pageSize(0), null);
+});
+
+test('nearby compares cities, never anything finer', () => {
+  assert.equal(r.cityOf('Delhi, Delhi'), 'delhi');
+  assert.equal(r.cityOf(undefined), '');
+});
+
+test('family permissions name only features that exist', () => {
+  assert.ok(r.validPermissions(['view_shortlist', 'manage_proposals']));
+  assert.ok(!r.validPermissions(['read_chats']));
+  assert.ok(!r.validPermissions('view_profile'));
+  assert.ok(!r.FAMILY_PERMISSIONS.some((p) => /chat|message|document|contact/.test(p)));
+});
+
+test('deletion needs a recent sign-in', () => {
+  const now = Date.now();
+  assert.ok(r.recentlySignedIn(now - 60000, now));
+  assert.ok(!r.recentlySignedIn(now - r.RECENT_SIGN_IN_MS - 1, now));
+});
+
+test('photos reach a viewer only as their privacy allows', () => {
+  assert.deepEqual(r.visiblePhotos(['a'], 'everyone', false), ['a']);
+  assert.deepEqual(r.visiblePhotos(['a'], 'matches', false), []);
+  assert.deepEqual(r.visiblePhotos(['a'], 'matches', true), ['a']);
+  assert.deepEqual(r.visiblePhotos(undefined, 'everyone', true), []);
+});
+
+test('a store record grants only what it says, while it is active', () => {
+  const v = { transactionId: 't', productId: 'p', state: 'active' as const, expiresAt: 2000 };
+  assert.equal(r.purchaseProblem('p', v, 1000), null);
+  assert.ok(r.purchaseProblem('q', v, 1000)?.includes('different product'));
+  assert.ok(r.purchaseProblem('p', v, 3000)?.includes('expired'));
+  assert.ok(r.purchaseProblem('p', { ...v, state: 'pending' }, 1000)?.includes('not active'));
+  assert.ok(r.purchaseProblem('p', { ...v, state: 'refunded' }, 1000)?.includes('not active'));
+  assert.ok(r.purchaseProblem('p', null, 1000)?.includes('could not'));
+});
+
+test('push preferences never silence account notices', () => {
+  assert.ok(r.wantsPush(undefined, 'message'));
+  assert.ok(!r.wantsPush({ messages: false }, 'message'));
+  assert.ok(r.wantsPush({ messages: false }, 'proposal'));
+  assert.ok(r.wantsPush({ messages: false, proposals: false }, 'review'));
 });

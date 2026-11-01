@@ -43,6 +43,7 @@ class FirebaseBackend implements Backend {
   final FirebaseStorage _storage;
   final FirebaseFunctions _functions;
   bool _googleReady = false;
+  StreamSubscription<String>? _tokenSub;
   int? _resendToken;
   String? _resendPhone;
 
@@ -51,6 +52,9 @@ class FirebaseBackend implements Backend {
       return await run();
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'unavailable') throw BackendException(_offline, code: e.code);
+      if ((e.details as Map<dynamic, dynamic>?)?['reason'] == 'requires-recent-login') {
+        throw BackendException(e.message ?? _generic, code: 'requires-recent-login');
+      }
       throw BackendException(
         e.code == 'internal' ? _generic : (e.message ?? _generic),
         code: e.code,
@@ -111,6 +115,9 @@ class FirebaseBackend implements Backend {
     final User? current = _auth.currentUser;
     if (current == null) {
       await _auth.signInWithCredential(credential);
+    } else if ((current.phoneNumber ?? '').isNotEmpty) {
+      // Proves it is them again, before something like account deletion.
+      await current.reauthenticateWithCredential(credential);
     } else {
       await current.linkWithCredential(credential);
       await current.getIdToken(true);
@@ -183,6 +190,7 @@ class FirebaseBackend implements Backend {
   @override
   Future<void> signOut() async {
     final String? uid = _auth.currentUser?.uid;
+    await _tokenSub?.cancel();
     if (uid != null && pushAvailable) {
       // ignore: deprecated_member_use
       final String? token = await FirebaseMessaging.instance.getToken();
@@ -195,7 +203,7 @@ class FirebaseBackend implements Backend {
 
   @override
   Future<void> deleteAccount() async {
-    await _call('deleteAccount');
+    await _call('requestAccountDeletion');
     await _auth.signOut();
   }
 
@@ -209,7 +217,8 @@ class FirebaseBackend implements Backend {
         final String day = now.toIso8601String().substring(0, 10);
         final String month = now.toIso8601String().substring(0, 7);
         return AccountState(
-          stage: ReviewStage.fromWire(d['stage']),
+          // A held member is back under review until a reviewer decides.
+          stage: d['held'] == true ? ReviewStage.submitted : ReviewStage.fromWire(d['stage']),
           rejectionReason: d['rejectionReason'] as String? ?? '',
           rejectedPhotos: (d['rejectedPhotos'] as List?)?.cast<String>() ?? const <String>[],
           editsPending: d['editsPending'] as bool? ?? false,
@@ -220,6 +229,10 @@ class FirebaseBackend implements Backend {
           premiumUntil: (d['premiumUntil'] as Timestamp?)?.toDate(),
           plan: d['plan'] as String? ?? '',
           familyOf: d['familyOf'] as String?,
+          subjectOf: d['subjectOf'] as String?,
+          subjectCode: d['subjectCode'] as String? ?? '',
+          subjectConfirmed: d['subjectConfirmed'] as bool? ?? false,
+          paused: d['paused'] as bool? ?? false,
         );
       });
 
@@ -235,8 +248,18 @@ class FirebaseBackend implements Backend {
           monthlyContactCredits: l['monthlyContactCredits'] as int? ?? 30,
           requireIdProof: l['requireIdProof'] as bool? ?? true,
           graduatesOnly: l['graduatesOnly'] as bool? ?? true,
+          subscriptionIds: _productIds(s.data()?['products'], 'subscription') ?? const AppLimits().subscriptionIds,
+          creditIds: _productIds(s.data()?['products'], 'credits') ?? const AppLimits().creditIds,
         );
       });
+
+  static Set<String>? _productIds(Object? products, String kind) {
+    if (products is! Map) return null;
+    return <String>{
+      for (final MapEntry<dynamic, dynamic> e in products.entries)
+        if ((e.value as Map?)?['kind'] == kind) e.key as String,
+    };
+  }
 
   @override
   Future<Map<String, dynamic>?> loadDraft(String uid) => _guard(() async {
@@ -284,8 +307,9 @@ class FirebaseBackend implements Backend {
   // ─── Discovery ─────────────────────────────────────────────────────────────
 
   @override
-  Future<IntroductionPage> fetchIntroductions(MatchFilters f, int? cursor) async {
+  Future<IntroductionPage> fetchIntroductions(MatchFilters f, int? cursor, {bool nearby = false}) async {
     final Map<String, dynamic> res = await _call('fetchIntroductions', <String, dynamic>{
+      if (nearby) 'mode': 'nearby',
       'filters': <String, dynamic>{
         'minAge': f.minAge,
         'maxAge': f.maxAge,
@@ -294,8 +318,10 @@ class FirebaseBackend implements Backend {
         'almaMater': f.almaMater,
         'education': f.education,
         'profession': f.profession,
-        'location': f.location,
+        // The Location row offers countries.
+        'country': f.location,
         'sect': f.sect,
+        'query': f.query,
       },
       'cursor': cursor,
     });
@@ -346,8 +372,8 @@ class FirebaseBackend implements Backend {
 
     final CollectionReference<Map<String, dynamic>> c = _db.collection('proposals');
     return _merge(
-      c.where('from', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
-      c.where('to', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('from', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('to', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
     );
   }
 
@@ -403,8 +429,8 @@ class FirebaseBackend implements Backend {
 
     final CollectionReference<Map<String, dynamic>> c = _db.collection('contactRequests');
     return _merge(
-      c.where('from', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
-      c.where('to', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('from', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('to', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
     );
   }
 
@@ -436,53 +462,79 @@ class FirebaseBackend implements Backend {
   Stream<List<MatchThread>> watchMatches(String uid) => _db
       .collection('matches')
       .where('users', arrayContains: uid)
+      .limit(200)
       .snapshots()
       .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.map((s) {
             final Map<String, dynamic> d = s.data();
+            final String other = (d['users'] as List).cast<String>().firstWhere((String u) => u != uid);
             return MatchThread(
               pairId: s.id,
-              otherId: (d['users'] as List).cast<String>().firstWhere((String u) => u != uid),
+              otherId: other,
+              theirReadAt: ((d['readAt'] as Map?)?[other] as Timestamp?)?.toDate(),
               isOpen: d['status'] == 'active',
               lastMessage: d['lastMessage'] as String? ?? '',
               lastMessageAt: (d['lastMessageAt'] as Timestamp?)?.toDate(),
               unread: ((d['unread'] as Map?)?[uid] as int?) ?? 0,
               myStep: (d['journey'] as Map?)?[uid] as String?,
-              theirStep: (d['journey'] as Map?)?[
-                  (d['users'] as List).cast<String>().firstWhere((String u) => u != uid)] as String?,
+              theirStep: (d['journey'] as Map?)?[other] as String?,
             );
           }).toList());
+
+  static ChatMessage _message(QueryDocumentSnapshot<Map<String, dynamic>> s, String uid) {
+    final Map<String, dynamic> d = s.data();
+    final DateTime at = (d['sentAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    return ChatMessage(
+      id: s.id,
+      text: d['text'] as String? ?? '',
+      time: DateFormat.jm().format(at),
+      createdAt: at,
+      sender: d['sender'] == uid ? MessageSender.user : MessageSender.match,
+    );
+  }
 
   @override
   Stream<List<ChatMessage>> watchMessages(String pairId, String uid) => _db
       .collection('matches/$pairId/messages')
       .orderBy('sentAt', descending: true)
-      .limit(200)
+      .limit(50)
       .snapshots()
-      .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.reversed.map((s) {
-            final Map<String, dynamic> d = s.data();
-            final DateTime at = (d['sentAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-            return ChatMessage(
-              id: s.id,
-              text: d['text'] as String? ?? '',
-              time: DateFormat.jm().format(at),
-              createdAt: at,
-              sender: d['sender'] == uid ? MessageSender.user : MessageSender.match,
-            );
-          }).toList());
+      .map((QuerySnapshot<Map<String, dynamic>> q) =>
+          q.docs.reversed.map((s) => _message(s, uid)).toList());
 
   @override
-  Future<void> sendMessage(String pairId, String uid, String text) => _guard(() async {
-        await _db.collection('matches/$pairId/messages').add(<String, dynamic>{
-          'sender': uid,
-          'text': text,
-          'sentAt': FieldValue.serverTimestamp(),
-        });
+  Future<List<ChatMessage>> olderMessages(String pairId, String uid, DateTime before) =>
+      _guard(() async {
+        final QuerySnapshot<Map<String, dynamic>> q = await _db
+            .collection('matches/$pairId/messages')
+            .orderBy('sentAt', descending: true)
+            .startAfter(<Object>[Timestamp.fromDate(before)])
+            .limit(30)
+            .get();
+        return q.docs.reversed.map((s) => _message(s, uid)).toList();
+      });
+
+  @override
+  Future<void> sendMessage(String pairId, String uid, String text, {required String id}) =>
+      _guard(() async {
+        final DocumentReference<Map<String, dynamic>> ref =
+            _db.doc('matches/$pairId/messages/$id');
+        try {
+          await ref.set(<String, dynamic>{
+            'sender': uid,
+            'text': text,
+            'sentAt': FieldValue.serverTimestamp(),
+          });
+        } on FirebaseException catch (e) {
+          // A retry of a message that did arrive hits the no-update rule.
+          if (e.code != 'permission-denied' || !(await ref.get()).exists) rethrow;
+        }
       });
 
   @override
   Future<void> markThreadRead(String pairId, String uid) => _guard(() async {
         await _db.doc('matches/$pairId').update(<String, dynamic>{
           'readAt.$uid': FieldValue.serverTimestamp(),
+          'unread.$uid': 0,
         });
       });
 
@@ -495,15 +547,28 @@ class FirebaseBackend implements Backend {
       _call('blockProfile', <String, dynamic>{'target': target});
 
   @override
-  Future<void> reportProfile(String target, String reason) =>
-      _call('reportProfile', <String, dynamic>{'target': target, 'reason': reason});
+  Future<void> reportProfile(String target, String reason, {String details = '', String context = 'profile'}) =>
+      _call('reportProfile', <String, dynamic>{
+        'target': target,
+        'reason': reason,
+        if (details.isNotEmpty) 'details': details,
+        'context': context,
+      });
 
   @override
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  Future<void> updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) =>
       _call('updatePrivacy', <String, dynamic>{
+        'allowContactRequests': ?allowContactRequests,
         'photoPrivacy': ?photoPrivacy,
         'showCaste': ?showCaste,
         'allowFamilyShare': ?allowFamilyShare,
+        'nearbyOptIn': ?nearbyOptIn,
       });
 
   @override
@@ -565,16 +630,148 @@ class FirebaseBackend implements Backend {
   }
 
   @override
-  Future<String> createFamilyInvite() async =>
-      (await _call('createFamilyInvite'))['code'] as String;
+  Stream<FamilyAdmin> watchFamilyAdmin(String member) {
+    final DocumentReference<Map<String, dynamic>> root = _db.doc('family/$member');
+    List<FamilyMember> members = <FamilyMember>[];
+    List<FamilyInvitation> invitations = <FamilyInvitation>[];
+    List<FamilyEvent> history = <FamilyEvent>[];
+    late final StreamController<FamilyAdmin> out;
+    final List<StreamSubscription<dynamic>> subs = <StreamSubscription<dynamic>>[];
+    void emit() => out.add(FamilyAdmin(members: members, invitations: invitations, history: history));
+    out = StreamController<FamilyAdmin>(
+      onListen: () {
+        subs.addAll(<StreamSubscription<dynamic>>[
+          root.collection('memberships').limit(30).snapshots().listen((QuerySnapshot<Map<String, dynamic>> q) {
+            members = q.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> s) => FamilyMember(
+                  uid: s.id,
+                  name: s.data()['name'] as String? ?? '',
+                  relationship: s.data()['relationship'] as String? ?? '',
+                  permissions: (s.data()['permissions'] as List?)?.cast<String>() ?? const <String>[],
+                )).toList();
+            emit();
+          }, onError: out.addError),
+          root.collection('invitations').orderBy('createdAt', descending: true).limit(30).snapshots()
+              .listen((QuerySnapshot<Map<String, dynamic>> q) {
+            invitations = q.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> s) => FamilyInvitation(
+                  id: s.id,
+                  name: s.data()['name'] as String? ?? '',
+                  relationship: s.data()['relationship'] as String? ?? '',
+                  status: s.data()['status'] as String? ?? 'pending',
+                  expiresAt: (s.data()['expiresAt'] as Timestamp?)?.toDate(),
+                )).toList();
+            emit();
+          }, onError: out.addError),
+          root.collection('history').orderBy('at', descending: true).limit(30).snapshots()
+              .listen((QuerySnapshot<Map<String, dynamic>> q) {
+            history = q.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> s) => FamilyEvent(
+                  action: s.data()['action'] as String? ?? '',
+                  at: (s.data()['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+                )).toList();
+            emit();
+          }, onError: out.addError),
+        ]);
+      },
+      onCancel: () async {
+        for (final StreamSubscription<dynamic> s in subs) {
+          await s.cancel();
+        }
+      },
+    );
+    return out.stream;
+  }
 
   @override
-  Future<void> joinFamily(String code, String name) =>
-      _call('joinFamily', <String, dynamic>{'code': code, 'name': name});
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  }) async =>
+      (await _call('createFamilyInvite', <String, dynamic>{
+        'name': name,
+        'relationship': relationship,
+        'phone': phone,
+        'permissions': permissions,
+      }))['code'] as String;
+
+  @override
+  Future<void> joinFamily(String code) => _call('joinFamily', <String, dynamic>{'code': code});
 
   @override
   Future<void> removeGuardian(String guardian, {String? member}) =>
       _call('removeGuardian', <String, dynamic>{'guardian': guardian, 'member': ?member});
+
+  @override
+  Future<void> rejectFamilyInvite(String code) =>
+      _call('rejectFamilyInvite', <String, dynamic>{'code': code});
+
+  @override
+  Future<void> cancelFamilyInvite(String id) =>
+      _call('cancelFamilyInvite', <String, dynamic>{'id': id});
+
+  @override
+  Future<String> resendFamilyInvite(String id) async =>
+      (await _call('resendFamilyInvite', <String, dynamic>{'id': id}))['code'] as String;
+
+  @override
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions) =>
+      _call('updateGuardianPermissions', <String, dynamic>{
+        'guardian': guardian,
+        'permissions': permissions,
+      });
+
+  @override
+  Future<FamilyOverview> familyOverview(String member) async {
+    final Map<String, dynamic> res = await _call('familyOverview', <String, dynamic>{'member': member});
+    final Map<dynamic, dynamic>? p = res['profile'] as Map<dynamic, dynamic>?;
+    String line(Map<dynamic, dynamic> m, List<String> keys) => keys
+        .map((String k) => '${m[k] ?? ''}')
+        .where((String v) => v.isNotEmpty)
+        .join(' · ');
+    return FamilyOverview(
+      permissions: (res['permissions'] as List?)?.cast<String>() ?? const <String>[],
+      profileSummary: p == null ? null : line(p, <String>['name', 'education', 'profession', 'location']),
+      proposals: (res['proposals'] as List?)?.map((dynamic raw) {
+        final Map<dynamic, dynamic> m = raw as Map<dynamic, dynamic>;
+        return FamilyProposal(
+          from: m['from'] as String,
+          summary: line(m, <String>['firstName', 'education', 'profession', 'location']),
+        );
+      }).toList(),
+    );
+  }
+
+  @override
+  Future<void> familyRespondProposal(String member, String from, {required bool accept}) =>
+      _call('familyRespondProposal', <String, dynamic>{
+        'member': member,
+        'from': from,
+        'accept': accept,
+      });
+
+  @override
+  Future<void> confirmSubject(String code, {required bool agree}) =>
+      _call('confirmSubject', <String, dynamic>{'code': code, 'agree': agree});
+
+  @override
+  Future<void> withdrawSubject() => _call('withdrawSubject');
+
+  @override
+  Future<void> setPaused(bool paused) => _call('setAccountPaused', <String, dynamic>{'paused': paused});
+
+  @override
+  Future<List<BlockedMember>> listBlocks() async =>
+      ((await _call('listBlocks'))['blocks'] as List? ?? const <dynamic>[]).map((dynamic raw) {
+        final Map<dynamic, dynamic> m = raw as Map<dynamic, dynamic>;
+        return BlockedMember(m['id'] as String, m['name'] as String? ?? 'Member');
+      }).toList();
+
+  @override
+  Future<void> unblockProfile(String target) =>
+      _call('unblockProfile', <String, dynamic>{'target': target});
+
+  @override
+  Future<Map<String, dynamic>> exportMyData() => _call('exportMyData');
 
   @override
   Future<void> shareWithFamily(String profileId) =>
@@ -654,11 +851,29 @@ class FirebaseBackend implements Backend {
         await FirebaseMessaging.instance.requestPermission();
         // ignore: deprecated_member_use
         final String? token = await FirebaseMessaging.instance.getToken();
-        if (token == null) return;
-        await _db.doc('accounts/$uid/devices/$token').set(<String, dynamic>{
-          'platform': Platform.operatingSystem,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        if (token != null) await _registerDevice(token);
+        unawaited(_tokenSub?.cancel());
+        // ignore: deprecated_member_use
+        _tokenSub = FirebaseMessaging.instance.onTokenRefresh.listen(
+          (String next) => unawaited(_registerDevice(next).catchError((Object _) {})),
+        );
+      });
+
+  Future<void> _registerDevice(String token) =>
+      _call('registerDevice', <String, dynamic>{'token': token, 'platform': Platform.operatingSystem});
+
+  @override
+  Stream<Map<String, bool>> watchNotificationPrefs(String uid) => _db
+      .doc('accounts/$uid/settings/notifications')
+      .snapshots()
+      .map((DocumentSnapshot<Map<String, dynamic>> s) =>
+          (s.data() ?? const <String, dynamic>{}).cast<String, bool>());
+
+  @override
+  Future<void> setNotificationPref(String uid, String category, bool on) => _guard(() async {
+        await _db
+            .doc('accounts/$uid/settings/notifications')
+            .set(<String, dynamic>{category: on}, SetOptions(merge: true));
       });
 
   // ─── Verification ──────────────────────────────────────────────────────────
@@ -710,14 +925,31 @@ class FirebaseBackend implements Backend {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   }) =>
       _call('validatePurchase', <String, dynamic>{
         'productId': productId,
         'platform': platform,
         'token': token,
-        'packageName': ?packageName,
       });
+
+  @override
+  Stream<List<PurchaseRecord>> watchPurchases(String uid) => _db
+      .collection('purchases')
+      .where('uid', isEqualTo: uid)
+      .orderBy('createdAt', descending: true)
+      .limit(50)
+      .snapshots()
+      .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.map((s) {
+            final Map<String, dynamic> d = s.data();
+            return PurchaseRecord(
+              productId: d['productId'] as String? ?? '',
+              state: d['state'] as String? ?? '',
+              createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              expiresAt: d['expiresAt'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch((d['expiresAt'] as num).toInt()),
+            );
+          }).toList());
 
   // ─── Review tools ──────────────────────────────────────────────────────────
 
@@ -728,6 +960,35 @@ class FirebaseBackend implements Backend {
         .map((dynamic i) => Map<String, dynamic>.from(i as Map))
         .toList();
   }
+
+  @override
+  Future<List<ReportItem>> listReports() async {
+    final Map<String, dynamic> res = await _call('listReports');
+    return (res['reports'] as List? ?? const <dynamic>[]).map((dynamic raw) {
+      final Map<dynamic, dynamic> r = raw as Map<dynamic, dynamic>;
+      return ReportItem(
+        id: r['id'] as String,
+        target: r['target'] as String,
+        name: r['name'] as String? ?? '',
+        reason: r['reason'] as String? ?? '',
+        details: r['details'] as String? ?? '',
+        context: r['context'] as String? ?? 'profile',
+        held: r['held'] as bool? ?? false,
+        count: (r['count'] as num?)?.toInt() ?? 0,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> resolveReport(String id, {required String decision, String note = ''}) =>
+      _call('resolveReport', <String, dynamic>{
+        'id': id,
+        'decision': decision,
+        if (note.isNotEmpty) 'note': note,
+      });
+
+  @override
+  Future<void> releaseHold(String uid) => _call('releaseHold', <String, dynamic>{'uid': uid});
 
   @override
   Future<List<String>> documentUrls(String uid, String type) async {

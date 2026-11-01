@@ -9,7 +9,7 @@
     "build": "tsc",
     "test": "npm run build && node --test lib-test/",
     "test:unit": "tsc -p tsconfig.test.json && node --test lib-test/test/rules.test.js",
-    "test:emulator": "npm run build && tsc -p tsconfig.test.json && firebase emulators:exec --project demo-nikah --only auth,firestore,storage,functions 'node --test --test-concurrency=1 lib-test/test/rules.emulator.test.js lib-test/test/flow.emulator.test.js lib-test/test/review.emulator.test.js'"
+    "test:emulator": "npm run build && tsc -p tsconfig.test.json && firebase emulators:exec --project demo-nikah --only auth,firestore,storage,functions 'node --test --test-concurrency=1 lib-test/test/rules.emulator.test.js lib-test/test/flow.emulator.test.js lib-test/test/review.emulator.test.js lib-test/test/connections.emulator.test.js lib-test/test/family.emulator.test.js lib-test/test/account.emulator.test.js lib-test/test/safety.emulator.test.js lib-test/test/purchases.emulator.test.js'"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

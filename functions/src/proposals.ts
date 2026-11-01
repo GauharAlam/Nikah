@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { expiredProposalIds } from './expiry';
 import * as R from './rules';
 import { accountRef, approvedUid, blockedEitherWay, db, idArg, isPremium, limits, notify, openMatch } from './shared';
 
@@ -52,7 +53,7 @@ export const sendProposal = onCall(async (req) => {
   });
 });
 
-async function moveProposal(ref: FirebaseFirestore.DocumentReference, actor: string, next: R.ProposalStatus): Promise<void> {
+export async function moveProposal(ref: FirebaseFirestore.DocumentReference, actor: string, next: R.ProposalStatus): Promise<void> {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const p = snap.data() as { from: string; to: string; status: R.ProposalStatus } | undefined;
@@ -64,6 +65,7 @@ async function moveProposal(ref: FirebaseFirestore.DocumentReference, actor: str
     }
     tx.update(ref, { status: next, respondedAt: FieldValue.serverTimestamp() });
     if (next === 'accepted') openMatch(tx, p.from, p.to);
+    if (next === 'declined') notify(tx, p.from, 'proposal', 'Proposal update', 'One of your proposals was answered.', '/home/proposals');
   });
 }
 
@@ -82,9 +84,11 @@ export const withdrawProposal = onCall(async (req) => {
 });
 
 export const expireProposals = onSchedule('every 24 hours', async () => {
-  const due = await db.collection('proposals').where('status', '==', 'pending')
-    .where('expiresAt', '<', Timestamp.now()).limit(400).get();
-  const batch = db.batch();
-  due.docs.forEach((d) => batch.update(d.ref, { status: 'expired' }));
-  await batch.commit();
+  // Drains the backlog page by page, so a busy day never leaves proposals behind.
+  for (;;) {
+    const due = await db.collection('proposals').where('status', '==', 'pending')
+      .where('expiresAt', '<', Timestamp.now()).limit(200).get();
+    await expiredProposalIds(db, due.docs.map((d) => d.ref));
+    if (due.size < 200) return;
+  }
 });

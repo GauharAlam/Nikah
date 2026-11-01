@@ -51,6 +51,21 @@ class ReviewStatusScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTheme.bodySmall,
               ),
+              if (!rejected && store.subjectCode.isNotEmpty && !store.subjectConfirmed) ...<Widget>[
+                const SizedBox(height: 18),
+                Text(
+                  tr('Ask the person this profile is for to install the app, sign in with their own number, and enter this code:'),
+                  textAlign: TextAlign.center,
+                  style: AppTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                SelectableText(
+                  store.subjectCode,
+                  key: const Key('subject_code'),
+                  textAlign: TextAlign.center,
+                  style: AppTheme.ts(24, FontWeight.w800, color: AppTheme.green),
+                ),
+              ],
               const SizedBox(height: 26),
               if (rejected)
                 PrimaryButton(

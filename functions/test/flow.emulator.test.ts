@@ -138,7 +138,7 @@ test('a declined contact request gives the credit back', async () => {
 });
 
 test('private photos stay hidden from a viewer who is not matched', async () => {
-  await db.doc('profiles/p1').set(profile('p1', 'female', { photos: ['https://x/p.jpg'], photoPrivacy: 'matches', showCaste: false }));
+  await db.doc('profiles/p1').set(profile('p1', 'female', { photoPaths: ['published/p1/1.jpg'], photoPrivacy: 'matches', showCaste: false }));
   const k = await user('k', { approved: true });
   await db.doc('accounts/k/viewed/p1').set({ at: Timestamp.now() });
   const [card] = (await k('getProfiles', { ids: ['p1'] })).profiles;
@@ -149,13 +149,13 @@ test('private photos stay hidden from a viewer who is not matched', async () => 
 
 test('three different reporters hold a profile; one reporter repeating does not', async () => {
   await db.doc('profiles/bad').set(profile('bad', 'female'));
-  const r1 = await user('r1', {});
+  const r1 = await user('r1', { approved: true });
   await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
   await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
   await r1('reportProfile', { target: 'bad', reason: 'Fake profile' });
   assert.equal((await db.doc('profiles/bad').get()).data()?.live, true);
-  const r2 = await user('r2', {});
-  const r3 = await user('r3', {});
+  const r2 = await user('r2', { approved: true });
+  const r3 = await user('r3', { approved: true });
   await r2('reportProfile', { target: 'bad', reason: 'Fake profile' });
   await r3('reportProfile', { target: 'bad', reason: 'Fake profile' });
   const held = (await db.doc('profiles/bad').get()).data();
@@ -197,36 +197,6 @@ test('free members stop at the limit, repeats are free, and premium is unlimited
   assert.equal(paid.limitReached, false);
   assert.equal((await free('getProfiles', { ids: [hiddenId] })).profiles.length, 1);
   await db.doc('config/app').delete();
-});
-
-test('a guardian joins once with a code, gives opinions, and can be removed', async () => {
-  await db.doc('profiles/mem').set(profile('mem', 'male'));
-  await db.doc('profiles/cand').set(profile('cand', 'female'));
-  await db.doc('profiles/nosh').set(profile('nosh', 'female', { allowFamilyShare: false }));
-  const m = await user('mem', { approved: true });
-  const parent = await user('parent', {});
-  const stranger = await user('stranger', {});
-  await db.doc('accounts/mem/viewed/cand').set({ at: Timestamp.now() });
-  await db.doc('accounts/mem/viewed/nosh').set({ at: Timestamp.now() });
-
-  const { code } = await m('createFamilyInvite');
-  assert.equal(await code_(m('joinFamily', { code, name: 'Me' })), 'functions/invalid-argument');
-  await parent('joinFamily', { code, name: 'Abu' });
-  assert.equal(await code_(stranger('joinFamily', { code, name: 'X' })), 'functions/not-found');
-
-  await m('shareWithFamily', { profile: 'cand' });
-  assert.equal(await code_(m('shareWithFamily', { profile: 'nosh' })), 'functions/permission-denied');
-  assert.equal(await code_(m('shareWithFamily', { profile: 'h' })), 'functions/not-found');
-  const summary = (await db.doc('family/mem/shortlist/cand').get()).data();
-  assert.equal(summary?.photos, undefined);
-  assert.equal(summary?.phone, undefined);
-
-  await parent('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'good' });
-  assert.equal(await code_(stranger('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'no' })), 'functions/permission-denied');
-  assert.equal(await code_(parent('sendProposal', { to: 'cand' })), 'functions/permission-denied');
-
-  await m('removeGuardian', { guardian: 'parent' });
-  assert.equal(await code_(parent('giveFamilyOpinion', { member: 'mem', profile: 'cand', opinion: 'no' })), 'functions/permission-denied');
 });
 
 test('an invite earns credits once, only after approval, and not for yourself', async () => {

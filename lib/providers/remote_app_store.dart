@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -18,6 +19,7 @@ import '../models/nikah_journey.dart';
 import '../models/notification_item.dart';
 import '../models/proposal.dart';
 import '../models/verification_doc.dart';
+import '../models/wali.dart';
 import '../models/ward_profile.dart';
 import 'app_store.dart';
 
@@ -29,7 +31,7 @@ class RemoteAppStore extends AppStore {
     session = SessionController(_backend, _report, prefs);
     drafts = ProfileController(_backend, _report, session);
     discovery = DiscoveryController(_backend, _report, session, prefs);
-    chat = ChatController(_backend, _report, session, discovery, prefs);
+    chat = ChatController(_backend, _report, session, discovery);
     connections = ConnectionsController(_backend, _report, session, discovery, chat);
     circle = FamilyController(_backend, _report, session);
     inbox = NotificationsController(_backend, _report, session);
@@ -105,6 +107,7 @@ class RemoteAppStore extends AppStore {
     }
     final String uid = user.uid;
     session.start(uid);
+    session.followPurchases(uid);
     circle.start(uid);
     discovery.start();
     connections.start(uid);
@@ -161,13 +164,10 @@ class RemoteAppStore extends AppStore {
   @override
   void enterOnboarding() {}
 
-  /// Deletes the account on the server, then local preferences.
   @override
-  void resetAll() {
-    _send(() async {
-      await _backend.deleteAccount();
-      await prefs.clear();
-    });
+  Future<void> deleteAccount() async {
+    await _backend.deleteAccount();
+    await prefs.clear();
   }
 
   // ─── Limits ───────────────────────────────────────────────────────────────
@@ -221,12 +221,42 @@ class RemoteAppStore extends AppStore {
   @override
   void submitEdits() => drafts.submitEdits();
   @override
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  void updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) =>
       drafts.updatePrivacy(
         photoPrivacy: photoPrivacy,
         showCaste: showCaste,
         allowFamilyShare: allowFamilyShare,
+        nearbyOptIn: nearbyOptIn,
+        allowContactRequests: allowContactRequests,
       );
+  @override
+  bool get isPaused => session.account.paused;
+  @override
+  Future<void> setPaused(bool paused) => _backend.setPaused(paused);
+  @override
+  Future<List<BlockedMember>> blockedMembers() => _backend.listBlocks();
+  @override
+  Future<void> unblockProfile(String id) => _backend.unblockProfile(id);
+  @override
+  Future<String> exportData() async =>
+      const JsonEncoder.withIndent('  ').convert(await _backend.exportMyData());
+  @override
+  String get subjectCode => session.account.subjectCode;
+  @override
+  bool get subjectConfirmed => session.account.subjectConfirmed;
+  @override
+  bool get isSubjectOfProfile => session.account.subjectOf != null;
+  @override
+  Future<void> confirmSubject(String code, {required bool agree}) =>
+      _backend.confirmSubject(code, agree: agree);
+  @override
+  Future<void> withdrawSubject() => _backend.withdrawSubject();
   @override
   List<VerificationDoc> get verificationDocs => drafts.documents;
   @override
@@ -242,6 +272,8 @@ class RemoteAppStore extends AppStore {
   List<MatchProfile> get directory => discovery.directory;
   @override
   MatchProfile profileById(String id) => discovery.profileById(id);
+  @override
+  Future<void> loadFullProfile(String id) => discovery.loadFull(id);
   @override
   List<MatchProfile> get discoveredProfiles => discovery.introductions;
   @override
@@ -260,6 +292,9 @@ class RemoteAppStore extends AppStore {
   void markProfileViewed(String id) {}
   @override
   void markIncompatible(String matchId) => discovery.markIncompatible(matchId);
+  @override
+  Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor}) =>
+      discovery.search(query: query, nearby: nearby, cursor: cursor);
 
   // ─── Proposals and contact ────────────────────────────────────────────────
   @override
@@ -322,10 +357,29 @@ class RemoteAppStore extends AppStore {
   @override
   bool isBlocked(String matchId) => discovery.isBlocked(matchId);
   @override
-  void blockProfile(String matchId) => discovery.block(matchId);
+  Future<void> blockProfile(String matchId) => discovery.block(matchId);
   @override
-  void reportProfile(String matchId, String reason) =>
-      _send(() => _backend.reportProfile(matchId, reason));
+  Future<void> reportProfile(String matchId, String reason, {String details = '', String context = 'profile'}) =>
+      _backend.reportProfile(matchId, reason, details: details, context: context);
+  @override
+  void openThread(String matchId) => chat.openThread(matchId);
+  @override
+  void closeThread() => chat.closeThread();
+  @override
+  bool isThreadOpen(String matchId) => chat.isMatched(matchId);
+  @override
+  bool isSeen(String matchId, ChatMessage message) => chat.isSeen(matchId, message);
+  @override
+  void retryMessage(String matchId, String messageId) => chat.retry(matchId, messageId);
+  @override
+  Future<void> loadOlderMessages() => chat.loadOlder();
+  @override
+  bool get reachedChatStart => chat.reachedStart;
+  @override
+  List<MatchProfile> get closedMatches =>
+      chat.closedIds.map(discovery.profileById).toList();
+  @override
+  List<MatchProfile> get pendingContacts => connections.pendingContacts;
 
   // ─── Nikah Journey ────────────────────────────────────────────────────────
   @override
@@ -350,11 +404,35 @@ class RemoteAppStore extends AppStore {
   @override
   bool get isGuardian => session.account.familyOf != null;
   @override
-  Future<String> createFamilyInvite() => circle.createInvite();
+  FamilyAdmin get familyAdmin => circle.admin;
   @override
-  Future<void> joinFamily(String code, String name) => circle.join(code, name);
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  }) =>
+      circle.createInvite(name: name, relationship: relationship, phone: phone, permissions: permissions);
+  @override
+  Future<void> joinFamily(String code) => circle.join(code);
+  @override
+  Future<void> rejectFamilyInvite(String code) => _backend.rejectFamilyInvite(code);
+  @override
+  Future<void> cancelFamilyInvite(String id) => _backend.cancelFamilyInvite(id);
+  @override
+  Future<String> resendFamilyInvite(String id) => _backend.resendFamilyInvite(id);
+  @override
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions) =>
+      _backend.updateGuardianPermissions(guardian, permissions);
+  @override
+  Future<FamilyOverview?> familyOverview() => circle.overview();
+  @override
+  Future<void> answerForMember(String from, {required bool accept}) =>
+      circle.answerForMember(from, accept: accept);
   @override
   Future<void> removeGuardian(String guardian) => circle.removeGuardian(guardian);
+  @override
+  Future<void> leaveFamily() => circle.leave();
   @override
   Future<void> shareWithFamily(String profileId) => circle.share(profileId);
   @override
@@ -372,6 +450,22 @@ class RemoteAppStore extends AppStore {
   void markNotificationRead(String id) => inbox.markRead(id);
   @override
   void markAllNotificationsRead() => inbox.markAllRead();
+
+  /// The timeline is the member's real server notifications.
+  @override
+  List<ActivityLogEntry> get activityLog => inbox.items
+      .map((NotificationItem n) => ActivityLogEntry(
+            id: n.id,
+            kind: switch (n.type) {
+              NotificationType.chat => ActivityKind.chat,
+              NotificationType.intro || NotificationType.match => ActivityKind.intro,
+              _ => ActivityKind.general,
+            },
+            title: n.title,
+            detail: n.body,
+            createdAt: n.createdAt,
+          ))
+      .toList();
   @override
   bool get showArabic => settings.showArabic;
   @override
@@ -383,14 +477,18 @@ class RemoteAppStore extends AppStore {
     required String productId,
     required String platform,
     required String token,
-    String? packageName,
   }) =>
-      _backend.validatePurchase(
-        productId: productId,
-        platform: platform,
-        token: token,
-        packageName: packageName,
-      );
+      _backend.validatePurchase(productId: productId, platform: platform, token: token);
+  @override
+  Set<String> get subscriptionProductIds => session.limits.subscriptionIds;
+  @override
+  Set<String> get creditProductIds => session.limits.creditIds;
+  @override
+  List<PurchaseRecord> get purchases => session.purchases;
+  @override
+  bool wantsNotification(String category) => inbox.wants(category);
+  @override
+  void setWantsNotification(String category, bool on) => inbox.setWants(category, on);
 
   @override
   void dispose() {

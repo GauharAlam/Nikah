@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import 'data/firebase_backend.dart';
 import 'l10n/app_strings.dart';
 import 'providers/app_store.dart';
 import 'providers/demo_app_store.dart';
+import 'services/app_lock.dart';
 import 'services/privacy_shield.dart';
 import 'theme/app_theme.dart';
 
@@ -45,6 +47,8 @@ void main() async {
       runApp(const _SetupRequiredApp());
       return;
     }
+    // A failure here must not stop the app. The server decides whether to require it.
+    unawaited(FirebaseAppCheck.instance.activate().catchError((Object _) {}));
     store = RemoteAppStore(prefs, FirebaseBackend());
   }
   final GoRouter router = buildRouter(store);
@@ -72,8 +76,8 @@ const FirebaseOptions _emulatorOptions = FirebaseOptions(
 /// Opens the screen named by a tapped notification.
 Future<void> _routePushTaps(GoRouter router) async {
   void open(RemoteMessage message) {
-    final Object? link = message.data['deepLink'];
-    if (link is String && link.startsWith('/')) unawaited(router.push(link));
+    final String? link = safeDeepLink(message.data['deepLink']);
+    if (link != null) unawaited(router.push(link));
   }
 
   final RemoteMessage? initial = await FirebaseMessaging.instance.getInitialMessage();
@@ -124,9 +128,12 @@ class _BarkatNikahAppState extends State<BarkatNikahApp> {
       routerConfig: widget.router,
       builder: (BuildContext context, Widget? child) {
         // Rebuilds every screen when the language changes.
-        final Widget page = KeyedSubtree(
-          key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
-          child: child ?? const SizedBox.shrink(),
+        final Widget page = AppLockGate(
+          prefs: _store.prefs,
+          child: KeyedSubtree(
+            key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
         return AppConfig.isDemo
             ? Banner(message: 'DEMO', location: BannerLocation.topEnd, child: page)

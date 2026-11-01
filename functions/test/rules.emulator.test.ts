@@ -1,7 +1,7 @@
 import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { deleteObject, getBytes, listAll, ref, uploadBytes } from 'firebase/storage';
 
 let env: RulesTestEnvironment;
@@ -23,7 +23,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'profiles/b'), { name: 'B', gender: 'female', live: true });
     await setDoc(doc(db, 'proposals/a_b'), { from: 'a', to: 'b', status: 'pending' });
     await setDoc(doc(db, 'contactShares/a_b'), { users: ['a', 'b'], phones: { a: '1', b: '2' } });
-    await setDoc(doc(db, 'matches/a_b'), { users: ['a', 'b'], status: 'active', readAt: {}, unread: { a: 0, b: 0 } });
+    await setDoc(doc(db, 'matches/a_b'), { users: ['a', 'b'], status: 'active', readAt: {}, unread: { a: 2, b: 3 } });
     await setDoc(doc(db, 'matches/a_c'), { users: ['a', 'c'], status: 'blocked', readAt: {}, unread: {} });
     await setDoc(doc(db, 'accounts/a/notifications/n1'), { title: 't', read: false });
     await setDoc(doc(db, 'reports/r1'), { reporter: 'a' });
@@ -89,6 +89,29 @@ test('only participants of an open match can message', async () => {
   await assertFails(getDoc(doc(member('z'), 'matches/a_b/messages/m')));
 });
 
+test('SEC-13: blocked and closed conversations cannot be read or written', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'matches/a_c/messages/m1'), { sender: 'c', text: 'x', sentAt: serverTimestamp() });
+    await setDoc(doc(c.firestore(), 'matches/a_b/messages/m1'), { sender: 'b', text: 'x', sentAt: serverTimestamp() });
+  });
+  await assertFails(getDoc(doc(member('a'), 'matches/a_c/messages/m1')));
+  await assertSucceeds(getDoc(doc(member('a'), 'matches/a_b/messages/m1')));
+  await assertFails(addDoc(collection(member('a'), 'matches/a_c/messages'), { sender: 'a', text: 'hi', sentAt: serverTimestamp() }));
+});
+
+test('SEC-13: a member who lost approval cannot message', async () => {
+  const held = member('a', false);
+  await assertFails(addDoc(collection(held, 'matches/a_b/messages'), { sender: 'a', text: 'hi', sentAt: serverTimestamp() }));
+  await assertFails(getDoc(doc(held, 'matches/a_b/messages/m1')));
+});
+
+test('a member clears only their own unread count, and only to zero', async () => {
+  await assertSucceeds(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.a': 0, 'readAt.a': serverTimestamp() }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.b': 0 }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'unread.a': 5 }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { status: 'closed' }));
+});
+
 test('a member moves only their own read marker', async () => {
   await assertSucceeds(updateDoc(doc(member('a'), 'matches/a_b'), { 'readAt.a': serverTimestamp() }));
   await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'readAt.b': serverTimestamp() }));
@@ -116,11 +139,24 @@ test('answers stay hidden until you give yours', async () => {
 
 test('family summaries reach only the member and their guardians', async () => {
   await env.withSecurityRulesDisabled(async (c) => {
-    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent'], names: { parent: 'Abu' } });
+    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent', 'limited'], names: { parent: 'Abu' } });
     await setDoc(doc(c.firestore(), 'family/a/shortlist/b'), { firstName: 'B' });
+    await setDoc(doc(c.firestore(), 'family/a/memberships/parent'), { permissions: ['view_shortlist'] });
+    await setDoc(doc(c.firestore(), 'family/a/memberships/limited'), { permissions: ['view_profile'] });
+    await setDoc(doc(c.firestore(), 'family/a/invitations/i'), { status: 'pending' });
+    await setDoc(doc(c.firestore(), 'family/a/history/h'), { action: 'joined' });
+    await setDoc(doc(c.firestore(), 'familyLinks/parent/circles/a'), { member: 'a' });
   });
   await assertSucceeds(getDoc(doc(member('a'), 'family/a/shortlist/b')));
   await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('limited', false), 'family/a/shortlist/b')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('limited', false), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/invitations/i')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/history/h')));
+  await assertSucceeds(getDoc(doc(member('a'), 'family/a/history/h')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'familyLinks/parent/circles/a')));
+  await assertFails(setDoc(doc(member('parent', false), 'family/a/memberships/parent'), { permissions: ['view_proposals'] }));
   await assertFails(getDoc(doc(member('z'), 'family/a/shortlist/b')));
   await assertFails(setDoc(doc(member('parent', false), 'family/a'), { guardians: ['z'] }));
   await assertFails(updateDoc(doc(member('parent', false), 'family/a/shortlist/b'), { firstName: 'X' }));
@@ -128,6 +164,41 @@ test('family summaries reach only the member and their guardians', async () => {
   await assertFails(getDoc(doc(member('parent', false), 'matches/a_b/messages/m')));
   await assertFails(getDoc(doc(member('parent', false), 'accounts/a')));
   await assertFails(getDoc(doc(member('parent', false), 'accounts/a/documents/name-proof')));
+
+  // A revoked guardian loses everything on the next request.
+  await env.withSecurityRulesDisabled((c) => deleteDoc(doc(c.firestore(), 'family/a/memberships/parent')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('parent', false), 'family/a')));
+});
+
+test('purchases and the credit ledger are readable by their owner and written by nobody', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'purchases/p'), { uid: 'a', productId: 'x' });
+    await setDoc(doc(c.firestore(), 'creditLedger/l'), { uid: 'a', delta: 5 });
+  });
+  await assertSucceeds(getDoc(doc(member('a'), 'purchases/p')));
+  await assertFails(getDoc(doc(member('b'), 'purchases/p')));
+  await assertFails(setDoc(doc(member('a'), 'purchases/q'), { uid: 'a' }));
+  await assertSucceeds(getDoc(doc(member('a'), 'creditLedger/l')));
+  await assertFails(setDoc(doc(member('a'), 'creditLedger/m'), { uid: 'a', delta: 99 }));
+});
+
+test('notification settings accept known categories, and devices are server-written', async () => {
+  await assertSucceeds(setDoc(doc(member('a'), 'accounts/a/settings/notifications'), { messages: false }));
+  await assertFails(setDoc(doc(member('a'), 'accounts/a/settings/notifications'), { billing: false }));
+  await assertFails(setDoc(doc(member('b'), 'accounts/a/settings/notifications'), { messages: false }));
+  await assertFails(setDoc(doc(member('a'), 'accounts/a/devices/t'), { token: 't' }));
+});
+
+test('a member reads their own deletion status and nobody else can', async () => {
+  await env.withSecurityRulesDisabled((c) => setDoc(doc(c.firestore(), 'deletionRequests/a'), { status: 'pending' }));
+  await assertSucceeds(getDoc(doc(member('a'), 'deletionRequests/a')));
+  await assertFails(getDoc(doc(member('b'), 'deletionRequests/a')));
+  await assertFails(setDoc(doc(member('a'), 'deletionRequests/a'), { status: 'done' }));
+  await assertFails(getDoc(doc(member('a'), 'auditLogs/x')));
+  await assertFails(getDoc(doc(member('a'), 'rateLimits/x')));
+  await assertFails(getDoc(doc(member('a'), 'familyInviteIndex/x')));
+  await assertFails(getDoc(doc(member('a'), 'subjectConfirmations/x')));
 });
 
 test('notifications: mark read only', async () => {

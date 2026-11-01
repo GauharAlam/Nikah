@@ -17,6 +17,10 @@ class DiscoveryController extends FeatureController {
   final SharedPreferences _prefs;
 
   final Map<String, MatchProfile> _cache = <String, MatchProfile>{};
+
+  /// Photo links last an hour, so cards are refreshed before they expire.
+  static const Duration _cardLife = Duration(minutes: 50);
+  final Map<String, DateTime> _fetchedAt = <String, DateTime>{};
   final Set<String> _fetching = <String>{};
   Set<String> _blocked = <String>{};
   List<MatchProfile> _introductions = <MatchProfile>[];
@@ -52,13 +56,13 @@ class DiscoveryController extends FeatureController {
   Future<void> ensure(Iterable<String> ids) async {
     if (!_session.hasApprovedClaim) return;
     final List<String> missing = ids
-        .where((String id) => !_cache.containsKey(id) && !_fetching.contains(id))
+        .where((String id) => (!_cache.containsKey(id) || _isStale(id)) && !_fetching.contains(id))
         .toList();
     if (missing.isEmpty) return;
     _fetching.addAll(missing);
     try {
       for (final MatchProfile p in await backend.getProfiles(missing)) {
-        _cache[p.id] = p;
+        _remember(p);
       }
       notifyListeners();
     } on Object catch (e) {
@@ -68,11 +72,33 @@ class DiscoveryController extends FeatureController {
     }
   }
 
+  bool _isStale(String id) {
+    final DateTime? at = _fetchedAt[id];
+    return at == null || DateTime.now().difference(at) > _cardLife;
+  }
+
+  void _remember(MatchProfile p) {
+    _cache[p.id] = p;
+    _fetchedAt[p.id] = DateTime.now();
+  }
+
   MatchProfile profileById(String id) {
     final MatchProfile? known = _cache[id];
-    if (known != null) return known;
-    unawaited(ensure(<String>[id]));
-    return MatchProfile.unknown(id);
+    if (known == null || _isStale(id)) unawaited(ensure(<String>[id]));
+    return known ?? MatchProfile.unknown(id);
+  }
+
+  /// Lists carry the primary photo only. Opening a profile fetches them all.
+  Future<void> loadFull(String id) async {
+    if (!_session.hasApprovedClaim) return;
+    try {
+      for (final MatchProfile p in await backend.getProfiles(<String>[id])) {
+        _remember(p);
+      }
+      notifyListeners();
+    } on Object catch (e) {
+      report(e);
+    }
   }
 
   Future<void> refresh() async {
@@ -92,9 +118,7 @@ class DiscoveryController extends FeatureController {
       final Set<String> seen = _introductions.map((MatchProfile p) => p.id).toSet();
       final List<MatchProfile> fresh =
           page.profiles.where((MatchProfile p) => seen.add(p.id)).toList();
-      for (final MatchProfile p in fresh) {
-        _cache[p.id] = p;
-      }
+      fresh.forEach(_remember);
       _introductions = <MatchProfile>[..._introductions, ...fresh];
       _cursor = page.cursor;
       _exhausted = page.cursor == null;
@@ -128,17 +152,47 @@ class DiscoveryController extends FeatureController {
     send(() => backend.hideProfile(id));
   }
 
-  void block(String id) {
+  /// Hides the profile at once, and puts it back if the server refuses.
+  Future<void> block(String id) async {
+    final MatchProfile? card = _cache[id];
     _blocked = <String>{..._blocked, id};
     drop(id);
     notifyListeners();
-    send(() => backend.blockProfile(id));
+    try {
+      await backend.blockProfile(id);
+    } on Object {
+      _blocked = <String>{..._blocked}..remove(id);
+      if (card != null) restore(card);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Puts a card back after a failed action.
+  void restore(MatchProfile card) {
+    if (_introductions.any((MatchProfile p) => p.id == card.id)) return;
+    _introductions = <MatchProfile>[card, ..._introductions];
+    notifyListeners();
+  }
+
+  MatchProfile? cached(String id) => _cache[id];
+
+  /// One page of search results. Leaves the deck untouched.
+  Future<IntroductionPage> search({required String query, required bool nearby, int? cursor}) async {
+    final IntroductionPage page = await backend.fetchIntroductions(
+      _filters.copyWith(query: query),
+      cursor,
+      nearby: nearby,
+    );
+    page.profiles.forEach(_remember);
+    return page;
   }
 
   @override
   Future<void> stop() async {
     await super.stop();
     _cache.clear();
+    _fetchedAt.clear();
     _blocked = <String>{};
     _introductions = <MatchProfile>[];
     _filters = const MatchFilters();

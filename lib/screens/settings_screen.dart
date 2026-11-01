@@ -1,16 +1,24 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../data/backend.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
+import '../services/app_lock.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
+import '../widgets/app_snacks.dart';
 import '../widgets/app_switch.dart';
 import '../widgets/picker_sheets.dart';
 
@@ -18,6 +26,22 @@ import '../widgets/picker_sheets.dart';
 /// surfaces and account data controls.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _pause(BuildContext context, AppStore store, bool paused) async {
+    try {
+      await store.setPaused(paused);
+    } on BackendException catch (e) {
+      if (context.mounted) showAppSnack(context, e.message);
+    }
+  }
+
+  Future<void> _setLock(BuildContext context, AppStore store, bool on) async {
+    final bool done = await AppLock.setEnabled(store.prefs, on);
+    if (context.mounted && !done) {
+      showAppSnack(context, tr('This phone has no screen lock set up.'));
+    }
+    store.settingsChanged();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,31 +52,25 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 60),
         children: <Widget>[
-          if (AppConfig.isDemo) ...<Widget>[
           const SectionLabel('Notifications'),
           const SizedBox(height: 10),
           AppCard(
             child: Column(
               children: <Widget>[
-                SwitchTile(
-                  icon: Icons.notifications_active_outlined,
-                  title: 'Push notifications',
-                  subtitle: 'New matches, intros & milestones',
-                  value: store.pushEnabled,
-                  onChanged: store.setPushEnabled,
-                ),
-                const Divider(height: 20),
-                SwitchTile(
-                  icon: Icons.mail_outline_rounded,
-                  title: 'Email digest',
-                  subtitle: 'A calm weekly summary of activity',
-                  value: store.emailDigest,
-                  onChanged: store.setEmailDigest,
-                ),
+                for (final MapEntry<String, String> c in notificationCategories.entries) ...<Widget>[
+                  SwitchTile(
+                    key: Key('notify_${c.key}'),
+                    icon: Icons.notifications_active_outlined,
+                    title: tr(c.value),
+                    subtitle: tr('Push notifications. Details are never shown on your lock screen.'),
+                    value: store.wantsNotification(c.key),
+                    onChanged: (bool v) => store.setWantsNotification(c.key, v),
+                  ),
+                  if (c.key != notificationCategories.keys.last) const Divider(height: 20),
+                ],
               ],
             ),
           ),
-          ],
           const SizedBox(height: 22),
           const SectionLabel('Privacy & modesty'),
           const SizedBox(height: 10),
@@ -75,6 +93,42 @@ class SettingsScreen extends StatelessWidget {
                   value: store.profile?.photoPrivacy == 'matches',
                   onChanged: (bool v) =>
                       store.updatePrivacy(photoPrivacy: v ? 'matches' : 'everyone'),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  key: const Key('pause_setting'),
+                  icon: Icons.pause_circle_outline_rounded,
+                  title: tr('Pause my profile'),
+                  subtitle: tr('Hide me from everyone, and keep everything'),
+                  value: store.isPaused,
+                  onChanged: (bool v) => unawaited(_pause(context, store, v)),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  key: const Key('contact_requests_setting'),
+                  icon: Icons.contact_phone_outlined,
+                  title: tr('Allow contact requests'),
+                  subtitle: tr('Your number is only shared if you accept'),
+                  value: store.profile?.allowContactRequests ?? true,
+                  onChanged: (bool v) => store.updatePrivacy(allowContactRequests: v),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  key: const Key('app_lock_setting'),
+                  icon: Icons.lock_outline_rounded,
+                  title: tr('App lock'),
+                  subtitle: tr('Ask for your fingerprint, face or passcode'),
+                  value: AppLock.enabled(store.prefs),
+                  onChanged: (bool v) => unawaited(_setLock(context, store, v)),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  key: const Key('nearby_setting'),
+                  icon: Icons.near_me_outlined,
+                  title: tr('Nearby discovery'),
+                  subtitle: tr('People who turn this on can find you by home city. Never GPS.'),
+                  value: store.profile?.nearbyOptIn ?? false,
+                  onChanged: (bool v) => store.updatePrivacy(nearbyOptIn: v),
                 ),
                 const Divider(height: 20),
                 SwitchTile(
@@ -162,9 +216,25 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => context.push(AppRoutes.about),
           ),
           const SizedBox(height: 26),
+          SettingsTile(
+            key: const Key('blocked_members'),
+            icon: Icons.block_rounded,
+            title: tr('Blocked members'),
+            subtitle: tr('See and unblock'),
+            onTap: () => context.push(AppRoutes.blockedMembers),
+          ),
+          const SizedBox(height: 10),
+          SettingsTile(
+            key: const Key('export_data'),
+            icon: Icons.download_outlined,
+            title: tr('Download my data'),
+            subtitle: tr('A copy of what we hold about you'),
+            onTap: () => _export(context, store),
+          ),
+          const SizedBox(height: 22),
           DangerButton(
             label: tr('Delete Account'),
-            onPressed: () => _confirmReset(context, store),
+            onPressed: () => context.push(AppRoutes.deleteAccount),
           ),
           const SizedBox(height: 26),
           Center(
@@ -194,29 +264,15 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static Future<void> _confirmReset(
-      BuildContext context, AppStore store) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete your account?'),
-        content: const Text(
-          'Your profile, proposals and chats will be '
-          'permanently deleted. This cannot be undone.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep my data'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    store.resetAll();
+  static Future<void> _export(BuildContext context, AppStore store) async {
+    try {
+      final String json = await store.exportData();
+      final Directory dir = await getTemporaryDirectory();
+      final File file = File('${dir.path}/my-nikah-data.json');
+      await file.writeAsString(json);
+      await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)]));
+    } on BackendException catch (e) {
+      if (context.mounted) showAppSnack(context, e.message);
+    }
   }
 }

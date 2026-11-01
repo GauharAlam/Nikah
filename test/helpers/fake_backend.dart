@@ -35,8 +35,21 @@ class FakeBackend implements Backend {
   Object? failNext;
   Object? failDraft;
 
+  /// Fails only the next call whose name starts with this.
+  String? failOn;
+  Object? failSend;
+  String lastQuery = '';
+  bool lastNearby = false;
+  int messageListeners = 0;
+  List<ChatMessage> olderPage = <ChatMessage>[];
+  final List<String> sentIds = <String>[];
+
   Future<void> _record(String call) async {
     calls.add(call);
+    if (failOn != null && call.startsWith(failOn!)) {
+      failOn = null;
+      throw const BackendException('refused');
+    }
     final Object? failure = failNext;
     failNext = null;
     if (failure != null) throw failure;
@@ -87,7 +100,9 @@ class FakeBackend implements Backend {
   Future<void> deletePhoto(String storagePath) => _record('deletePhoto');
 
   @override
-  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor) async {
+  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor, {bool nearby = false}) async {
+    lastQuery = filters.query;
+    lastNearby = nearby;
     await _record('fetchIntroductions:$cursor');
     return pages.isEmpty ? const IntroductionPage(<MatchProfile>[], null) : pages.removeAt(0);
   }
@@ -121,10 +136,22 @@ class FakeBackend implements Backend {
   @override
   Stream<List<MatchThread>> watchMatches(String uid) => matches.stream;
   @override
-  Stream<List<ChatMessage>> watchMessages(String pairId, String uid) => messages.stream;
+  Stream<List<ChatMessage>> watchMessages(String pairId, String uid) {
+    messageListeners++;
+    return messages.stream;
+  }
+
   @override
-  Future<void> sendMessage(String pairId, String uid, String text) =>
-      _record('message:$pairId:$text');
+  Future<List<ChatMessage>> olderMessages(String pairId, String uid, DateTime before) async => olderPage;
+  @override
+  Future<void> sendMessage(String pairId, String uid, String text, {required String id}) async {
+    sentIds.add(id);
+    final Object? failure = failSend;
+    failSend = null;
+    if (failure != null) throw failure;
+    await _record('message:$pairId:$text');
+  }
+
   @override
   Future<void> markThreadRead(String pairId, String uid) => _record('read:$pairId');
   @override
@@ -132,9 +159,16 @@ class FakeBackend implements Backend {
   @override
   Future<void> blockProfile(String target) => _record('block:$target');
   @override
-  Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
+  Future<void> reportProfile(String target, String reason, {String details = '', String context = 'profile'}) =>
+      _record('report:$target:$reason:$context');
   @override
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  Future<void> updatePrivacy({
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? nearbyOptIn,
+    bool? allowContactRequests,
+  }) =>
       _record('privacy:$photoPrivacy');
   @override
   Future<void> touchActive() => _record('touchActive');
@@ -145,10 +179,57 @@ class FakeBackend implements Backend {
   Future<void> submitEdits() => _record('submitEdits');
   @override
   Stream<FamilyState> watchFamily(String member) => familyStream.stream;
+  final StreamController<FamilyAdmin> familyAdmin = StreamController<FamilyAdmin>.broadcast();
+  FamilyOverview overview = const FamilyOverview();
+  List<BlockedMember> blocks = <BlockedMember>[];
   @override
-  Future<String> createFamilyInvite() async => 'FAM234';
+  Stream<FamilyAdmin> watchFamilyAdmin(String member) => familyAdmin.stream;
   @override
-  Future<void> joinFamily(String code, String name) => _record('joinFamily:$code');
+  Future<void> rejectFamilyInvite(String code) => _record('rejectInvite:$code');
+  @override
+  Future<void> cancelFamilyInvite(String id) => _record('cancelInvite:$id');
+  @override
+  Future<String> resendFamilyInvite(String id) async {
+    await _record('resendInvite:$id');
+    return 'NEW234';
+  }
+
+  @override
+  Future<void> updateGuardianPermissions(String guardian, List<String> permissions) =>
+      _record('permissions:$guardian:${permissions.join(',')}');
+  @override
+  Future<FamilyOverview> familyOverview(String member) async {
+    await _record('overview:$member');
+    return overview;
+  }
+
+  @override
+  Future<void> familyRespondProposal(String member, String from, {required bool accept}) =>
+      _record('familyAnswer:$member:$from:$accept');
+  @override
+  Future<void> confirmSubject(String code, {required bool agree}) => _record('subject:$code:$agree');
+  @override
+  Future<void> withdrawSubject() => _record('withdrawSubject');
+  @override
+  Future<void> setPaused(bool paused) => _record('paused:$paused');
+  @override
+  Future<List<BlockedMember>> listBlocks() async => blocks;
+  @override
+  Future<void> unblockProfile(String target) => _record('unblock:$target');
+  @override
+  Future<Map<String, dynamic>> exportMyData() async => <String, dynamic>{'draft': <String, dynamic>{'fullName': 'Sara'}};
+  @override
+  Future<String> createFamilyInvite({
+    required String name,
+    required String relationship,
+    required String phone,
+    required List<String> permissions,
+  }) async {
+    await _record('invite:$relationship:${permissions.join(',')}');
+    return 'FAM234';
+  }
+  @override
+  Future<void> joinFamily(String code) => _record('join:$code');
   @override
   Future<void> removeGuardian(String guardian, {String? member}) => _record('removeGuardian:$guardian');
   @override
@@ -179,15 +260,27 @@ class FakeBackend implements Backend {
   Future<void> submitDocument(String uid, String type, List<String> localPaths) =>
       _record('document:$type');
   @override
-  Future<void> validatePurchase({
-    required String productId,
-    required String platform,
-    required String token,
-    String? packageName,
-  }) =>
-      _record('purchase:$productId');
+  Future<void> validatePurchase({required String productId, required String platform, required String token}) =>
+      _record('purchase:$productId:$platform');
+  final StreamController<List<PurchaseRecord>> purchaseRecords = StreamController<List<PurchaseRecord>>.broadcast();
+  final StreamController<Map<String, bool>> notificationPrefs = StreamController<Map<String, bool>>.broadcast();
   @override
-  Future<List<Map<String, dynamic>>> listReviewQueue() async => const <Map<String, dynamic>>[];
+  Stream<List<PurchaseRecord>> watchPurchases(String uid) => purchaseRecords.stream;
+  @override
+  Stream<Map<String, bool>> watchNotificationPrefs(String uid) => notificationPrefs.stream;
+  @override
+  Future<void> setNotificationPref(String uid, String category, bool on) => _record('pref:$category:$on');
+  @override
+  Future<List<Map<String, dynamic>>> listReviewQueue() async => queue;
+  List<Map<String, dynamic>> queue = <Map<String, dynamic>>[];
+  List<ReportItem> reports = <ReportItem>[];
+  @override
+  Future<List<ReportItem>> listReports() async => reports;
+  @override
+  Future<void> resolveReport(String id, {required String decision, String note = ''}) =>
+      _record('resolveReport:$id:$decision');
+  @override
+  Future<void> releaseHold(String uid) => _record('releaseHold:$uid');
   @override
   Future<List<String>> documentUrls(String uid, String type) async => const <String>[];
   @override

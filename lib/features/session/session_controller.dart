@@ -20,6 +20,7 @@ class SessionController extends FeatureController {
   AuthStage _stage = AuthStage.guest;
   bool _restoring = true;
   String? _startupError;
+  List<PurchaseRecord> _purchases = <PurchaseRecord>[];
 
   /// Runs when the account says this member belongs to a family circle.
   void Function(String? member)? onFamilyLink;
@@ -37,6 +38,7 @@ class SessionController extends FeatureController {
   AppLimits get limits => _limits;
   ReviewStage get reviewStage => _account.stage;
   bool get isPremium => _account.isPremium;
+  List<PurchaseRecord> get purchases => _purchases;
 
   bool get pledgeAccepted => _prefs.getBool('bk_pledge_$uid') ?? false;
 
@@ -83,6 +85,14 @@ class SessionController extends FeatureController {
     notifyListeners();
   }
 
+  /// Follows the member's purchases only while they exist as a session.
+  void followPurchases(String uid) {
+    follow(backend.watchPurchases(uid), (List<PurchaseRecord> p) {
+      _purchases = p;
+      notifyListeners();
+    });
+  }
+
   void restored() {
     _restoring = false;
     notifyListeners();
@@ -103,5 +113,6 @@ class SessionController extends FeatureController {
   Future<void> stop() async {
     await super.stop();
     _account = const AccountState();
+    _purchases = <PurchaseRecord>[];
   }
 }

@@ -7,7 +7,9 @@ import { randomInt, randomUUID } from 'node:crypto';
 import * as R from './rules';
 
 initializeApp();
-setGlobalOptions({ region: 'asia-south1', maxInstances: 20 });
+// App Check needs each app registered in the console, so it is switched on per
+// deployment. See docs/DEPLOYMENT.md.
+setGlobalOptions({ region: 'asia-south1', maxInstances: 20, enforceAppCheck: process.env.ENFORCE_APP_CHECK === 'true' });
 export const db = getFirestore();
 // A missing optional field must not fail a whole write.
 db.settings({ ignoreUndefinedProperties: true });
@@ -83,11 +85,29 @@ export function openMatch(tx: Transaction, a: string, b: string): void {
   notify(tx, b, 'match', 'New match', 'Interest is mutual. Chat is now open.', `/chat/${a}`);
 }
 
-export async function newCode(collection: string, data: Record<string, unknown>): Promise<string> {
+/** A fixed-window limit per member. Transactional, so parallel calls cannot pass it. */
+export async function rateLimit(uid: string, action: string, max: number, windowMs: number): Promise<void> {
+  const ref = db.doc(`rateLimits/${action}_${uid}`);
+  await db.runTransaction(async (tx) => {
+    const d = (await tx.get(ref)).data();
+    const now = Date.now();
+    const fresh = !d || now - d.start >= windowMs;
+    if (!fresh && d.count >= max) throw new HttpsError('resource-exhausted', 'Too many attempts. Please try again later.');
+    tx.set(ref, {
+      start: fresh ? now : d.start, count: fresh ? 1 : d.count + 1,
+      expiresAt: Timestamp.fromMillis((fresh ? now : d.start) + windowMs),
+    });
+  });
+}
+
+/** Issues a fresh code. [ref] maps a code to the document that reserves it. */
+export async function newUniqueCode(
+  ref: (code: string) => FirebaseFirestore.DocumentReference, data: () => Record<string, unknown>,
+): Promise<string> {
   for (let i = 0; i < 6; i++) {
     const code = R.makeCode(() => randomInt(0, 1_000_000) / 1_000_000);
     try {
-      await db.doc(`${collection}/${code}`).create(data);
+      await ref(code).create(data());
       return code;
     } catch {
       // Taken. Try another.
@@ -95,6 +115,9 @@ export async function newCode(collection: string, data: Record<string, unknown>)
   }
   throw new HttpsError('unavailable', 'Please try again.');
 }
+
+export const newCode = (collection: string, data: Record<string, unknown>): Promise<string> =>
+  newUniqueCode((code) => db.doc(`${collection}/${code}`), () => data);
 
 export async function closeMatch(a: string, b: string, status: string): Promise<void> {
   const ref = db.doc(`matches/${R.pairId(a, b)}`);

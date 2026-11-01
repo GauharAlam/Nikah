@@ -51,6 +51,20 @@ class ConnectionsController extends FeatureController {
     return left < 0 ? 0 : left;
   }
 
+  /// Removes the card while the server decides, and restores it on refusal,
+  /// so the deck never claims something that did not happen.
+  Future<void> _withCard(String id, Future<void> Function() call) async {
+    final MatchProfile? card = _discovery.cached(id);
+    _discovery.drop(id);
+    notifyListeners();
+    try {
+      await call();
+    } on Object catch (e) {
+      if (card != null) _discovery.restore(card);
+      report(e);
+    }
+  }
+
   // ─── Proposals ───────────────────────────────────────────────────────────
 
   Proposal? proposalFor(String id, ProposalDirection direction) {
@@ -84,9 +98,7 @@ class ConnectionsController extends FeatureController {
   bool sendProposal(String id) {
     if (hasProposed(id)) return true;
     if (proposalsLeft == 0) return false;
-    _discovery.drop(id);
-    notifyListeners();
-    send(() => backend.sendProposal(id));
+    unawaited(_withCard(id, () => backend.sendProposal(id)));
     return true;
   }
 
@@ -119,9 +131,7 @@ class ConnectionsController extends FeatureController {
   bool requestContact(String id) {
     if (isContactShared(id) || contactRequested(id)) return true;
     if (contactCredits <= 0) return false;
-    _discovery.drop(id);
-    notifyListeners();
-    send(() => backend.requestContact(id));
+    unawaited(_withCard(id, () => backend.requestContact(id)));
     return true;
   }
 
@@ -132,6 +142,12 @@ class ConnectionsController extends FeatureController {
 
   Future<void> respondContact(String id, {required bool accept}) =>
       backend.respondContact(id, accept: accept);
+
+  /// Contact requests waiting on either side.
+  List<MatchProfile> get pendingContacts => _contacts
+      .where((ContactRequestRecord c) => c.status == 'pending')
+      .map((ContactRequestRecord c) => _discovery.profileById(c.profileId))
+      .toList();
 
   // ─── Decks ───────────────────────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ import 'config/app_config.dart';
 import 'data/backend.dart';
 import 'providers/app_store.dart';
 import 'screens/approved_screen.dart';
+import 'screens/account_screens.dart';
 import 'screens/contact_details_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/phone_signin_screen.dart';
@@ -35,6 +36,7 @@ import 'screens/premium_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/proposals_screen.dart';
 import 'screens/schedule_meeting_screen.dart';
+import 'screens/search_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/verification_screen.dart';
 import 'screens/wali_hub_screen.dart';
@@ -60,6 +62,7 @@ class AppRoutes {
   static const String homeChats = '/home/chat';
   static const String homeProfile = '/home/profile';
   static const String filters = '/filters';
+  static const String search = '/search';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String about = '/about';
@@ -71,6 +74,8 @@ class AppRoutes {
   static const String invite = '/invite';
   static const String familyCircle = '/family/circle';
   static const String familyView = '/family/view';
+  static const String deleteAccount = '/settings/delete';
+  static const String blockedMembers = '/settings/blocked';
   static const String contactDetails = '/profile/contact';
   static const String verifyPhone = '/profile/phone';
   static const String reviewQueue = '/admin/review';
@@ -83,6 +88,19 @@ class AppRoutes {
   static String journey(String id) => '/journey/$id';
   static String schedule(String id) => '/schedule/$id';
   static String photo(String id) => '/photo/$id';
+}
+
+/// The screens a notification may open. Anything else is ignored, so a
+/// malformed or forged link can never reach an arbitrary route or URL.
+String? safeDeepLink(Object? link) {
+  if (link is! String) return null;
+  const Set<String> fixed = <String>{
+    AppRoutes.homeDiscovery, AppRoutes.homeProposals, AppRoutes.homeMatches, AppRoutes.homeActivities,
+    AppRoutes.notifications, AppRoutes.reviewStatus, AppRoutes.verifyProfile, AppRoutes.editProfile,
+    AppRoutes.familyCircle, AppRoutes.familyView, AppRoutes.invite,
+  };
+  if (fixed.contains(link)) return link;
+  return RegExp(r'^/(chat|match)/[A-Za-z0-9_-]{1,128}$').hasMatch(link) ? link : null;
 }
 
 /// Where [location] should go for the member's current state, or null to stay.
@@ -258,11 +276,14 @@ GoRouter buildRouter(AppStore store) {
             ScheduleMeetingScreen(matchId: state.pathParameters['id']!),
       ),
       GoRoute(path: AppRoutes.filters, builder: (_, _) => const FiltersScreen()),
+      GoRoute(path: AppRoutes.search, builder: (_, _) => const SearchScreen()),
       GoRoute(
         path: AppRoutes.notifications,
         builder: (_, _) => const NotificationsScreen(),
       ),
       GoRoute(path: AppRoutes.settings, builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: AppRoutes.deleteAccount, builder: (_, _) => const DeleteAccountScreen()),
+      GoRoute(path: AppRoutes.blockedMembers, builder: (_, _) => const BlockedMembersScreen()),
       GoRoute(path: AppRoutes.about, builder: (_, _) => const AboutScreen()),
       GoRoute(
         path: AppRoutes.editProfile,
