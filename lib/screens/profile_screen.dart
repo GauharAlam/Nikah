@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/ward_profile.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
@@ -68,14 +69,22 @@ class ProfileScreen extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     Expanded(
-                      child: _QuickAction(
-                        icon: Icons.shield_outlined,
-                        title: 'Wali Hub',
-                        subtitle: store.guardian.isVerified
-                            ? 'Verified guardian'
-                            : 'Verification pending',
-                        onTap: () => context.push(AppRoutes.waliHub),
-                      ),
+                      child: AppConfig.guardianFeatures
+                          ? _QuickAction(
+                              icon: Icons.shield_outlined,
+                              title: 'Wali Hub',
+                              subtitle: store.guardian.isVerified
+                                  ? 'Verified guardian'
+                                  : 'Verification pending',
+                              onTap: () => context.push(AppRoutes.waliHub),
+                            )
+                          : _QuickAction(
+                              icon: Icons.phone_outlined,
+                              title: 'Contact details',
+                              subtitle: 'Number and sharing',
+                              onTap: () =>
+                                  context.push(AppRoutes.contactDetails),
+                            ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -150,9 +159,18 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
-                const SectionLabel('Guardian oversight'),
-                const SizedBox(height: 10),
-                AppCard(
+                if (store.isReviewer) ...<Widget>[
+                  SettingsTile(
+                    icon: Icons.fact_check_outlined,
+                    title: 'Review queue',
+                    subtitle: 'Reviewer tools',
+                    onTap: () => context.push(AppRoutes.reviewQueue),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (AppConfig.guardianFeatures) const SectionLabel('Guardian oversight'),
+                if (AppConfig.guardianFeatures) const SizedBox(height: 10),
+                if (AppConfig.guardianFeatures) AppCard(
                   child: Row(
                     children: <Widget>[
                       Container(
@@ -257,22 +275,6 @@ class ProfileScreen extends StatelessWidget {
                     label: 'Sign out',
                     onPressed: () => _confirmSignOut(context, store),
                   ),
-                ] else ...<Widget>[
-                  const InfoBanner(
-                    icon: Icons.info_outline_rounded,
-                    text: 'You are browsing as a guest. Create an account to '
-                        'keep your biodata and chats saved.',
-                    variant: InfoVariant.info,
-                  ),
-                  const SizedBox(height: 12),
-                  PrimaryButton(
-                    label: 'Create account',
-                    icon: Icons.person_add_alt_1_rounded,
-                    onPressed: () {
-                      store.enterOnboarding();
-                      context.push(AppRoutes.signIn);
-                    },
-                  ),
                 ],
               ],
             ),
@@ -295,7 +297,7 @@ class ProfileScreen extends StatelessWidget {
       builder: (BuildContext ctx) => AlertDialog(
         title: const Text('Sign out?'),
         content: const Text(
-          'Your biodata, chats and guardian settings stay saved on this '
+          'You can sign back in at any time. Your biodata stays saved on this '
           'device, ready when you return.',
         ),
         actions: <Widget>[
@@ -312,7 +314,6 @@ class ProfileScreen extends StatelessWidget {
     );
     if (confirmed != true) return;
     store.signOut();
-    if (context.mounted) context.go(AppRoutes.signIn);
   }
 }
 
@@ -401,7 +402,7 @@ class _ProfileHeader extends StatelessWidget {
                         color: AppTheme.gold.withValues(alpha: 0.45)),
                   ),
                   child: Text(
-                    'Awaiting Wali verification',
+                    'Verification pending',
                     style: AppTheme.ts(11, FontWeight.w700,
                         color: AppTheme.gold),
                   ),

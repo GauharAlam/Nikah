@@ -39,6 +39,10 @@ class MatchProfile {
   final String degreeLevel;
   final String professionField;
 
+  /// All photos, first is the card image. Empty for seeded demo profiles.
+  final List<String> photos;
+  final bool isVerified;
+
   const MatchProfile({
     required this.id,
     required this.name,
@@ -71,7 +75,68 @@ class MatchProfile {
     this.replyRate = 95,
     this.degreeLevel = '',
     this.professionField = '',
+    this.photos = const <String>[],
+    this.isVerified = false,
   });
+
+  /// Shown while a real profile is loading or after it became unavailable.
+  factory MatchProfile.unknown(String id) => MatchProfile(
+        id: id,
+        name: 'Member',
+        age: 0,
+        profession: '',
+        location: '',
+        imageUrl: '',
+        isWaliVerified: false,
+        faithTags: const <String>[],
+        marriageQuote: '',
+        sect: '',
+        height: '',
+        education: '',
+        relocation: '',
+        religiousPractices: const <String>[],
+        waliName: '',
+        waliRelation: '',
+        caste: '',
+      );
+
+  /// Maps a card returned by `fetchIntroductions` / `getProfiles`.
+  factory MatchProfile.fromCard(Map<String, dynamic> c) {
+    final List<String> photos =
+        (c['photos'] as List?)?.cast<String>() ?? const <String>[];
+    return MatchProfile(
+      id: c['id'] as String,
+      name: c['name'] as String? ?? 'Member',
+      age: (c['age'] as num?)?.toInt() ?? 0,
+      profession: c['profession'] as String? ?? '',
+      location: c['location'] as String? ?? '',
+      imageUrl: photos.isEmpty ? '' : photos.first,
+      photos: photos,
+      isWaliVerified: false,
+      isVerified: c['verified'] as bool? ?? false,
+      faithTags: const <String>[],
+      marriageQuote: c['aboutMe'] as String? ?? '',
+      aboutMe: c['aboutMe'] as String? ?? '',
+      sect: '',
+      height: c['height'] as String? ?? '',
+      education: c['education'] as String? ?? '',
+      relocation: '',
+      religiousPractices: const <String>[],
+      waliName: '',
+      waliRelation: '',
+      maritalStatus: c['maritalStatus'] as String? ?? '',
+      nationality: c['country'] as String? ?? '',
+      languages: '',
+      university: c['university'] as String? ?? '',
+      employer: c['employer'] as String? ?? '',
+      caste: c['caste'] as String? ?? '',
+      matchPercent: 0,
+      isSelfManaged: c['selfManaged'] as bool? ?? true,
+      isNew: c['isNew'] as bool? ?? false,
+      marriageReadiness: c['marriageReadiness'] as String? ?? '',
+      replyRate: 0,
+    );
+  }
 
   String get firstName => name.split(' ').first;
 

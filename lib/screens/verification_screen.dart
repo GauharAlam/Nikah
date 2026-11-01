@@ -1,8 +1,13 @@
 // Verification screen — Barkat-style centered trust header with the gold
 // "Barkat Verified" pill, benefits list, per-document cards and FAQs.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../config/app_config.dart';
+import '../data/backend.dart';
 import '../models/verification_doc.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -12,6 +17,34 @@ import '../widgets/app_snacks.dart';
 /// Full-screen verification checklist (route: /profile/verify).
 class VerificationScreen extends StatelessWidget {
   const VerificationScreen({super.key});
+
+  Future<void> _upload(
+    BuildContext context,
+    AppStore store,
+    VerificationDoc doc,
+  ) async {
+    final List<XFile> files = await ImagePicker().pickMultiImage(limit: 2);
+    if (files.isEmpty || !context.mounted) return;
+    showAppSnack(context, 'Uploading ${doc.title}…', icon: Icons.upload_rounded);
+    try {
+      await store.uploadVerificationDoc(
+        doc.id,
+        files.take(2).map((XFile f) => f.path).toList(),
+      );
+      if (context.mounted) {
+        showSuccessSnack(
+          context,
+          AppConfig.isDemo
+              ? 'Demo build: nothing was uploaded.'
+              : '${doc.title} uploaded. Our team will review it.',
+        );
+      }
+    } on BackendException catch (e) {
+      if (context.mounted) showAppSnack(context, e.message);
+    } on Object {
+      if (context.mounted) showAppSnack(context, 'Upload failed. Please try again.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,12 +164,9 @@ class VerificationScreen extends StatelessWidget {
             _DocCard(
               doc: doc,
               onTap: () {
-                if (doc.status == VerificationDocStatus.missing) {
-                  store.submitVerificationDoc(doc.id);
-                  showSuccessSnack(
-                    context,
-                    '${doc.title} uploaded — our team will review it.',
-                  );
+                if (doc.status == VerificationDocStatus.missing ||
+                    doc.status == VerificationDocStatus.rejected) {
+                  unawaited(_upload(context, store, doc));
                 } else if (doc.status == VerificationDocStatus.pending) {
                   showAppSnack(
                     context,
@@ -328,7 +358,7 @@ class _DocCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    doc.status.detail,
+                    doc.rejectionReason.isEmpty ? doc.status.detail : doc.rejectionReason,
                     style: AppTheme.ts(11, FontWeight.w700, color: fg),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

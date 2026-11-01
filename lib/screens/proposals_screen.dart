@@ -49,7 +49,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
         children: <Widget>[
           _QuotaBanner(
             used: store.proposalsSentToday,
-            quota: AppStore.proposalQuota,
+            quota: store.dailyProposalLimit,
             credits: store.contactCredits,
           ),
           const SizedBox(height: 14),
@@ -76,18 +76,18 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                 icon: Icons.favorite_outline_rounded,
                 title: 'No proposals yet',
                 body: 'Tap the green heart on a profile to send your first '
-                    'proposal. You get five every day.',
+                    'proposal.',
               )
             else
               for (final Proposal p in sent) ...<Widget>[
                 _SentProposalCard(
-                  profile: MatchProfile.byId(p.profileId),
+                  profile: store.profileById(p.profileId),
                   proposal: p,
                 ),
                 const SizedBox(height: 10),
               ],
           if (_tab == _ProposalTab.received)
-            if (received.isEmpty)
+            if (received.isEmpty && store.incomingContactRequests.isEmpty)
               const EmptyState(
                 icon: Icons.mark_email_read_outlined,
                 title: 'No proposals received',
@@ -97,11 +97,33 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
             else
               for (final Proposal p in received) ...<Widget>[
                 _ReceivedProposalCard(
-                  profile: MatchProfile.byId(p.profileId),
+                  profile: store.profileById(p.profileId),
                   proposal: p,
                 ),
                 const SizedBox(height: 10),
               ],
+          if (_tab == _ProposalTab.received)
+            for (final MatchProfile p in store.incomingContactRequests)
+              ListTile(
+                key: Key('contact_request_${p.id}'),
+                title: Text(p.name),
+                subtitle: const Text('Requested your contact details'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: 'Decline',
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => store.respondContact(p.id, accept: false),
+                    ),
+                    IconButton(
+                      tooltip: 'Share my contact',
+                      icon: const Icon(Icons.check_rounded),
+                      onPressed: () => store.respondContact(p.id, accept: true),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );

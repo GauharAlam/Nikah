@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/backend.dart';
+import '../data/option_lists.dart';
 import '../models/chat_message.dart';
 import '../models/filters.dart';
 import '../models/meeting.dart';
@@ -15,6 +17,8 @@ import '../models/verification_doc.dart';
 import '../models/ward_profile.dart';
 import '../models/wali.dart';
 
+part 'remote_app_store.dart';
+
 enum AuthStage { guest, onboarding, active }
 
 /// Single source of truth for session, onboarding draft, matches, chats,
@@ -22,8 +26,115 @@ enum AuthStage { guest, onboarding, active }
 /// All sections are persisted through [SharedPreferences].
 class AppStore extends ChangeNotifier {
   AppStore(this._prefs) {
-    _load();
+    if (usesLocalState) _load();
   }
+
+  /// Demo builds keep everything on the device. [RemoteAppStore] does not.
+  bool get usesLocalState => true;
+
+  /// True until the first auth state is known.
+  bool get isRestoring => false;
+
+  /// Failures to show the member. Screens never need to catch these.
+  final ValueNotifier<String?> errors = ValueNotifier<String?>(null);
+
+  // ─── Directory ────────────────────────────────────────────────────────────
+  List<MatchProfile> get directory => MatchProfile.seeds;
+  MatchProfile profileById(String id) => MatchProfile.byId(id);
+
+  // ─── Sign-in ──────────────────────────────────────────────────────────────
+  bool get isSignedIn => _stage != AuthStage.guest;
+  bool get isReviewer => false;
+  ReviewStage get reviewStage =>
+      _onboarded ? ReviewStage.approved : ReviewStage.draft;
+  String get rejectionReason => '';
+
+  /// Demo builds accept only this code. Real codes come from Firebase.
+  static const String demoOtp = '123456';
+
+  Future<String> sendOtp(String e164Phone) async => e164Phone;
+
+  Future<void> confirmOtp(String verificationId, String code) async {
+    if (code != demoOtp) {
+      throw const BackendException('That code is not correct.');
+    }
+    _startDemoSession();
+    updateProfile((WardProfile p) => p.copyWith(
+          phone: verificationId.replaceFirst(RegExp(r'^\+\d{1,2}'), ''),
+        ));
+  }
+
+  Future<void> signInWithGoogle() async => _startDemoSession();
+
+  void _startDemoSession() {
+    if (_onboarded) {
+      _stage = AuthStage.active;
+      unawaited(_prefs.setString(_kStage, 'active'));
+      notifyListeners();
+    } else {
+      enterOnboarding();
+    }
+  }
+
+  // ─── Pledge ───────────────────────────────────────────────────────────────
+  bool get pledgeAccepted => _prefs.getBool(_kPledge) ?? false;
+
+  void acceptPledge() {
+    unawaited(_prefs.setBool(_kPledge, true));
+    notifyListeners();
+  }
+
+  // ─── Photos and profile submission ────────────────────────────────────────
+  /// Returns what to store in the draft for a picked photo.
+  Future<String> uploadPhoto(String localPath) async => localPath;
+
+  /// Display location for a draft photo: a URL, or a local path in demo builds.
+  Future<String> photoSource(String stored) async => stored;
+
+  Future<void> removePhoto(String stored) async {
+    updateProfile((WardProfile p) => p.copyWith(
+          photos: p.photos.where((String x) => x != stored).toList(),
+        ));
+  }
+
+  /// Saves the draft after each onboarding step.
+  Future<void> saveDraft(WardProfile next) async {
+    updateProfile((_) => next);
+  }
+
+  /// Demo builds have no reviewer, so a submission is approved at once.
+  Future<void> submitProfile() async {
+    submitOnboarding();
+  }
+
+  // ─── Discovery paging ─────────────────────────────────────────────────────
+  bool get isLoadingIntroductions => false;
+  String? get introductionsError => null;
+  Future<void> refreshIntroductions() async {}
+  Future<void> loadMoreIntroductions() async {}
+
+  // ─── Contact ──────────────────────────────────────────────────────────────
+  List<MatchProfile> get incomingContactRequests => const <MatchProfile>[];
+  Future<void> respondContact(String matchId, {required bool accept}) async {}
+  String sharedPhone(String matchId) => '';
+
+  // ─── Limits ───────────────────────────────────────────────────────────────
+  int get dailyProposalLimit => proposalQuota;
+  int get monthlyCredits => monthlyContactCredits;
+  int get decisionsPerDay => 10;
+  int get pendingLimit => 15;
+  bool get isPremium => false;
+  DateTime? get premiumUntil => null;
+
+  /// Grants nothing locally: entitlements come from the server only.
+  Future<void> validatePurchase({
+    required String productId,
+    required String platform,
+    required String token,
+    String? packageName,
+  }) async {}
+
+  Backend? get backend => null;
 
   final SharedPreferences _prefs;
   final List<Timer> _timers = <Timer>[];
@@ -62,6 +173,7 @@ class AppStore extends ChangeNotifier {
   static const String _kDocs = 'bk_docs';
   static const String _kSharedContacts = 'bk_shared_contacts';
   static const String _kUnmatched = 'bk_unmatched';
+  static const String _kPledge = 'bk_pledge';
   static const String _kBlocked = 'bk_blocked';
   static const String _kReports = 'bk_reports';
 
@@ -79,51 +191,6 @@ class AppStore extends ChangeNotifier {
   void enterOnboarding() {
     _stage = AuthStage.onboarding;
     unawaited(_prefs.setString(_kStage, 'onboarding'));
-    notifyListeners();
-  }
-
-  /// Sign in using the demo account, optionally overriding credentials.
-  ///
-  /// NOTE: this performs **no authentication**. It accepts any input and opens
-  /// a local session against seeded demo data. Real credential verification
-  /// arrives with the Firebase `AuthRepository` (see
-  /// `docs/IMPLEMENTATION_PLAN.md` Stage 3); this method must not survive into
-  /// a release build.
-  void signIn({String? email, String? phone}) {
-    WardProfile? next = _profile;
-    if (next == null || next.displayName.isEmpty) {
-      next = WardProfile.demoWard;
-    }
-    if (email != null && email.trim().isNotEmpty) {
-      next = next.copyWith(email: email.trim());
-    }
-    if (phone != null && phone.trim().isNotEmpty) {
-      next = next.copyWith(phone: phone.trim());
-    }
-    if (!_onboarded) {
-      // Demo sign-in marks the guided steps complete so /home is reachable.
-      _steps = <int, bool>{..._steps, 1: true, 2: true, 3: true, 4: true};
-      _onboarded = true;
-      unawaited(_prefs.setString(_kSteps, _serializeSteps(_steps)));
-      unawaited(_prefs.setBool(_kOnboarded, true));
-    }
-    _profile = next;
-    _stage = AuthStage.active;
-    unawaited(_prefs.setString(_kProfile, WardProfile.encode(next)));
-    unawaited(_prefs.setString(_kStage, 'active'));
-    _addLog(ActivityLogEntry(
-      id: _nextId('log'),
-      kind: ActivityKind.verification,
-      title: 'Signed in',
-      detail: 'Session opened.',
-      createdAt: DateTime.now(),
-    ));
-    notifyListeners();
-  }
-
-  void signInAsGuest() {
-    _stage = AuthStage.guest;
-    unawaited(_prefs.setString(_kStage, 'guest'));
     notifyListeners();
   }
 
@@ -168,44 +235,21 @@ class AppStore extends ChangeNotifier {
   bool get hasProfile => _profile != null;
 
   void updateProfile(WardProfile Function(WardProfile) mutate) {
-    final WardProfile base = _profile ?? WardProfile.demoWard;
+    final WardProfile base = _profile ?? const WardProfile();
     final WardProfile next = mutate(base).copyWith(updatedAt: DateTime.now());
     _profile = next;
     unawaited(_prefs.setString(_kProfile, WardProfile.encode(next)));
     notifyListeners();
   }
 
-  /// Publish the reviewed biodata and open the active account.
+  /// Opens the account in demo builds, where no reviewer exists.
   void submitOnboarding() {
-    _profile = (_profile ?? WardProfile.demoWard)
-        .copyWith(waliVerified: true, updatedAt: DateTime.now());
+    _profile = (_profile ?? const WardProfile()).copyWith(updatedAt: DateTime.now());
     _onboarded = true;
     _stage = AuthStage.active;
-    _steps = <int, bool>{..._steps, 1: true, 2: true, 3: true, 4: true};
     unawaited(_prefs.setString(_kProfile, WardProfile.encode(_profile!)));
     unawaited(_prefs.setBool(_kOnboarded, true));
-    unawaited(_prefs.setString(_kSteps, _serializeSteps(_steps)));
     unawaited(_prefs.setString(_kStage, 'active'));
-    _intros = <String>{..._intros, MatchProfile.zayd.id};
-    unawaited(_prefs.setString(_kIntros, _intros.toList(growable: false).join(',')));
-    _addNotification(NotificationItem(
-      id: _nextId('ntf'),
-      type: NotificationType.wali,
-      title: 'Profile verified by your Wali',
-      body: '$_demoGuardianName approved your biodata. Chaperoned '
-          'introductions are now active.',
-      createdAt: DateTime.now(),
-      deepLink: '/wali/hub',
-    ));
-    _addNotification(NotificationItem(
-      id: _nextId('ntf'),
-      type: NotificationType.match,
-      title: 'Introduction requested',
-      body: 'Interest sent to ${MatchProfile.zayd.waliName} for a '
-          'chaperoned Ta\'aruf with ${MatchProfile.zayd.firstName}.',
-      createdAt: DateTime.now(),
-      deepLink: '/home/matches',
-    ));
     notifyListeners();
   }
 
@@ -221,7 +265,7 @@ class AppStore extends ChangeNotifier {
   MatchFilters get filters => _filters;
 
   /// Cards still visible on the discovery deck (connected people leave it).
-  List<MatchProfile> get discoveredProfiles => MatchProfile.seeds
+  List<MatchProfile> get discoveredProfiles => directory
       .where((p) => !_approved.contains(p.id))
       .where((p) => !_skipped.contains(p.id))
       .where((p) => !_blocked.contains(p.id))
@@ -229,10 +273,10 @@ class AppStore extends ChangeNotifier {
       .toList();
 
   List<MatchProfile> get introRequests =>
-      MatchProfile.seeds.where((p) => _intros.contains(p.id)).toList();
+      directory.where((p) => _intros.contains(p.id)).toList();
 
   List<MatchProfile> get connectedMatches =>
-      MatchProfile.seeds.where((p) => _approved.contains(p.id)).toList();
+      directory.where((p) => _approved.contains(p.id)).toList();
 
   void toggleLike(String matchId) {
     if (_likes.contains(matchId)) {
@@ -246,7 +290,7 @@ class AppStore extends ChangeNotifier {
 
   void requestIntro(String matchId) {
     if (_intros.contains(matchId)) return;
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _intros = <String>{..._intros, matchId};
     unawaited(_prefs.setString(_kIntros, _intros.toList(growable: false).join(',')));
     _addLog(ActivityLogEntry(
@@ -276,7 +320,7 @@ class AppStore extends ChangeNotifier {
     _approved = <String>{..._approved, matchId};
     unawaited(_prefs.setString(
         _kApproved, _approved.toList(growable: false).join(',')));
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _addNotification(NotificationItem(
       id: _nextId('ntf'),
       type: NotificationType.milestone,
@@ -324,7 +368,7 @@ class AppStore extends ChangeNotifier {
   int get proposalsSentToday =>
       _proposalDay == _todayKey ? _proposalCount : 0;
   int get proposalsLeft {
-    final int left = proposalQuota - proposalsSentToday;
+    final int left = dailyProposalLimit - proposalsSentToday;
     return left < 0 ? 0 : left;
   }
 
@@ -359,7 +403,7 @@ class AppStore extends ChangeNotifier {
   bool isContactShared(String matchId) => _sharedContacts.contains(matchId);
 
   /// «Chat Matches» deck — approved for chaperoned chat, contacts private.
-  List<MatchProfile> get chatMatches => MatchProfile.seeds
+  List<MatchProfile> get chatMatches => directory
       .where((p) => _approved.contains(p.id))
       .where((p) => !_sharedContacts.contains(p.id))
       .where((p) => !_unmatched.contains(p.id))
@@ -367,7 +411,7 @@ class AppStore extends ChangeNotifier {
       .toList();
 
   /// «Shared Contacts» deck — contact details exchanged.
-  List<MatchProfile> get sharedContactProfiles => MatchProfile.seeds
+  List<MatchProfile> get sharedContactProfiles => directory
       .where((p) => _sharedContacts.contains(p.id))
       .where((p) => !_unmatched.contains(p.id))
       .where((p) => !_blocked.contains(p.id))
@@ -389,13 +433,13 @@ class AppStore extends ChangeNotifier {
         ..sort((Proposal a, Proposal b) => b.createdAt.compareTo(a.createdAt)));
 
   List<MatchProfile> get proposalsSentList => sentProposals
-      .map((Proposal p) => MatchProfile.byId(p.profileId))
+      .map((Proposal p) => profileById(p.profileId))
       .toList();
 
   /// Profiles whose proposal is waiting on this member — what the Proposals
   /// «Received» tab lists.
   List<MatchProfile> get incomingProposalProfiles => pendingIncomingProposals
-      .map((Proposal p) => MatchProfile.byId(p.profileId))
+      .map((Proposal p) => profileById(p.profileId))
       .toList();
 
   int get pendingRequestCount => pendingIncomingProposals.length;
@@ -446,7 +490,7 @@ class AppStore extends ChangeNotifier {
     if (_unmatched.contains(matchId)) return;
     _unmatched = <String>{..._unmatched, matchId};
     _saveBarkatState();
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
       kind: ActivityKind.intro,
@@ -502,7 +546,7 @@ class AppStore extends ChangeNotifier {
   /// (see [acceptProposal]).
   bool sendProposal(String matchId) {
     if (hasProposed(matchId)) return true;
-    if (proposalsSentToday >= proposalQuota) return false;
+    if (proposalsLeft == 0) return false;
     if (_proposalDay != _todayKey) {
       _proposalDay = _todayKey;
       _proposalCount = 0;
@@ -523,7 +567,7 @@ class AppStore extends ChangeNotifier {
     ];
     _skipped = <String>{..._skipped..remove(matchId)};
     _saveBarkatState();
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
       kind: ActivityKind.intro,
@@ -554,7 +598,7 @@ class AppStore extends ChangeNotifier {
     _contactCredits--;
     _contactRequestsOut = <String>{..._contactRequestsOut, matchId};
     _saveBarkatState();
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
       kind: ActivityKind.intro,
@@ -615,7 +659,7 @@ class AppStore extends ChangeNotifier {
     );
     if (updated == null) return false;
 
-    final MatchProfile match = MatchProfile.byId(matchId);
+    final MatchProfile match = profileById(matchId);
     _openMatch(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
@@ -641,7 +685,7 @@ class AppStore extends ChangeNotifier {
       id: _nextId('log'),
       kind: ActivityKind.intro,
       title: 'Proposal declined',
-      detail: '${MatchProfile.byId(matchId).firstName}\'s proposal was '
+      detail: '${profileById(matchId).firstName}\'s proposal was '
           'declined. No match was created.',
       createdAt: DateTime.now(),
     ));
@@ -663,13 +707,20 @@ class AppStore extends ChangeNotifier {
       id: _nextId('log'),
       kind: ActivityKind.intro,
       title: 'Proposal withdrawn',
-      detail: 'Your proposal to ${MatchProfile.byId(matchId).firstName} was '
+      detail: 'Your proposal to ${profileById(matchId).firstName} was '
           'withdrawn.',
       createdAt: DateTime.now(),
     ));
     notifyListeners();
     return true;
   }
+
+  /// In demo builds the file goes nowhere, so the screen says so.
+  Future<void> uploadVerificationDoc(
+    String docId,
+    List<String> localPaths,
+  ) async =>
+      submitVerificationDoc(docId);
 
   /// Demo upload — moves a document from missing to under review.
   void submitVerificationDoc(String docId) {
@@ -731,8 +782,8 @@ class AppStore extends ChangeNotifier {
   Map<String, DateTime> _readAt = <String, DateTime>{};
 
   List<String> get chatThreadIds {
-    final Iterable<String> visible =
-        _chats.keys.where((String id) => !_blocked.contains(id));
+    final Iterable<String> visible = _chats.keys.where((String id) =>
+        !_blocked.contains(id) && _chats[id]!.isNotEmpty);
     final Map<String, DateTime> lastByThread = <String, DateTime>{
       for (final String id in visible)
         id: _chats[id]!.last.createdAt,
@@ -1424,7 +1475,7 @@ class AppStore extends ChangeNotifier {
       _kLogs, _kMeetings, _kNotifications, _kSettings, _kSkipped,
       _kProposals, _kProposalDay, _kProposalCount, _kContactCredits,
       _kContactRequests, _kIncoming, _kDocs, _kSharedContacts, _kUnmatched,
-      _kProposalRecords, _kBlocked, _kReports,
+      _kProposalRecords, _kBlocked, _kReports, _kPledge,
     ]) {
       unawaited(_prefs.remove(key));
     }

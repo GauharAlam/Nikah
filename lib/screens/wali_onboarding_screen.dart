@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../app_router.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -154,13 +153,12 @@ class _WaliOnboardingStepScreenState extends State<WaliOnboardingStepScreen> {
     );
     final AppStore store = context.read<AppStore>();
     store.updateGuardian(guardian);
-    store.markStepDone(5);
     if (widget.isStandalone) {
       showSuccessSnack(context, 'Wali details updated. Invitation re-sent.');
       context.pop();
     } else {
       showSuccessSnack(context, 'Wali appointed. Onwards to Biodata!');
-      context.push(AppRoutes.onboardingBiodata);
+      context.pop();
     }
   }
 
@@ -197,8 +195,7 @@ class _WaliOnboardingStepScreenState extends State<WaliOnboardingStepScreen> {
         ),
       );
     }
-    return OnboardingShell(
-      step: 5,
+    return ProfileSectionShell(
       title: 'Appoint Your Wali',
       subtitle:
           'Every sincere search is supervised — appoint the guardian of '

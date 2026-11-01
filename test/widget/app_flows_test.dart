@@ -1,122 +1,171 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
 import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/models/verification_doc.dart';
+import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/widgets/app_switch.dart';
 
 import '../helpers/test_app.dart';
 
+/// Taps a row in the open bottom sheet, scrolling that sheet to reach it.
+Future<void> sheetTap(WidgetTester tester, Finder row) async {
+  await tester.scrollUntilVisible(row, 120, scrollable: find.byType(Scrollable).last);
+  await tester.pumpAndSettle();
+  await tester.tap(row);
+  await tester.pumpAndSettle();
+}
+
+class _FakePicker extends ImagePickerPlatform {
+  _FakePicker(this.path);
+  final String path;
+
+  @override
+  Future<List<XFile>> getMultiImageWithOptions({
+    MultiImagePickerOptions options = const MultiImagePickerOptions(),
+  }) async =>
+      <XFile>[XFile(path)];
+}
+
 void main() {
   useFakeImageTransport();
 
-  testWidgets('boots to landing and explores as guest', (
+  testWidgets('a wrong code is refused, then a new member completes all steps', (
     WidgetTester tester,
   ) async {
+    final Directory dir = await tester.runAsync(
+      () => Directory.systemTemp.createTemp('photo'),
+    ) as Directory;
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final String photo = '${dir.path}/p.png';
+    await tester.runAsync(() => File(photo).writeAsBytes(<int>[0x89, 0x50]));
+    final ImagePickerPlatform realPicker = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = _FakePicker(photo);
+    addTearDown(() => ImagePickerPlatform.instance = realPicker);
+
     final (AppStore store, _) = await pumpApp(tester);
 
-    expect(find.text('Barkat Nikah'), findsOneWidget);
-    expect(
-      find.textContaining('Where educated', findRichText: true),
-      findsOneWidget,
-    );
+    expect(find.text('Continue with Phone'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('continue_phone')));
+    await tester.enterText(find.byKey(const Key('phone_input')), '9876543210');
+    await tester.pump();
+    await tap(tester, find.byKey(const Key('auth_submit')));
 
-    await tap(tester, find.text('Explore Profiles as Guest'));
+    await tester.enterText(find.byKey(const Key('otp_input')), '000000');
+    await tester.pump();
+    await tap(tester, find.byKey(const Key('auth_submit')));
+    expect(find.byKey(const Key('auth_error')), findsOneWidget);
+    expect(store.isSignedIn, isFalse);
 
-    expect(find.text('Discover'), findsOneWidget);
-    expect(find.text('Proposals'), findsOneWidget);
-    expect(find.text('Matches'), findsOneWidget);
-    expect(find.text('Activities'), findsOneWidget);
-    expect(find.text('Premium'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
-    expect(store.stage, AuthStage.guest);
-    await drain(tester);
-  });
+    await tester.enterText(find.byKey(const Key('otp_input')), AppStore.demoOtp);
+    await tester.pump();
+    await tap(tester, find.byKey(const Key('auth_submit')));
+    expect(store.isSignedIn, isTrue);
 
-  testWidgets('signs in from landing into the home shell', (
-    WidgetTester tester,
-  ) async {
-    final (AppStore store, _) = await pumpApp(tester);
+    await tap(tester, find.byKey(const Key('start_profile')));
+    final Finder next = find.byKey(const Key('onboarding_next'));
 
-    await tap(tester, find.text('Already a member? Sign In'));
-    expect(find.text('Sign In Securely'), findsOneWidget);
+    // 1 — who
+    await tap(tester, find.byKey(const Key('who_self')));
+    await tap(tester, next);
 
-    await tap(tester, find.text('Sign In Securely'));
+    // 2 — basics: empty fields are refused.
+    await tap(tester, next);
+    expect(find.text('Let\'s start with the basics'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('full_name')), 'Sara Khan');
+    await tap(tester, find.byKey(const Key('pick_gender')));
+    await tap(tester, find.text('Female'));
+    await tap(tester, find.byKey(const Key('pick_marital')));
+    await tap(tester, find.text('Never married'));
+    await tap(tester, find.byKey(const Key('pick_readiness')));
+    await tap(tester, find.text('Ready within 1 year'));
+    await tap(tester, next);
 
-    expect(find.text('Discover'), findsOneWidget);
-    expect(store.isLoggedIn, isTrue);
-    await drain(tester);
-  });
+    // 3 — cities
+    await tap(tester, find.byKey(const Key('pick_home')));
+    await tap(tester, find.text('Select country'));
+    await tap(tester, find.text('India'));
+    await tap(tester, find.text('Select state or region'));
+    await tap(tester, find.text('Delhi').last);
+    await tap(tester, find.text('Select city'));
+    await tap(tester, find.text('Rohini'));
+    await tap(tester, find.widgetWithText(FilledButton, 'Done'));
+    await tap(tester, next);
 
-  testWidgets('completes onboarding through to the discovery deck', (
-    WidgetTester tester,
-  ) async {
-    final (AppStore store, _) = await pumpApp(tester);
-
-    await tap(tester, find.text('Create My Account'));
-
-    // Step 1 — account details and honor pledge.
-    await tap(
-      tester,
-      find.text('My intention is a sincere halal Nikah for the sake of Allah.'),
-    );
-    await tap(
-      tester,
-      find.text('My Wali (guardian) is aware of and consents to this search.'),
-    );
-    await tap(
-      tester,
-      find.text('My biodata is truthful, modest and written with adab.'),
-    );
-
-    // Pick the date of birth through the date picker.
-    final Finder dobField = find.byWidgetPredicate(
-      (Widget w) =>
-          w is TextField &&
-          w.decoration?.hintText == 'Select date of birth',
-    );
-    await tap(tester, dobField);
-    await tester.pumpAndSettle();
+    // 4 — personal
+    await tap(tester, find.byKey(const Key('pick_dob')));
     await tap(tester, find.text('OK'));
+    await tap(tester, find.byKey(const Key('pick_caste')));
+    await sheetTap(tester, find.text('Ansari'));
+    await tap(tester, find.byKey(const Key('pick_height')));
+    await sheetTap(tester, find.text('5\'4"'));
+    await tester.enterText(find.byKey(const Key('contact_number')), '9876543210');
+    await tap(tester, next);
 
-    await tap(tester, find.text('Save & Continue'));
+    // 5 — education: non-graduates cannot continue.
+    await tap(tester, find.byKey(const Key('pick_alma')));
+    await tap(tester, find.text('Aligarh Muslim University'));
+    await tap(tester, find.byKey(const Key('alma_done')));
+    await tap(tester, find.byKey(const Key('pick_qualification')));
+    await sheetTap(tester, find.text('Diploma'));
+    await tap(tester, next);
+    expect(find.text('Education & profession'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('pick_qualification')));
+    await sheetTap(tester, find.text('MBA'));
+    await tap(tester, find.byKey(const Key('pick_profession')));
+    await sheetTap(tester, find.text('Doctor'));
+    await tap(tester, next);
 
-    // Step 2 — education & career (demo defaults prefilled).
-    await tap(tester, find.text('Save & Continue'));
+    // 6 — photos
+    await tap(tester, next);
+    expect(store.profile!.photos, <String>[photo]);
+    await tap(tester, next);
 
-    // Step 3 — deen & practice.
-    await tap(tester, find.text('Save & Continue'));
+    // 7 — review
+    expect(find.text('Review and submit'), findsOneWidget);
+    await tap(tester, next);
 
-    // Step 4 — photos & verification: upload one proof document.
-    await tap(tester, find.byKey(const Key('upload_doc_photo-proof')));
-    expect(
-      store.verificationDocs
-          .firstWhere((VerificationDoc d) => d.id == 'photo-proof')
-          .status,
-      VerificationDocStatus.pending,
-    );
-    await tap(tester, find.text('Save & Continue'));
-
-    // Step 5 — wali details (prefilled for the demo persona).
-    await tap(tester, find.text('Save & Continue'));
-
-    // Step 6 — biodata builder.
-    await tap(tester, find.text('Review My Biodata'));
-
-    // Review — submit for guardian verification.
-    await tap(tester, find.byType(Checkbox));
-    await tap(tester, find.text('Submit for Guardian Verification'));
-
-    await tester.pump(const Duration(milliseconds: 1200));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Discover'), findsOneWidget);
     expect(store.isLoggedIn, isTrue);
+    expect(find.text('Your profile is approved!'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('start_bismillah')));
+    await tap(tester, find.byKey(const Key('how_to_got_it')));
+    expect(find.text('Discover'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('an interrupted member resumes at their saved step', (
+    WidgetTester tester,
+  ) async {
+    final (AppStore store, GoRouter router) = await pumpApp(
+      tester,
+      prefs: <String, Object>{
+        'bk_stage': 'onboarding',
+        'bk_profile': WardProfile.encode(
+          const WardProfile(onboardingStep: 4, displayName: 'Sara'),
+        ),
+      },
+    );
+    expect(store.isSignedIn, isTrue);
+    router.go(AppRoutes.onboarding);
+    await tester.pumpAndSettle();
+    expect(find.text('Personal details'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('home routes are closed to a signed-out visitor', (
+    WidgetTester tester,
+  ) async {
+    final (_, GoRouter router) = await pumpApp(tester);
+    router.go(AppRoutes.homeDiscovery);
+    await tester.pumpAndSettle();
+    expect(find.text('Continue with Phone'), findsOneWidget);
     await drain(tester);
   });
 
@@ -297,7 +346,8 @@ void main() {
   testWidgets('applies the wali-verified filter from the filters screen', (
     WidgetTester tester,
   ) async {
-    final (AppStore store, GoRouter router) = await pumpApp(tester);
+    final (AppStore store, GoRouter router) =
+        await pumpApp(tester, prefs: activePrefs);
 
     router.go(AppRoutes.filters);
     await tester.pumpAndSettle();

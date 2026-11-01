@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -181,13 +182,12 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final MatchProfile match = MatchProfile.byId(widget.matchId);
+    final MatchProfile match = store.profileById(widget.matchId);
     final bool shared = store.isContactShared(match.id);
     final bool approved = store.isApproved(match.id);
     final bool requested = store.contactRequested(match.id);
     final bool proposed = store.hasProposed(match.id);
     final bool incoming = store.incomingProposal(match.id)?.isPending ?? false;
-    final int activeDays = match.id.hashCode.abs() % 4 + 2;
 
     return Scaffold(
       backgroundColor: AppTheme.canvas,
@@ -214,7 +214,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             tooltip: 'Share profile',
             onPressed: () => showAppSnack(
               context,
-              'Sharing unlocks after both families approve the match.',
+              'Sharing is not available yet.',
               icon: Icons.ios_share_rounded,
             ),
             icon: const Icon(Icons.ios_share_rounded, size: 21),
@@ -232,7 +232,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         padding: EdgeInsets.zero,
         children: <Widget>[
           _buildCarousel(match),
-          _buildHeader(match, activeDays),
+          _buildHeader(match),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 26),
             child: Column(
@@ -265,7 +265,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                 ],
                 const SectionHeader(
                   'Biodata Snapshot',
-                  subtitle: 'Key demographics reviewed by the Wali',
+                  subtitle: 'Key details',
                 ),
                 const SizedBox(height: 12),
                 _demGrid(<(String, String)>[
@@ -279,15 +279,17 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   ('Sect', match.sect),
                 ]),
                 const SizedBox(height: 22),
-                const SectionLabel('Faith Practice'),
-                const SizedBox(height: 10),
-                _PracticeCard(practices: match.religiousPractices),
-                const SizedBox(height: 22),
+                if (match.religiousPractices.isNotEmpty) ...<Widget>[
+                  const SectionLabel('Faith Practice'),
+                  const SizedBox(height: 10),
+                  _PracticeCard(practices: match.religiousPractices),
+                  const SizedBox(height: 22),
+                ],
                 const SectionHeader('About Me'),
                 const SizedBox(height: 8),
                 Text(match.aboutMe, style: AppTheme.bodyLarge),
                 const SizedBox(height: 22),
-                const SectionHeader('Languages & Interests'),
+                if (match.languages.isNotEmpty) const SectionHeader('Languages & Interests'),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -304,7 +306,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 22),
-                _GuardianCard(match: match),
+                if (AppConfig.guardianFeatures) _GuardianCard(match: match),
                 const SizedBox(height: 14),
                 InfoBanner(
                   icon: shared
@@ -312,12 +314,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                       : Icons.privacy_tip_outlined,
                   variant: InfoVariant.info,
                   text: shared
-                      ? 'Contact details are visible to both families. '
-                            'Please involve your Wali in the first call '
-                            'and keep messages respectful.'
-                      : 'Photo privacy — profiles stay modest until '
-                            'contact approval, and all introductions '
-                            'route through the Wali.',
+                      ? 'Contact details are visible to both of you. '
+                            'Please involve your family and keep messages '
+                            'respectful.'
+                      : 'Contact details stay private until both sides '
+                            'agree.',
                 ),
               ],
             ),
@@ -400,7 +401,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     );
   }
 
-  Widget _buildHeader(MatchProfile match, int activeDays) {
+  Widget _buildHeader(MatchProfile match) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 2, 18, 0),
       child: Column(
@@ -453,24 +454,6 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             ],
           ),
           const SizedBox(height: 7),
-          Row(
-            children: <Widget>[
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppTheme.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Active ${activeDays}d ago',
-                style: _t(12, FontWeight.w600, AppTheme.slate500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
           Row(
             children: <Widget>[
               const Icon(
@@ -569,7 +552,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         _StepButton(
           key: const Key('detail_chat'),
           title: 'Send Message',
-          subtitle: 'Chaperoned chat with ${match.firstName}',
+          subtitle: 'Chat with ${match.firstName}',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
         ),
@@ -616,8 +599,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Both families will be notified once your request is approved. '
-          'Your Wali can follow up from the Wali hub.',
+          'You will be notified when your request is answered.',
           style: AppTheme.bodySmall,
         ),
       ];
@@ -646,13 +628,13 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         _StepButton(
           key: const Key('proposal_sent_pill'),
           title: 'Proposal Sent',
-          subtitle: 'Awaiting ${match.waliName}\'s response',
+          subtitle: 'Awaiting a reply',
           icon: Icons.check_circle_rounded,
           muted: true,
           chevron: false,
           onTap: () => showAppSnack(
             context,
-            'Your proposal is already with their family.',
+            'Your proposal has been sent.',
             icon: Icons.favorite_rounded,
           ),
         ),
@@ -670,7 +652,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       _StepButton(
         key: const Key('detail_intro'),
         title: 'Send Proposal',
-        subtitle: 'Ask ${match.waliName} for an introduction',
+        subtitle: 'Share your interest',
         icon: Icons.favorite_rounded,
         onTap: () => _sendProposal(match),
       ),
@@ -1039,7 +1021,7 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int n = match.id.hashCode.abs() % 90 + 10;
+    final String phone = context.watch<AppStore>().sharedPhone(match.id);
     return AppCard(
       key: const Key('contact_revealed_card'),
       backgroundColor: AppTheme.warningBg,
@@ -1067,7 +1049,7 @@ class _ContactCard extends StatelessWidget {
           _ContactRow(
             icon: Icons.phone_outlined,
             label: 'Phone',
-            value: '+44 7700 900$n',
+            value: phone.isEmpty ? 'Not available' : phone,
           ),
           const SizedBox(height: 8),
           _ContactRow(

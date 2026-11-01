@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Applied only once the Firebase config file is in place, so demo builds work.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.barkat.nikah.nikah_app"
     compileSdk = flutter.compileSdkVersion

@@ -106,7 +106,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final MatchProfile match = MatchProfile.byId(widget.matchId);
+    final MatchProfile match = store.profileById(widget.matchId);
     final WardProfile ward = store.profile ?? WardProfile.demoWard;
     final String wardName = ward.displayName.isEmpty
         ? WardProfile.demoWard.displayName

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../config/app_config.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -73,39 +74,32 @@ class SettingsScreen extends StatelessWidget {
                 SwitchTile(
                   icon: Icons.done_all_rounded,
                   title: 'Read receipts for matches',
-                  subtitle: 'Let your Wali track thread attendance',
+                  subtitle: 'Show when you have read a message',
                   value: store.privacy('readReceipts'),
                   onChanged: (bool v) => store.togglePrivacy('readReceipts', v),
-                ),
-                const Divider(height: 20),
-                SwitchTile(
-                  icon: Icons.visibility_off_outlined,
-                  title: 'Hide me from non-verified members',
-                  subtitle: 'Only Wali-verified accounts can view you',
-                  value: store.privacy('hideFromNonVerified'),
-                  onChanged: (bool v) =>
-                      store.togglePrivacy('hideFromNonVerified', v),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 22),
-          const SectionLabel('Guardian'),
-          const SizedBox(height: 10),
-          SettingsTile(
-            icon: Icons.shield_outlined,
-            title: 'Wali & Guardian Hub',
-            subtitle:
-                '${store.guardian.name} · ${store.guardian.relation.label}',
-            onTap: () => context.push(AppRoutes.waliHub),
-          ),
-          const SizedBox(height: 10),
-          SettingsTile(
-            icon: Icons.sms_outlined,
-            title: 'Wali Verification Portal',
-            subtitle: '6-digit guardian passcode',
-            onTap: () => context.push(AppRoutes.waliPortal),
-          ),
+          if (AppConfig.guardianFeatures) ...<Widget>[
+            const SizedBox(height: 22),
+            const SectionLabel('Guardian'),
+            const SizedBox(height: 10),
+            SettingsTile(
+              icon: Icons.shield_outlined,
+              title: 'Wali & Guardian Hub',
+              subtitle:
+                  '${store.guardian.name} · ${store.guardian.relation.label}',
+              onTap: () => context.push(AppRoutes.waliHub),
+            ),
+            const SizedBox(height: 10),
+            SettingsTile(
+              icon: Icons.sms_outlined,
+              title: 'Wali Verification Portal',
+              subtitle: '6-digit guardian passcode',
+              onTap: () => context.push(AppRoutes.waliPortal),
+            ),
+          ],
           const SizedBox(height: 22),
           const SectionLabel('Account'),
           const SizedBox(height: 10),
@@ -162,9 +156,8 @@ class SettingsScreen extends StatelessWidget {
       builder: (BuildContext ctx) => AlertDialog(
         title: const Text('Delete your account?'),
         content: const Text(
-          'Your profile, proposals, chats and guardian settings will be '
-          'deleted. Accounts are stored only on this device for now, so this '
-          'removes everything and cannot be undone.',
+          'Your profile, proposals and chats will be '
+          'permanently deleted. This cannot be undone.',
         ),
         actions: <Widget>[
           TextButton(
@@ -180,6 +173,5 @@ class SettingsScreen extends StatelessWidget {
     );
     if (confirmed != true) return;
     store.resetAll();
-    if (context.mounted) context.go(AppRoutes.landing);
   }
 }
