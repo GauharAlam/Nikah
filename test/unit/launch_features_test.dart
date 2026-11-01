@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nikah_app/l10n/app_strings.dart';
 import 'package:nikah_app/models/verification_doc.dart';
 import 'package:nikah_app/models/ward_profile.dart';
-import 'package:nikah_app/providers/app_store.dart';
+import 'package:nikah_app/providers/demo_app_store.dart';
 import 'package:nikah_app/services/biodata_pdf.dart';
 import 'package:nikah_app/services/profile_strength.dart';
 
@@ -112,12 +112,12 @@ void main() {
     test('the choice survives a restart', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final AppStore store = AppStore(prefs);
+      final DemoAppStore store = DemoAppStore(prefs);
       addTearDown(store.dispose);
       store.setLanguage(AppLanguage.hindi);
       AppStrings.current = AppLanguage.english;
 
-      final AppStore reopened = AppStore(prefs);
+      final DemoAppStore reopened = DemoAppStore(prefs);
       addTearDown(reopened.dispose);
       expect(reopened.language, AppLanguage.hindi);
     });

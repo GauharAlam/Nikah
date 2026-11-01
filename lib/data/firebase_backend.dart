@@ -20,11 +20,23 @@ import 'backend.dart';
 /// [Backend] on Firebase. Reads Firestore directly where rules allow it; every
 /// decision with consequences goes through a Cloud Function.
 class FirebaseBackend implements Backend {
-  FirebaseBackend()
+  FirebaseBackend({this.pushAvailable = true})
       : _auth = FirebaseAuth.instance,
         _db = FirebaseFirestore.instance,
         _storage = FirebaseStorage.instance,
         _functions = FirebaseFunctions.instanceFor(region: 'asia-south1');
+
+  /// Points every service at the local emulators. The emulators have no
+  /// Cloud Messaging, so push stays off.
+  factory FirebaseBackend.emulator(String host) {
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    FirebaseFunctions.instanceFor(region: 'asia-south1').useFunctionsEmulator(host, 5001);
+    FirebaseStorage.instance.useStorageEmulator(host, 9199);
+    unawaited(FirebaseAuth.instance.useAuthEmulator(host, 9099));
+    return FirebaseBackend(pushAvailable: false);
+  }
+
+  final bool pushAvailable;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
@@ -36,21 +48,25 @@ class FirebaseBackend implements Backend {
     try {
       return await run();
     } on FirebaseFunctionsException catch (e) {
-      final bool userFacing = e.code != 'internal' && e.code != 'unavailable';
+      if (e.code == 'unavailable') throw BackendException(_offline, code: e.code);
       throw BackendException(
-        userFacing ? (e.message ?? _generic) : _generic,
+        e.code == 'internal' ? _generic : (e.message ?? _generic),
         code: e.code,
       );
     } on FirebaseAuthException catch (e) {
       throw BackendException(_authMessage(e.code), code: e.code);
     } on FirebaseException catch (e) {
-      throw BackendException(_generic, code: e.code);
+      throw BackendException(
+        BackendException.kindOf(e.code) == FailureKind.offline ? _offline : _generic,
+        code: e.code,
+      );
     } on SocketException {
-      throw const BackendException('You appear to be offline.');
+      throw const BackendException(_offline, code: 'unavailable');
     }
   }
 
   static const String _generic = 'Something went wrong. Please try again.';
+  static const String _offline = 'You appear to be offline.';
 
   static String _authMessage(String code) => switch (code) {
         'invalid-verification-code' => 'That code is not correct.',
@@ -136,7 +152,7 @@ class FirebaseBackend implements Backend {
   @override
   Future<void> signOut() async {
     final String? uid = _auth.currentUser?.uid;
-    if (uid != null) {
+    if (uid != null && pushAvailable) {
       // ignore: deprecated_member_use
       final String? token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
@@ -184,6 +200,8 @@ class FirebaseBackend implements Backend {
           decisionsPerDay: l['decisionsPerDay'] as int? ?? 10,
           pendingLimit: l['pendingLimit'] as int? ?? 15,
           monthlyContactCredits: l['monthlyContactCredits'] as int? ?? 30,
+          requireIdProof: l['requireIdProof'] as bool? ?? true,
+          graduatesOnly: l['graduatesOnly'] as bool? ?? true,
         );
       });
 
@@ -587,6 +605,7 @@ class FirebaseBackend implements Backend {
 
   @override
   Future<void> registerPushToken(String uid) => _guard(() async {
+        if (!pushAvailable) return;
         await FirebaseMessaging.instance.requestPermission();
         // ignore: deprecated_member_use
         final String? token = await FirebaseMessaging.instance.getToken();

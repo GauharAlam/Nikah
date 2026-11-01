@@ -43,6 +43,40 @@ class MatchFilters {
     this.nikahTimeline = 'Any timeline',
   });
 
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'minAge': minAge,
+        'maxAge': maxAge,
+        'marriageStatus': marriageStatus,
+        'caste': caste,
+        'almaMater': almaMater,
+        'education': education,
+        'profession': profession,
+        'location': location,
+        'sect': sect,
+        'contactSharing': contactSharing,
+        'cities': cities,
+        'waliVerifiedOnly': waliVerifiedOnly,
+        'practiceTags': practiceTags,
+        'nikahTimeline': nikahTimeline,
+      };
+
+  factory MatchFilters.fromJson(Map<String, dynamic> json) => MatchFilters(
+        minAge: json['minAge'] as int? ?? 21,
+        maxAge: json['maxAge'] as int? ?? 40,
+        marriageStatus: json['marriageStatus'] as String? ?? anyValue,
+        caste: json['caste'] as String? ?? anyValue,
+        almaMater: json['almaMater'] as String? ?? anyValue,
+        education: json['education'] as String? ?? anyValue,
+        profession: json['profession'] as String? ?? anyValue,
+        location: json['location'] as String? ?? anyValue,
+        sect: json['sect'] as String? ?? anyValue,
+        contactSharing: json['contactSharing'] as String? ?? manualApproval,
+        cities: (json['cities'] as List?)?.cast<String>() ?? const <String>[],
+        waliVerifiedOnly: json['waliVerifiedOnly'] as bool? ?? false,
+        practiceTags: (json['practiceTags'] as List?)?.cast<String>() ?? const <String>[],
+        nikahTimeline: json['nikahTimeline'] as String? ?? 'Any timeline',
+      );
+
   bool get isDefault =>
       minAge == 21 &&
       maxAge == 40 &&

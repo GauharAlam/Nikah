@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/main.dart';
 import 'package:nikah_app/providers/app_store.dart';
+import 'package:nikah_app/providers/demo_app_store.dart';
 
 const List<int> _kTransparentImage = <int>[
   0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49,
@@ -90,7 +91,7 @@ Future<(AppStore, GoRouter)> pumpApp(
 
   SharedPreferences.setMockInitialValues(prefs);
   final SharedPreferences sp = await SharedPreferences.getInstance();
-  final AppStore store = AppStore(sp);
+  final AppStore store = DemoAppStore(sp);
   addTearDown(store.dispose);
   final GoRouter router = buildRouter(store);
 

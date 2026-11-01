@@ -1,12 +1,37 @@
-/// Build-time switches. Production builds pass `--dart-define=BACKEND=firebase`.
+import 'package:flutter/foundation.dart';
+
+/// Which backend a build talks to.
+enum BackendMode { firebase, emulator, demo }
+
+/// Build-time switches.
 class AppConfig {
   AppConfig._();
 
-  static const String _backend =
-      String.fromEnvironment('BACKEND', defaultValue: 'demo');
+  static const String _backend = String.fromEnvironment('BACKEND');
+
+  /// Host of the local Firebase emulators. Android emulators reach the
+  /// development machine at 10.0.2.2.
+  static const String emulatorHost =
+      String.fromEnvironment('EMULATOR_HOST', defaultValue: '10.0.2.2');
+
+  /// Release builds are always Firebase, whatever was passed, so a fake backend
+  /// can never reach members. Debug builds default to the local demo.
+  static BackendMode resolveMode(String value, {required bool release}) {
+    if (release) return BackendMode.firebase;
+    return switch (value) {
+      'firebase' => BackendMode.firebase,
+      'emulator' => BackendMode.emulator,
+      _ => BackendMode.demo,
+    };
+  }
+
+  static BackendMode get mode => resolveMode(_backend, release: kReleaseMode);
+
+  /// The only code the demo sign-in accepts. Real codes come from Firebase.
+  static const String demoOtp = '123456';
 
   /// Demo builds run on seeded local data and show a permanent banner.
-  static bool get isDemo => _backend != 'firebase';
+  static bool get isDemo => mode == BackendMode.demo;
 
   /// Guardian portal, chaperoned chat and meeting scheduling have no server
   /// support yet, so they stay out of production builds.

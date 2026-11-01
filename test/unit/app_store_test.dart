@@ -9,16 +9,17 @@ import 'package:nikah_app/models/proposal.dart';
 import 'package:nikah_app/models/verification_doc.dart';
 import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/providers/app_store.dart';
+import 'package:nikah_app/providers/demo_app_store.dart';
 
 /// Builds a store over mock preferences representing a member who has already
 /// finished onboarding.
-Future<AppStore> _activeStore() async {
+Future<DemoAppStore> _activeStore() async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     'bk_stage': 'active',
     'bk_onboarded': true,
   });
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  final AppStore store = AppStore(prefs);
+  final DemoAppStore store = DemoAppStore(prefs);
   addTearDown(store.dispose);
   return store;
 }
@@ -26,9 +27,9 @@ Future<AppStore> _activeStore() async {
 void main() {
   group('proposal quota', () {
     test('enforces the daily proposal quota', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
-      expect(store.proposalsLeft, AppStore.proposalQuota);
+      expect(store.proposalsLeft, DemoAppStore.proposalQuota);
       for (final MatchProfile profile in MatchProfile.seeds) {
         expect(store.sendProposal(profile.id), isTrue);
       }
@@ -39,7 +40,7 @@ void main() {
 
     test('re-proposing to the same profile does not spend another slot',
         () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.sendProposal('zayd-1'), isTrue);
       final int left = store.proposalsLeft;
@@ -50,13 +51,13 @@ void main() {
 
   group('contact requests', () {
     test('spends a credit and leaves the request pending', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
-      expect(store.contactCredits, AppStore.monthlyContactCredits);
+      expect(store.contactCredits, DemoAppStore.monthlyContactCredits);
       expect(store.isContactShared('farhan-2'), isFalse);
 
       expect(store.requestContact('farhan-2'), isTrue);
-      expect(store.contactCredits, AppStore.monthlyContactCredits - 1);
+      expect(store.contactCredits, DemoAppStore.monthlyContactCredits - 1);
       expect(store.contactRequested('farhan-2'), isTrue);
 
       // A request must NOT grant itself the other member's consent. Nothing on
@@ -71,7 +72,7 @@ void main() {
     });
 
     test('a pending request does not create a match', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       store.requestContact('imran-3');
       await Future<void>.delayed(const Duration(milliseconds: 3000));
@@ -85,7 +86,7 @@ void main() {
     });
 
     test('contact sharing cannot create a match', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.acceptContact('imran-3'), isFalse);
 
@@ -96,7 +97,7 @@ void main() {
 
   group('messaging', () {
     test('a sent message is stored once and no reply is fabricated', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.seedThreadIfEmpty('zayd-1');
       final int before = store.messages('zayd-1').length;
 
@@ -116,7 +117,7 @@ void main() {
     });
 
     test('an empty message is ignored', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.seedThreadIfEmpty('zayd-1');
       final int before = store.messages('zayd-1').length;
 
@@ -128,7 +129,7 @@ void main() {
 
   group('proposals', () {
     test('sending a proposal does NOT create a match', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.sendProposal('imran-3'), isTrue);
 
@@ -142,7 +143,7 @@ void main() {
     });
 
     test('incoming proposals are reachable and listed', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       // Previously this list was permanently empty (G-02).
       expect(store.pendingIncomingProposals, isNotEmpty);
@@ -154,7 +155,7 @@ void main() {
     });
 
     test('accepting an incoming proposal creates the match', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       expect(store.isApproved('farhan-2'), isFalse);
 
       expect(store.acceptProposal('farhan-2'), isTrue);
@@ -171,7 +172,7 @@ void main() {
     });
 
     test('declining an incoming proposal creates no match', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.declineProposal('salman-5'), isTrue);
 
@@ -185,7 +186,7 @@ void main() {
     });
 
     test('a proposal cannot be accepted twice', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.acceptProposal('farhan-2'), isTrue);
       expect(
@@ -196,7 +197,7 @@ void main() {
     });
 
     test('a declined proposal cannot then be accepted', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.declineProposal('farhan-2'), isTrue);
       expect(store.acceptProposal('farhan-2'), isFalse);
@@ -204,7 +205,7 @@ void main() {
     });
 
     test('accepting a proposal nobody sent is refused', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       expect(store.incomingProposal('imran-3'), isNull);
       expect(store.acceptProposal('imran-3'), isFalse);
@@ -212,7 +213,7 @@ void main() {
     });
 
     test('an outgoing proposal cannot be accepted by its sender', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.sendProposal('imran-3');
 
       expect(
@@ -224,7 +225,7 @@ void main() {
     });
 
     test('withdrawing frees the heart but does not refund the slot', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.sendProposal('imran-3');
       final int leftAfterSend = store.proposalsLeft;
 
@@ -241,19 +242,19 @@ void main() {
 
     test('an incoming proposal cannot be withdrawn by the recipient',
         () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       expect(store.withdrawProposal('farhan-2'), isFalse);
       expect(store.incomingProposal('farhan-2')!.status,
           ProposalStatus.pending);
     });
 
     test('proposal records survive a reload', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.sendProposal('imran-3');
       store.declineProposal('salman-5');
 
       // Rebuild over the same mock preferences.
-      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore reloaded = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(reloaded.dispose);
 
       expect(reloaded.outgoingProposal('imran-3')?.status,
@@ -265,14 +266,14 @@ void main() {
 
   group('persistence', () {
     test('chat history survives a reload', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.seedThreadIfEmpty('zayd-1');
       store.sendMessage('zayd-1', 'Assalamu alaikum.');
       final int count = store.messages('zayd-1').length;
 
       // Rebuilding the store used to throw inside the constructor, because
       // threads were written as JSON strings but read back as JSON arrays.
-      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore reloaded = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(reloaded.dispose);
 
       expect(reloaded.messages('zayd-1').length, count);
@@ -287,7 +288,7 @@ void main() {
       });
       final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      final AppStore store = AppStore(prefs);
+      final DemoAppStore store = DemoAppStore(prefs);
       addTearDown(store.dispose);
 
       // Construction completed instead of throwing. The unreadable blob was
@@ -321,7 +322,7 @@ void main() {
       });
       final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      final AppStore store = AppStore(prefs);
+      final DemoAppStore store = DemoAppStore(prefs);
       addTearDown(store.dispose);
 
       expect(store.messages('bilal-4').length, 1);
@@ -340,7 +341,7 @@ void main() {
       });
       final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      final AppStore store = AppStore(prefs);
+      final DemoAppStore store = DemoAppStore(prefs);
       addTearDown(store.dispose);
 
       expect(store.isLiked('zayd-1'), isTrue);
@@ -354,7 +355,7 @@ void main() {
   group('block and report', () {
     test('a blocked profile leaves every list and its proposal is declined',
         () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.sendProposal('imran-3');
       store.blockProfile('imran-3');
       store.blockProfile('farhan-2');
@@ -372,7 +373,7 @@ void main() {
     });
 
     test('a blocked conversation accepts no new messages', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       final int before = store.messages('zayd-1').length;
 
       store.blockProfile('zayd-1');
@@ -382,11 +383,11 @@ void main() {
     });
 
     test('blocks and reports survive a reload', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.blockProfile('imran-3');
       store.reportProfile('bilal-4', 'Fake profile');
 
-      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore reloaded = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(reloaded.dispose);
 
       expect(reloaded.isBlocked('imran-3'), isTrue);
@@ -397,7 +398,7 @@ void main() {
 
   group('account deletion', () {
     test('removes proposals, blocks and reports from storage', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.sendProposal('imran-3');
       store.blockProfile('bilal-4');
       store.reportProfile('bilal-4', 'Fake profile');
@@ -415,7 +416,7 @@ void main() {
   });
 
   group('gender', () {
-    Future<AppStore> storeFor(Gender gender) async {
+    Future<DemoAppStore> storeFor(Gender gender) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'bk_stage': 'active',
         'bk_onboarded': true,
@@ -423,13 +424,13 @@ void main() {
           WardProfile(displayName: 'Test', hasGender: true, gender: gender),
         ),
       });
-      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore store = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(store.dispose);
       return store;
     }
 
     test('men are shown only women', () async {
-      final AppStore store = await storeFor(Gender.male);
+      final DemoAppStore store = await storeFor(Gender.male);
       expect(store.discoveredProfiles, isNotEmpty);
       expect(store.discoveredProfiles.every((MatchProfile p) => p.gender == 'female'), isTrue);
       expect(store.chatMatches.every((MatchProfile p) => p.gender == 'female'), isTrue);
@@ -437,7 +438,7 @@ void main() {
     });
 
     test('women are shown only men', () async {
-      final AppStore store = await storeFor(Gender.female);
+      final DemoAppStore store = await storeFor(Gender.female);
       expect(store.discoveredProfiles, isNotEmpty);
       expect(store.discoveredProfiles.every((MatchProfile p) => p.gender == 'male'), isTrue);
       expect(store.incomingProposalProfiles.every((MatchProfile p) => p.gender == 'male'), isTrue);
@@ -453,7 +454,7 @@ void main() {
           const WardProfile(hasGender: true, gender: Gender.male),
         ),
       });
-      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore store = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(store.dispose);
       expect(store.isApproved('zayd-1'), isFalse);
       expect(store.chatMatches.single.gender, 'female');
@@ -462,8 +463,8 @@ void main() {
 
   group('free profile limit', () {
     test('stops at the limit, and seen profiles stay available', () async {
-      final AppStore store = await _activeStore();
-      expect(store.freeProfilesLeft, AppStore.freeProfileLimit);
+      final DemoAppStore store = await _activeStore();
+      expect(store.freeProfilesLeft, DemoAppStore.freeProfileLimit);
 
       for (final MatchProfile p in store.discoveredProfiles.toList()) {
         store.markProfileViewed(p.id);
@@ -471,7 +472,7 @@ void main() {
 
       expect(store.freeProfilesLeft, 0);
       expect(store.reachedProfileLimit, isTrue);
-      expect(store.discoveredProfiles.length, AppStore.freeProfileLimit);
+      expect(store.discoveredProfiles.length, DemoAppStore.freeProfileLimit);
 
       final int shown = store.discoveredProfiles.length;
       store.markProfileViewed('demo-male-15');
@@ -480,19 +481,19 @@ void main() {
     });
 
     test('seeing the same profile twice counts once', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       final String id = store.discoveredProfiles.first.id;
       store.markProfileViewed(id);
       store.markProfileViewed(id);
-      expect(store.freeProfilesLeft, AppStore.freeProfileLimit - 1);
+      expect(store.freeProfilesLeft, DemoAppStore.freeProfileLimit - 1);
     });
 
     test('the count survives a reload', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.markProfileViewed(store.discoveredProfiles.first.id);
-      final AppStore reloaded = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore reloaded = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(reloaded.dispose);
-      expect(reloaded.freeProfilesLeft, AppStore.freeProfileLimit - 1);
+      expect(reloaded.freeProfilesLeft, DemoAppStore.freeProfileLimit - 1);
     });
   });
 
@@ -508,7 +509,7 @@ void main() {
         'bk_onboarded': true,
         'bk_docs': VerificationDoc.encodeList(reviewed),
       });
-      final AppStore store = AppStore(await SharedPreferences.getInstance());
+      final DemoAppStore store = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(store.dispose);
 
       expect(store.isBarkatVerified, isTrue);
@@ -516,7 +517,7 @@ void main() {
     });
 
     test('submitting does not by itself approve', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
 
       store.submitVerificationDoc('education-proof');
 
@@ -532,7 +533,7 @@ void main() {
 
   group('discovery filtering', () {
     test('an incompatible profile leaves the discovery deck', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       final String id = store.discoveredProfiles.first.id;
 
       store.markIncompatible(id);
@@ -541,7 +542,7 @@ void main() {
     });
 
     test('an unmatched profile leaves both match decks', () async {
-      final AppStore store = await _activeStore();
+      final DemoAppStore store = await _activeStore();
       store.acceptProposal('farhan-2');
       expect(store.chatMatches.any((MatchProfile p) => p.id == 'farhan-2'),
           isTrue);

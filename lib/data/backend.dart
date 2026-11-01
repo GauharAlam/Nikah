@@ -62,12 +62,16 @@ class AppLimits {
     this.decisionsPerDay = 10,
     this.pendingLimit = 15,
     this.monthlyContactCredits = 30,
+    this.requireIdProof = true,
+    this.graduatesOnly = true,
   });
 
   final int proposalsPerDay;
   final int decisionsPerDay;
   final int pendingLimit;
   final int monthlyContactCredits;
+  final bool requireIdProof;
+  final bool graduatesOnly;
 }
 
 class IntroductionPage {
@@ -159,11 +163,28 @@ class FamilyState {
   final List<FamilyPick> shortlist;
 }
 
+/// What a screen should do about a failure.
+enum FailureKind { offline, notAllowed, notFound, limitReached, recentSignInNeeded, invalid, other }
+
 /// Server failure with text that is safe to show a member.
 class BackendException implements Exception {
   const BackendException(this.message, {this.code = ''});
   final String message;
   final String code;
+
+  FailureKind get kind => kindOf(code);
+
+  /// Maps Firebase error codes to the action a screen should take.
+  static FailureKind kindOf(String code) => switch (code) {
+        'unavailable' || 'network-request-failed' || 'deadline-exceeded' => FailureKind.offline,
+        'permission-denied' || 'unauthenticated' => FailureKind.notAllowed,
+        'not-found' => FailureKind.notFound,
+        'resource-exhausted' || 'too-many-requests' => FailureKind.limitReached,
+        'requires-recent-login' => FailureKind.recentSignInNeeded,
+        'invalid-argument' || 'failed-precondition' => FailureKind.invalid,
+        _ => FailureKind.other,
+      };
+
   @override
   String toString() => message;
 }

@@ -11,9 +11,9 @@ push to `feature/trust-and-nikah-journey`.
 |---|---|---|
 | 0 | Baseline | done |
 | 1 | Audit, architecture, schema | this document set |
-| 2 | Architecture refactor | ARC-01, 02, 03, 04, 05, 06, 08, 09, 10 |
+| 2 | Architecture refactor | ARC-01, 02, 03, 04, 06, 08, 09, 10 |
 | 3 | Authentication and onboarding, review | SEC-03, 04, 06, 14, 15, 17, 18; FLOW-01 to 06, 16 |
-| 4 | Discovery, proposals, matches, chat | SEC-05, 10, 13, 20, 21, 25; ARC-07; FLOW-07 to 11 |
+| 4 | Discovery, proposals, matches, chat | SEC-05, 10, 13, 20, 21, 25; ARC-05, 07; FLOW-07 to 11 |
 | 5 | Family and privacy, deletion | SEC-01, 02, 08, 11, 22, 24; FLOW-12, 13, 19 |
 | 6 | Trust and safety | SEC-09, 12, 16, 26; FLOW-14, 17 |
 | 7 | Notifications and premium | SEC-07, 19; FLOW-18 |

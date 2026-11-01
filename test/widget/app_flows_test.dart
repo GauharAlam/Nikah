@@ -10,6 +10,7 @@ import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/l10n/app_strings.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/providers/app_store.dart';
+import 'package:nikah_app/providers/demo_app_store.dart';
 import 'package:nikah_app/models/verification_doc.dart';
 import 'package:nikah_app/models/match_profile.dart';
 import 'package:nikah_app/models/nikah_journey.dart';
@@ -67,7 +68,7 @@ void main() {
     expect(find.byKey(const Key('auth_error')), findsOneWidget);
     expect(store.isSignedIn, isFalse);
 
-    await tester.enterText(find.byKey(const Key('otp_input')), AppStore.demoOtp);
+    await tester.enterText(find.byKey(const Key('otp_input')), DemoAppStore.demoOtp);
     await tester.pump();
     await tap(tester, find.byKey(const Key('auth_submit')));
     expect(store.isSignedIn, isTrue);

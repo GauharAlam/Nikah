@@ -105,6 +105,15 @@ class Guardian {
   }
 
   /// Guardian shown in mock guardian-side screens.
+  /// No guardian set. What production builds see; they have no wali feature.
+  static const Guardian none = Guardian(
+    name: '',
+    relation: GuardianRelation.other,
+    phoneCode: '',
+    phone: '',
+    email: '',
+  );
+
   static const Guardian seed = Guardian(
     name: 'Khalid Al-Mansoor',
     relation: GuardianRelation.father,

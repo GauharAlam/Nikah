@@ -1,13 +1,14 @@
 # Setup and release
 
-The app has two modes, chosen at build time.
+The backend is chosen at build time. Release builds always use Firebase, whatever is passed.
 
 | Mode | Command | Data |
 |---|---|---|
-| Demo (default) | `flutter run` | Seeded sample data on the device, with a DEMO banner. The sign-in code is `123456`. |
-| Production | `flutter run --dart-define=BACKEND=firebase` | Firebase only. No sample data, no demo sign-in, no guardian screens. |
+| Demo (debug default) | `flutter run` | Seeded sample data on the device, with a DEMO banner. The sign-in code is `123456`. Compiled out of release builds. |
+| Emulator | `flutter run --dart-define=BACKEND=emulator` | The real app against local Firebase emulators, project `demo-nikah`. Set `EMULATOR_HOST` if not on an Android emulator. |
+| Firebase | `flutter run --dart-define=BACKEND=firebase`, or any release build | Firebase only. No sample data, no demo sign-in, no guardian screens. |
 
-A production build without its Firebase files opens a "missing configuration" screen.
+A Firebase build without its config files opens a "missing configuration" screen.
 
 ## 1. Firebase project
 

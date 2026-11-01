@@ -78,7 +78,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
           if (mounted) setState(() => _cooldown--);
         });
         if (AppConfig.isDemo) {
-          showAppSnack(context, 'Demo build: use code ${AppStore.demoOtp}.');
+          showAppSnack(context, 'Demo build: use code ${AppConfig.demoOtp}.');
         }
       });
 
