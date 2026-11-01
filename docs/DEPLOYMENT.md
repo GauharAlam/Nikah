@@ -31,9 +31,6 @@ npm install -g firebase-tools
 firebase login
 firebase use <project-id>
 (cd functions && npm ci)
-firebase functions:secrets:set APPLE_KEY_ID
-firebase functions:secrets:set APPLE_ISSUER_ID
-firebase functions:secrets:set APPLE_PRIVATE_KEY
 firebase deploy --only firestore,storage,functions
 ```
 
@@ -45,8 +42,6 @@ Then, in the Google Cloud console:
 3. Turn on a **TTL policy** for `rateLimits` on the field `expiresAt`.
 4. Create the Pub/Sub topic `play-notifications`, and select it in Play Console under Real-time
    developer notifications.
-5. In App Store Connect, set the App Store Server Notifications URL to the deployed
-   `onAppStoreNotification` function, version 2.
 
 Check that every query works on the real project. Emulators do not enforce composite indexes.
 
@@ -115,19 +110,20 @@ Add its SHA-1 and SHA-256 to Firebase, then:
 APP_LINK=... SUPPORT_EMAIL=... TERMS_URL=... PRIVACY_URL=... tool/build_release.sh
 ```
 
-## iOS release
+## iOS (not planned for now)
 
-Needs full Xcode and CocoaPods, neither installed here, so nothing on iOS has been compiled.
+The first release is Android only. iOS code stays in the repo but has never been compiled, and
+Apple billing is off. If iOS starts later:
 
-1. `pod install`, and add `GoogleService-Info.plist` through Xcode.
+1. Install full Xcode and CocoaPods, run `pod install`, and add `GoogleService-Info.plist`.
 2. Add the reversed client id URL scheme, an APNs key, and the Push capability.
-3. Test the screenshot protection in `AppDelegate.swift` on a device. It has never run.
-4. Archive and upload.
+3. Set the three Apple secrets, then follow the note at the top of `functions/src/purchases.ts`.
+4. Set the App Store Server Notifications URL to `onAppStoreNotification`, version 2.
+5. Test the screenshot protection in `AppDelegate.swift` on a device. It has never run.
 
 ## Privacy disclosures
 
-Declare these in Play Data safety and App Store privacy labels, and have them checked against
-the final privacy policy.
+Declare these in Play Data safety, and have them checked against the final privacy policy.
 
 | Data | Purpose | Linked to the person | Shared with other members |
 |---|---|---|---|
@@ -157,11 +153,10 @@ page is also required by Google Play.
 
 - [ ] All of `TESTING.md` passes, including device tests
 - [ ] Real SMS sign-in, Google linking and push on a physical phone
-- [ ] Real purchase, renewal, restore and refund in store sandboxes
+- [ ] Real purchase, renewal, restore and refund with Play test accounts
 - [ ] Signed photo and document links work on real Storage
 - [ ] A full deletion on staging, checked by hand
 - [ ] Performance on a mid-range Android phone
-- [ ] Full iOS pass
 
 ## Rollback
 

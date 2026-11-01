@@ -31,8 +31,7 @@ documented, but stays unverified until the item arrives.
 | Id | Needed | Blocks |
 |---|---|---|
 | X-1 | Firebase project and config files | real SMS, real push, signed URLs on real Storage, any production run |
-| X-2 | Full Xcode and CocoaPods | any iOS build, iOS privacy shield |
-| X-3 | Apple and Google store accounts with products | real purchases, receipts, notifications |
+| X-3 | Google Play account with products | real purchases, notifications |
 | X-4 | Legal review of terms, privacy policy and retention periods | release |
 | X-5 | Final store listing identity | store release |
 | X-6 | Real institution dataset and product decisions on quotas | launch content |
@@ -51,6 +50,8 @@ documented, but stays unverified until the item arrives.
 
 ## Out of scope for now
 
+- iOS. The first release is Android only. iOS code stays in the repo, uncompiled, and Apple
+  billing is switched off on the server.
 - Payment rails other than Apple and Google.
 - Automated image moderation. Human review stands, and a hook is left at photo publish.
 - Web and desktop builds. The platform folders stay, but only Android and iOS are targets.

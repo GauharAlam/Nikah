@@ -2,8 +2,8 @@
 
 A privacy-first matrimony app for educated Muslims, built with Flutter and Firebase.
 
-**Status:** feature-complete on Android against local Firebase emulators. It has not yet run on
-a real Firebase project, a physical phone, iOS or real store billing. See
+**Status:** Android first. Feature-complete against local Firebase emulators. It has not yet run
+on a real Firebase project, a physical phone or real Play billing. iOS is not planned for now. See
 [docs/IMPLEMENTATION_PROGRESS.md](docs/IMPLEMENTATION_PROGRESS.md).
 
 ## What it does

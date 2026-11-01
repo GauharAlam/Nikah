@@ -108,6 +108,13 @@ test('a refunded subscription ends premium', async () => {
   assert.ok((await db.doc('accounts/pu11').get()).data()?.premiumUntil.toMillis() <= Date.now());
 });
 
+test('Apple billing is off, so an iOS purchase is refused and grants nothing', async () => {
+  const u = await user('pu13', { approved: true });
+  await store('t13', { productId: 'nikah_monthly', expiresAt: Date.now() + 30 * day });
+  assert.equal(await code(u('validatePurchase', { productId: 'nikah_monthly', platform: 'ios', token: 't13' })), 'functions/failed-precondition');
+  assert.equal((await db.doc('accounts/pu13').get()).data()?.premiumUntil, undefined);
+});
+
 test('a member cannot fabricate entitlement or read another member\'s purchases', async () => {
   const u = await user('pu12', {});
   assert.equal(await code(u('refreshPurchase', { token: 'x', platform: 'android', productId: 'nikah_monthly' })), 'functions/permission-denied');

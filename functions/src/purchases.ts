@@ -3,9 +3,13 @@ import { onMessagePublished } from 'firebase-functions/v2/pubsub';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import * as R from './rules';
 import { accountRef, audit, db, notify, reviewerUid, stringArg, uidOf } from './shared';
-import { appleIssuerId, appleKeyId, applePrivateKey, verifyWithStore } from './stores';
+import { verifyWithStore } from './stores';
 
-const STORE_SECRETS = [appleKeyId, appleIssuerId, applePrivateKey];
+// The app ships on Android only for now, so Apple billing stays off and deploying
+// needs no Apple secrets. To turn it on, set APPLE_BILLING to true and restore
+// `const STORE_SECRETS = [appleKeyId, appleIssuerId, applePrivateKey];`.
+const APPLE_BILLING = false;
+const STORE_SECRETS: never[] = [];
 
 async function storeConfig(): Promise<{ products: Record<string, R.Product>; packageName: string }> {
   const config = (await db.doc('config/app').get()).data();
@@ -63,6 +67,9 @@ async function revoke(platform: string, verified: R.VerifiedPurchase): Promise<v
 }
 
 async function lookUp(platform: string, token: string, productId: string) {
+  if (platform === 'ios' && !APPLE_BILLING) {
+    throw new HttpsError('failed-precondition', 'Purchases are not available on this platform.');
+  }
   const { products, packageName } = await storeConfig();
   const product = products[productId];
   if (!product) throw new HttpsError('invalid-argument', 'Unknown product.');

@@ -6,8 +6,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 ## Where the project stands
 
 Every phase is complete. **The app is not ready for real members yet**, because nothing has run on
-a real Firebase project, a physical phone, iOS or real store billing. See Definition of Done at
-the end of this file.
+a real Firebase project, a physical phone or real Play billing. The first release is Android
+only. See Definition of Done at the end of this file.
 
 ## Status
 
@@ -465,7 +465,7 @@ and any iOS build.
 | `flutter analyze` | 0 issues |
 | `flutter test` | 208 passed |
 | `npm run test:unit` | 33 passed |
-| `npm run test:emulator` | 112 passed |
+| `npm run test:emulator` | 113 passed |
 | Device tests on the android-36 emulator | 11 passed |
 | `flutter build apk --release` | built, 66.2 MB |
 | APK inspection | id `com.gauharalam.nikah`, label `Nikah`, no `DemoAppStore`, no `Barkat` |
@@ -494,12 +494,12 @@ where the client is involved.
 | Blocking and reporting | Verified on emulator |
 | Push notifications | Written and unit tested. Never delivered |
 | Privacy settings enforced by the backend | Verified on emulator |
-| Purchase verification | Logic verified with a simulated store. Real stores never called |
+| Purchase verification | Logic verified with a simulated store. Google Play never called |
 | Deletion complete and retryable | Verified on emulator |
 | Rules pass security tests | Yes |
 | Flutter tests pass; functions compile and pass | Yes |
 | Android build | Yes, unsigned for stores |
-| iOS build | Not possible here: never compiled |
+| iOS build | Out of scope for now: Android only |
 | No fake backend in production | Yes, proved from the built APK |
 | Documentation reflects the implementation | Yes |
 
@@ -508,8 +508,7 @@ where the client is involved.
 | Id | Item |
 |---|---|
 | X-1 | Firebase project and config files |
-| X-2 | Full Xcode and CocoaPods |
-| X-3 | Apple and Google store accounts and products |
+| X-3 | Google Play account and products |
 | X-4 | Legal review: terms, privacy, retention, safety procedure |
 | X-5 | Confirm the name and app id before first publish |
 | X-6 | Real institution data, quota decisions, app icon and artwork |

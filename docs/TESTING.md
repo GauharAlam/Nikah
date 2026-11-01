@@ -52,5 +52,5 @@ For device tests, start an Android emulator first:
 
 ## What no test here can prove
 
-Real SMS, real push, real App Check, signed URLs on real Storage, real Google sign-in, real store
-purchases, any iOS behaviour, and whether composite indexes are complete.
+Real SMS, real push, real App Check, signed URLs on real Storage, real Google sign-in, real Play
+purchases, and whether composite indexes are complete.
