@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/models/match_profile.dart';
+import 'package:nikah_app/models/nikah_journey.dart';
 import 'package:nikah_app/models/proposal.dart';
 import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/providers/app_store.dart';
@@ -275,6 +276,38 @@ void main() {
     await settle();
     expect(backend.calls, contains('deleteAccount'));
     expect(store.pledgeAccepted, isFalse);
+  });
+
+  test('privacy changes reach the server once approved', () async {
+    await signIn();
+    backend.account.add(const AccountState(stage: ReviewStage.approved));
+    await settle();
+    store.updatePrivacy(photoPrivacy: 'matches');
+    await settle();
+    expect(backend.calls, contains('privacy:matches'));
+    expect(store.profile!.photoPrivacy, 'matches');
+  });
+
+  test('journey steps and answers go to the server', () async {
+    await signIn();
+    backend.matches.add(const <MatchThread>[
+      MatchThread(pairId: 'p', otherId: 'a', isOpen: true, myStep: 'families', theirStep: 'questions'),
+    ]);
+    await settle();
+    expect(store.journeyStep('a'), JourneyStep.families);
+    expect(store.theirJourneyStep('a'), JourneyStep.questions);
+
+    store.setJourneyStep('a', JourneyStep.istikhara);
+    await settle();
+    expect(backend.calls, contains('journey:istikhara'));
+
+    await store.saveAnswers('a', <String, String>{'deen1': 'Yes'});
+    expect(await store.myAnswers('a'), <String, String>{'deen1': 'Yes'});
+  });
+
+  test('an approved member marks activity', () async {
+    await signIn();
+    expect(backend.calls, contains('touchActive'));
   });
 
   test('purchases are granted by the server only', () async {

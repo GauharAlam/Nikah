@@ -159,6 +159,20 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
+                SettingsTile(
+                  icon: Icons.shield_outlined,
+                  title: 'Safety Centre',
+                  subtitle: 'Scams to watch for and how to report',
+                  onTap: () => context.push(AppRoutes.safety),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  icon: Icons.mosque_outlined,
+                  title: 'Deen and values',
+                  subtitle: 'Prayer, Quran and lifestyle',
+                  onTap: () => context.push(AppRoutes.practice),
+                ),
+                const SizedBox(height: 10),
                 if (store.isReviewer) ...<Widget>[
                   SettingsTile(
                     icon: Icons.fact_check_outlined,

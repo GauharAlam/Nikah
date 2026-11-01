@@ -2,6 +2,21 @@
 
 **Last updated:** 2026-11-01
 
+## Differentiators (2026-11-01)
+
+From `docs/PRODUCT_PLAN.md`. **Built:** required ID, intent and consent confirmation, family
+profile consent, Scam Shield, Safety Centre, automatic hold after three reporters, What we
+checked, real activity with stale profiles leaving discovery, contact credit refunds,
+photos after match, optional and hideable caste, children field, sect filter, Deen and
+values on the profile, share summary with family, Nikah Journey and Important Questions.
+
+**Verified:** 96 Flutter tests, 16 server logic tests, and 28 emulator tests covering the
+server and rules changes.
+
+**Not verified:** rendered screens for this round, a device, or a real Firebase project.
+Deen and values edits made after approval stay in the draft until the profile is reviewed
+again. The scam patterns are English only. Family Circle is not built.
+
 ## Current state (2026-11-01)
 
 The whole app is now written against Firebase and runs in demo mode until the Firebase

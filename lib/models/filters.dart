@@ -14,6 +14,7 @@ class MatchFilters {
   final String education;
   final String profession;
   final String location;
+  final String sect;
   final String contactSharing;
 
   /// Legacy fields kept while older screens migrate to the Barkat set.
@@ -34,6 +35,7 @@ class MatchFilters {
     this.education = anyValue,
     this.profession = anyValue,
     this.location = anyValue,
+    this.sect = anyValue,
     this.contactSharing = manualApproval,
     this.cities = const <String>[],
     this.waliVerifiedOnly = false,
@@ -50,6 +52,7 @@ class MatchFilters {
       education == anyValue &&
       profession == anyValue &&
       location == anyValue &&
+      sect == anyValue &&
       contactSharing == manualApproval &&
       cities.isEmpty &&
       !waliVerifiedOnly &&
@@ -65,6 +68,7 @@ class MatchFilters {
     if (education != anyValue) n++;
     if (profession != anyValue) n++;
     if (location != anyValue) n++;
+    if (sect != anyValue) n++;
     if (contactSharing != manualApproval) n++;
     if (cities.isNotEmpty) n++;
     if (waliVerifiedOnly) n++;
@@ -82,6 +86,7 @@ class MatchFilters {
     String? education,
     String? profession,
     String? location,
+    String? sect,
     String? contactSharing,
     List<String>? cities,
     bool? waliVerifiedOnly,
@@ -97,6 +102,7 @@ class MatchFilters {
       education: education ?? this.education,
       profession: profession ?? this.profession,
       location: location ?? this.location,
+      sect: sect ?? this.sect,
       contactSharing: contactSharing ?? this.contactSharing,
       cities: cities ?? this.cities,
       waliVerifiedOnly: waliVerifiedOnly ?? this.waliVerifiedOnly,
@@ -134,6 +140,7 @@ class MatchFilters {
         !p.location.toLowerCase().contains(location.toLowerCase())) {
       return false;
     }
+    if (sect != anyValue && p.sect != sect) return false;
     // Legacy fields still respected when set.
     if (cities.isNotEmpty &&
         !cities.any((c) => p.location.toLowerCase().contains(c.toLowerCase()))) {

@@ -10,6 +10,7 @@ import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/models/verification_doc.dart';
+import 'package:nikah_app/models/nikah_journey.dart';
 import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/widgets/app_switch.dart';
 
@@ -102,8 +103,7 @@ void main() {
     // 4 — personal
     await tap(tester, find.byKey(const Key('pick_dob')));
     await tap(tester, find.text('OK'));
-    await tap(tester, find.byKey(const Key('pick_caste')));
-    await sheetTap(tester, find.text('Ansari'));
+    // Caste is optional, so it is skipped here.
     await tap(tester, find.byKey(const Key('pick_height')));
     await sheetTap(tester, find.text('5\'4"'));
     await tester.enterText(find.byKey(const Key('contact_number')), '9876543210');
@@ -130,6 +130,10 @@ void main() {
 
     // 7 — review
     expect(find.text('Review and submit'), findsOneWidget);
+    await tap(tester, next);
+    expect(store.isLoggedIn, isFalse, reason: 'intent and consent are required');
+    await tap(tester, find.byKey(const Key('confirm_intent')));
+    await tap(tester, find.byKey(const Key('confirm_consent')));
     await tap(tester, next);
 
     expect(store.isLoggedIn, isTrue);
@@ -303,6 +307,54 @@ void main() {
           .status,
       VerificationDocStatus.pending,
     );
+    await drain(tester);
+  });
+
+  testWidgets('a match can open the journey and save answers', (WidgetTester tester) async {
+    final (AppStore store, GoRouter router) = await pumpApp(tester, prefs: activePrefs);
+    router.go(AppRoutes.journey('zayd-1'));
+    await tester.pumpAndSettle();
+
+    await tap(tester, find.byKey(const Key('journey_families')));
+    expect(store.journeyStep('zayd-1'), JourneyStep.families);
+
+    await tester.enterText(find.byKey(const Key('answer_deen1')), 'Five prayers');
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('save_answers')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save_answers')));
+    await tester.pumpAndSettle();
+
+    expect((await store.myAnswers('zayd-1'))['deen1'], 'Five prayers');
+    expect(await store.theirAnswers('zayd-1'), isNull);
+    await drain(tester);
+  });
+
+  testWidgets('the Safety Centre opens and lists warning signs', (WidgetTester tester) async {
+    final (_, GoRouter router) = await pumpApp(tester, prefs: activePrefs);
+    router.go(AppRoutes.safety);
+    await tester.pumpAndSettle();
+    expect(find.text('They ask for money'), findsOneWidget);
+    await drain(tester);
+  });
+
+  testWidgets('a family profile needs the person\'s agreement', (WidgetTester tester) async {
+    final (_, GoRouter router) = await pumpApp(
+      tester,
+      prefs: <String, Object>{'bk_stage': 'onboarding'},
+    );
+    router.go(AppRoutes.onboarding);
+    await tester.pumpAndSettle();
+    await tap(tester, find.byKey(const Key('who_family')));
+    await tap(tester, find.byKey(const Key('onboarding_next')));
+    expect(find.text('Who is looking for a Nikah match?'), findsOneWidget);
+    await tap(tester, find.byKey(const Key('candidate_consent')));
+    await tap(tester, find.byKey(const Key('onboarding_next')));
+    expect(find.text('Let\'s start with the basics'), findsOneWidget);
     await drain(tester);
   });
 

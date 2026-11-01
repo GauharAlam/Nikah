@@ -231,6 +231,7 @@ class FirebaseBackend implements Backend {
         'education': f.education,
         'profession': f.profession,
         'location': f.location,
+        'sect': f.sect,
       },
       'cursor': cursor,
     });
@@ -375,6 +376,9 @@ class FirebaseBackend implements Backend {
               lastMessage: d['lastMessage'] as String? ?? '',
               lastMessageAt: (d['lastMessageAt'] as Timestamp?)?.toDate(),
               unread: ((d['unread'] as Map?)?[uid] as int?) ?? 0,
+              myStep: (d['journey'] as Map?)?[uid] as String?,
+              theirStep: (d['journey'] as Map?)?[
+                  (d['users'] as List).cast<String>().firstWhere((String u) => u != uid)] as String?,
             );
           }).toList());
 
@@ -423,6 +427,46 @@ class FirebaseBackend implements Backend {
   @override
   Future<void> reportProfile(String target, String reason) =>
       _call('reportProfile', <String, dynamic>{'target': target, 'reason': reason});
+
+  @override
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+      _call('updatePrivacy', <String, dynamic>{
+        'photoPrivacy': ?photoPrivacy,
+        'showCaste': ?showCaste,
+        'allowFamilyShare': ?allowFamilyShare,
+      });
+
+  @override
+  Future<void> touchActive() => _call('touchActive');
+
+  // ─── Nikah Journey ─────────────────────────────────────────────────────────
+
+  @override
+  Future<void> setJourneyStep(String pairId, String uid, String step) => _guard(() async {
+        await _db.doc('matches/$pairId').update(<String, dynamic>{'journey.$uid': step});
+      });
+
+  @override
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> answers) =>
+      _guard(() async {
+        await _db.doc('matches/$pairId/answers/$uid').set(<String, dynamic>{
+          'answers': answers,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+  @override
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid) async {
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> s =
+          await _db.doc('matches/$pairId/answers/$uid').get();
+      return (s.data()?['answers'] as Map?)?.cast<String, String>();
+    } on FirebaseException catch (e) {
+      // Rules hide the other person's answers until you have given yours.
+      if (e.code == 'permission-denied') return null;
+      throw const BackendException(_generic);
+    }
+  }
 
   // ─── Notifications ─────────────────────────────────────────────────────────
 

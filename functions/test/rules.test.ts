@@ -41,7 +41,7 @@ const good: r.Draft = {
   fullName: 'A', gender: 'male', maritalStatus: 'Never married', marriageReadiness: 'Ready within 1 year',
   homeCity: 'Delhi', caste: 'Ansari', height: `5'10"`, phone: '+919999999999', almaMaters: ['AMU'],
   qualification: 'B.Tech', qualificationGraduate: true, profession: 'Engineer',
-  dateOfBirth: Date.UTC(1998, 0, 1), photos: ['p'],
+  dateOfBirth: Date.UTC(1998, 0, 1), photos: ['p'], intentConfirmed: true, dataConsent: true,
 };
 
 test('a complete draft has no problems', () => {
@@ -82,4 +82,47 @@ test('blocked, matched, proposed and hidden profiles leave discovery', () => {
   assert.equal(r.visibleInDiscovery({ ...base, hasProposal: true }, t), false);
   assert.equal(r.visibleInDiscovery({ ...base, hiddenUntil: t + 1 }, t), false);
   assert.equal(r.visibleInDiscovery({ ...base, hiddenUntil: t - 1 }, t), true);
+});
+
+test('intent and consent are required, and family profiles need the person\'s agreement', () => {
+  const p = (d: Partial<r.Draft>) => r.draftProblems({ ...good, ...d }, r.DEFAULT_LIMITS, now);
+  assert.ok(p({ intentConfirmed: false }).some((x) => x.includes('marriage')));
+  assert.ok(p({ dataConsent: false }).some((x) => x.includes('Agree')));
+  assert.ok(p({ managedBy: 'family' }).some((x) => x.includes('agreed')));
+  assert.deepEqual(p({ managedBy: 'family', candidateConsent: true }), []);
+});
+
+test('caste is optional, and the graduate rule is a setting', () => {
+  assert.deepEqual(r.draftProblems({ ...good, caste: undefined }, r.DEFAULT_LIMITS, now), []);
+  const open = { ...r.DEFAULT_LIMITS, graduatesOnly: false };
+  assert.deepEqual(r.draftProblems({ ...good, qualificationGraduate: false }, open, now), []);
+});
+
+test('private photos reach only a match, and hidden caste reaches nobody', () => {
+  const c = { photos: ['a'], caste: 'Syed', photoPrivacy: 'matches', showCaste: false };
+  assert.deepEqual(r.redactCard(c, false).photos, []);
+  assert.equal(r.redactCard(c, false).photosHidden, true);
+  assert.deepEqual(r.redactCard(c, true).photos, ['a']);
+  assert.equal(r.redactCard(c, true).caste, '');
+  assert.equal('photoPrivacy' in r.redactCard(c, true), false);
+  assert.deepEqual(r.redactCard({ photos: ['a'], photoPrivacy: 'everyone' }, false).photos, ['a']);
+});
+
+test('a credit returns only in the month it was spent, and never below zero', () => {
+  assert.equal(r.creditsAfterRefund('2026-11', 3, '2026-11'), 2);
+  assert.equal(r.creditsAfterRefund('2026-10', 3, '2026-11'), 3);
+  assert.equal(r.creditsAfterRefund('2026-11', 0, '2026-11'), 0);
+  assert.equal(r.creditsAfterRefund(undefined, 2, '2026-11'), 2);
+});
+
+test('holds need enough different reporters', () => {
+  assert.equal(r.shouldHold(2, r.DEFAULT_LIMITS), false);
+  assert.equal(r.shouldHold(3, r.DEFAULT_LIMITS), true);
+});
+
+test('stale profiles leave discovery', () => {
+  const base = { blocked: false, hasProposal: false, matched: false, staleDays: 45 };
+  const t = now.getTime();
+  assert.equal(r.visibleInDiscovery({ ...base, lastActiveAt: t - 46 * 86400000 }, t), false);
+  assert.equal(r.visibleInDiscovery({ ...base, lastActiveAt: t - 44 * 86400000 }, t), true);
 });

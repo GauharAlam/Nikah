@@ -95,6 +95,25 @@ test('a member moves only their own read marker', async () => {
   await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { status: 'active', 'unread.a': 5 }));
 });
 
+test('a member moves only their own journey step, to a known step', async () => {
+  await assertSucceeds(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.a': 'questions' }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.b': 'questions' }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.a': 'married' }));
+  await assertFails(updateDoc(doc(member('z'), 'matches/a_b'), { 'journey.z': 'questions' }));
+});
+
+test('answers stay hidden until you give yours', async () => {
+  const a = member('a');
+  const b = member('b');
+  await assertSucceeds(setDoc(doc(a, 'matches/a_b/answers/a'), { answers: { q1: 'Yes' } }));
+  await assertFails(getDoc(doc(b, 'matches/a_b/answers/a')));
+  await assertSucceeds(setDoc(doc(b, 'matches/a_b/answers/b'), { answers: { q1: 'No' } }));
+  await assertSucceeds(getDoc(doc(b, 'matches/a_b/answers/a')));
+  await assertFails(setDoc(doc(a, 'matches/a_b/answers/b'), { answers: {} }));
+  await assertFails(getDoc(doc(member('z'), 'matches/a_b/answers/a')));
+  await assertFails(setDoc(doc(a, 'matches/a_c/answers/a'), { answers: {} }));
+});
+
 test('notifications: mark read only', async () => {
   await assertSucceeds(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { read: true }));
   await assertFails(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { title: 'x' }));

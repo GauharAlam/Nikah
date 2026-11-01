@@ -180,6 +180,7 @@ class RemoteAppStore extends AppStore {
       }, onError: _report),
     ]);
     _send(() => _backend.registerPushToken(uid));
+    if (user.isApproved) _send(_backend.touchActive);
     _restoring = false;
     notifyListeners();
   }
@@ -498,6 +499,65 @@ class RemoteAppStore extends AppStore {
     final String? uid = _user?.uid;
     if (thread != null && uid != null) {
       _send(() => _backend.markThreadRead(thread.pairId, uid));
+    }
+  }
+
+  @override
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) {
+    super.updatePrivacy(
+      photoPrivacy: photoPrivacy,
+      showCaste: showCaste,
+      allowFamilyShare: allowFamilyShare,
+    );
+    if (isLoggedIn) {
+      _send(() => _backend.updatePrivacy(
+            photoPrivacy: photoPrivacy,
+            showCaste: showCaste,
+            allowFamilyShare: allowFamilyShare,
+          ));
+    }
+  }
+
+  // ─── Nikah Journey ────────────────────────────────────────────────────────
+
+  @override
+  JourneyStep journeyStep(String matchId) =>
+      JourneyStep.values.asNameMap()[_threads[matchId]?.myStep] ?? JourneyStep.talking;
+
+  @override
+  JourneyStep? theirJourneyStep(String matchId) =>
+      JourneyStep.values.asNameMap()[_threads[matchId]?.theirStep];
+
+  @override
+  void setJourneyStep(String matchId, JourneyStep step) {
+    final MatchThread? thread = _threads[matchId];
+    final String? uid = _user?.uid;
+    if (thread != null && uid != null) {
+      _send(() => _backend.setJourneyStep(thread.pairId, uid, step.name));
+    }
+  }
+
+  @override
+  Future<Map<String, String>> myAnswers(String matchId) async {
+    final MatchThread? thread = _threads[matchId];
+    final String? uid = _user?.uid;
+    if (thread == null || uid == null) return <String, String>{};
+    return await _backend.loadAnswers(thread.pairId, uid) ?? <String, String>{};
+  }
+
+  @override
+  Future<Map<String, String>?> theirAnswers(String matchId) async {
+    final MatchThread? thread = _threads[matchId];
+    if (thread == null) return null;
+    return _backend.loadAnswers(thread.pairId, matchId);
+  }
+
+  @override
+  Future<void> saveAnswers(String matchId, Map<String, String> answers) async {
+    final MatchThread? thread = _threads[matchId];
+    final String? uid = _user?.uid;
+    if (thread != null && uid != null) {
+      await _backend.saveAnswers(thread.pairId, uid, answers);
     }
   }
 

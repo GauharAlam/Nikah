@@ -73,10 +73,25 @@ service cloud.firestore {
       }
       allow read: if signedIn() && request.auth.uid in resource.data.users;
       // A member may only move their own read marker.
-      allow update: if signedIn() && request.auth.uid in resource.data.users
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
-        && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]);
+      allow update: if signedIn() && request.auth.uid in resource.data.users && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+          && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['journey'])
+          && request.resource.data.journey.diff(resource.data.get('journey', {})).affectedKeys().hasOnly([request.auth.uid])
+          && request.resource.data.journey[request.auth.uid] in ['talking', 'questions', 'families', 'istikhara', 'decision'])
+      );
       allow create, delete: if false;
+
+      // Important Questions: you see the other answers only after giving yours.
+      match /answers/{uid} {
+        allow read: if participant() && (request.auth.uid == uid
+          || exists(/databases/$(database)/documents/matches/$(pair)/answers/$(request.auth.uid)));
+        allow create, update: if participant() && open() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['answers', 'updatedAt'])
+          && request.resource.data.answers is map
+          && request.resource.data.answers.size() <= 40;
+        allow delete: if false;
+      }
 
       match /messages/{id} {
         allow read: if participant();

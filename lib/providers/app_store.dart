@@ -9,6 +9,7 @@ import '../data/option_lists.dart';
 import '../models/chat_message.dart';
 import '../models/filters.dart';
 import '../models/meeting.dart';
+import '../models/nikah_journey.dart';
 import '../models/match_profile.dart';
 import '../models/notification_item.dart';
 import '../models/profile_report.dart';
@@ -124,6 +125,8 @@ class AppStore extends ChangeNotifier {
   int get decisionsPerDay => 10;
   int get pendingLimit => 15;
   bool get isPremium => false;
+  bool get requireIdProof => true;
+  bool get graduatesOnly => true;
   DateTime? get premiumUntil => null;
 
   /// Grants nothing locally: entitlements come from the server only.
@@ -135,6 +138,41 @@ class AppStore extends ChangeNotifier {
   }) async {}
 
   Backend? get backend => null;
+
+  // ─── Privacy ──────────────────────────────────────────────────────────────
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) {
+    updateProfile((WardProfile p) => p.copyWith(
+          photoPrivacy: photoPrivacy,
+          showCaste: showCaste,
+          allowFamilyShare: allowFamilyShare,
+        ));
+  }
+
+  // ─── Nikah Journey ────────────────────────────────────────────────────────
+  JourneyStep journeyStep(String matchId) =>
+      JourneyStep.values.asNameMap()[_prefs.getString('bk_journey_$matchId')] ??
+      JourneyStep.talking;
+
+  /// The other person's step, once they have set one.
+  JourneyStep? theirJourneyStep(String matchId) => null;
+
+  void setJourneyStep(String matchId, JourneyStep step) {
+    unawaited(_prefs.setString('bk_journey_$matchId', step.name));
+    notifyListeners();
+  }
+
+  Future<Map<String, String>> myAnswers(String matchId) async {
+    final String? raw = _prefs.getString('bk_answers_$matchId');
+    if (raw == null) return <String, String>{};
+    return (jsonDecode(raw) as Map<String, dynamic>).cast<String, String>();
+  }
+
+  /// Null until both sides have answered. Demo builds have nobody to answer.
+  Future<Map<String, String>?> theirAnswers(String matchId) async => null;
+
+  Future<void> saveAnswers(String matchId, Map<String, String> answers) async {
+    await _prefs.setString('bk_answers_$matchId', jsonEncode(answers));
+  }
 
   final SharedPreferences _prefs;
   final List<Timer> _timers = <Timer>[];
@@ -750,6 +788,7 @@ class AppStore extends ChangeNotifier {
     'education': f.education,
     'profession': f.profession,
     'location': f.location,
+    'sect': f.sect,
     'contactSharing': f.contactSharing,
     'cities': f.cities,
     'waliVerifiedOnly': f.waliVerifiedOnly,
@@ -768,6 +807,7 @@ class AppStore extends ChangeNotifier {
         education: json['education'] as String? ?? MatchFilters.anyValue,
         profession: json['profession'] as String? ?? MatchFilters.anyValue,
         location: json['location'] as String? ?? MatchFilters.anyValue,
+        sect: json['sect'] as String? ?? MatchFilters.anyValue,
         contactSharing:
             json['contactSharing'] as String? ?? MatchFilters.manualApproval,
         cities: (json['cities'] as List?)?.cast<String>() ?? const <String>[],
@@ -829,8 +869,7 @@ class AppStore extends ChangeNotifier {
       ),
       ChatMessage(
         id: _nextId('msg'),
-        text: 'Chaperone: This conversation is supervised by both guardians '
-            'in line with platform policy and Quran 4:34 etiquette.',
+        text: 'Chaperone: This sample conversation shows how a guardian note appears.',
         time: _fmtTime(base.subtract(const Duration(minutes: 5))),
         createdAt: base.subtract(const Duration(minutes: 5)),
         sender: MessageSender.chaperone,

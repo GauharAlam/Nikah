@@ -124,6 +124,22 @@ class FakeBackend implements Backend {
   @override
   Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
   @override
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+      _record('privacy:$photoPrivacy');
+  @override
+  Future<void> touchActive() => _record('touchActive');
+  final Map<String, Map<String, String>> answers = <String, Map<String, String>>{};
+  @override
+  Future<void> setJourneyStep(String pairId, String uid, String step) => _record('journey:$step');
+  @override
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> a) async {
+    answers[uid] = a;
+    await _record('answers');
+  }
+
+  @override
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid) async => answers[uid];
+  @override
   Stream<List<NotificationItem>> watchNotifications(String uid) => notifications.stream;
   @override
   Future<void> markNotificationRead(String uid, String id) => _record('notified:$id');

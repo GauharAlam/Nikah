@@ -26,6 +26,7 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 60),
         children: <Widget>[
+          if (AppConfig.isDemo) ...<Widget>[
           const SectionLabel('Notifications'),
           const SizedBox(height: 10),
           AppCard(
@@ -49,6 +50,7 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+          ],
           const SizedBox(height: 22),
           const SectionLabel('Privacy & modesty'),
           const SizedBox(height: 10),
@@ -64,14 +66,40 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 20),
                 SwitchTile(
+                  key: const Key('photos_after_match_setting'),
+                  icon: Icons.visibility_off_outlined,
+                  title: 'Show my photos only after we match',
+                  subtitle: 'Others see your details, but not your face',
+                  value: store.profile?.photoPrivacy == 'matches',
+                  onChanged: (bool v) =>
+                      store.updatePrivacy(photoPrivacy: v ? 'matches' : 'everyone'),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  icon: Icons.groups_outlined,
+                  title: 'Show my caste',
+                  subtitle: 'Turn off to keep it private',
+                  value: store.profile?.showCaste ?? true,
+                  onChanged: (bool v) => store.updatePrivacy(showCaste: v),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  icon: Icons.share_outlined,
+                  title: 'Allow sharing with families',
+                  subtitle: 'A summary with no photo or number',
+                  value: store.profile?.allowFamilyShare ?? true,
+                  onChanged: (bool v) => store.updatePrivacy(allowFamilyShare: v),
+                ),
+                if (AppConfig.isDemo) const Divider(height: 20),
+                if (AppConfig.isDemo) SwitchTile(
                   icon: Icons.blur_on_rounded,
                   title: 'Modesty blur on photos',
                   subtitle: 'Soft blur until mutual approval',
                   value: store.privacy('blurPhotos'),
                   onChanged: (bool v) => store.togglePrivacy('blurPhotos', v),
                 ),
-                const Divider(height: 20),
-                SwitchTile(
+                if (AppConfig.isDemo) const Divider(height: 20),
+                if (AppConfig.isDemo) SwitchTile(
                   icon: Icons.done_all_rounded,
                   title: 'Read receipts for matches',
                   subtitle: 'Show when you have read a message',
@@ -102,6 +130,13 @@ class SettingsScreen extends StatelessWidget {
           ],
           const SizedBox(height: 22),
           const SectionLabel('Account'),
+          const SizedBox(height: 10),
+          SettingsTile(
+            icon: Icons.shield_outlined,
+            title: 'Safety Centre',
+            subtitle: 'Scams to watch for and how to report',
+            onTap: () => context.push(AppRoutes.safety),
+          ),
           const SizedBox(height: 10),
           SettingsTile(
             icon: Icons.edit_outlined,

@@ -18,9 +18,35 @@ class OptionLists {
   ];
 
   static const String beyondCaste = 'Beyond Caste';
+  static const String noCaste = 'Prefer not to say';
+
+  static const List<String> sects = <String>[
+    'Sunni',
+    'Shia',
+    'Ahl-e-Hadith',
+    'Just Muslim',
+    'Prefer not to say',
+  ];
+
+  static const List<String> children = <String>[
+    'No children',
+    'Yes, living with me',
+    'Yes, not living with me',
+  ];
+
+  static const List<String> reportReasons = <String>[
+    'Asked for money',
+    'Pushed investment or crypto',
+    'Asked to leave the app quickly',
+    'Fake profile',
+    'Already married',
+    'Inappropriate photos or messages',
+    'Harassment',
+  ];
 
   static const List<String> castes = <String>[
     beyondCaste,
+    noCaste,
     'Syed',
     'Shaikh',
     'Pathan',

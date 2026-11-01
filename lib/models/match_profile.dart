@@ -43,6 +43,15 @@ class MatchProfile {
   final List<String> photos;
   final bool isVerified;
 
+  /// Photos held back until a match. Set by the server.
+  final bool photosHidden;
+
+  /// Documents a reviewer approved.
+  final List<String> verifiedDocs;
+  final int? activeDaysAgo;
+  final String children;
+  final bool allowFamilyShare;
+
   const MatchProfile({
     required this.id,
     required this.name,
@@ -77,6 +86,11 @@ class MatchProfile {
     this.professionField = '',
     this.photos = const <String>[],
     this.isVerified = false,
+    this.photosHidden = false,
+    this.verifiedDocs = const <String>[],
+    this.activeDaysAgo,
+    this.children = '',
+    this.allowFamilyShare = true,
   });
 
   /// Shown while a real profile is loading or after it became unavailable.
@@ -117,11 +131,16 @@ class MatchProfile {
       faithTags: const <String>[],
       marriageQuote: c['aboutMe'] as String? ?? '',
       aboutMe: c['aboutMe'] as String? ?? '',
-      sect: '',
+      photosHidden: c['photosHidden'] as bool? ?? false,
+      verifiedDocs: (c['verifiedDocs'] as List?)?.cast<String>() ?? const <String>[],
+      activeDaysAgo: (c['activeDaysAgo'] as num?)?.toInt(),
+      children: c['children'] as String? ?? '',
+      allowFamilyShare: c['allowFamilyShare'] as bool? ?? true,
+      sect: c['sect'] as String? ?? '',
       height: c['height'] as String? ?? '',
       education: c['education'] as String? ?? '',
       relocation: '',
-      religiousPractices: const <String>[],
+      religiousPractices: (c['practices'] as List?)?.cast<String>() ?? const <String>[],
       waliName: '',
       waliRelation: '',
       maritalStatus: c['maritalStatus'] as String? ?? '',

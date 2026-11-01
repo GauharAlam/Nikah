@@ -34,6 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late WardProfile _d;
   late int _step;
   bool _busy = false;
+  String? _error;
   late final TextEditingController _name;
   late final TextEditingController _phone;
   late final TextEditingController _company;
@@ -56,7 +57,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _set(WardProfile next) => setState(() => _d = next);
+  void _set(WardProfile next) => setState(() {
+        _d = next;
+        _error = null;
+      });
 
   WardProfile _withTyped() => _d.copyWith(
         displayName: _name.text.trim(),
@@ -67,18 +71,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   /// What stops the current step being completed, if anything.
   String? _problem(WardProfile d) {
     switch (_step) {
+      case 1:
+        if (d.managedBy == 'family' && !d.candidateConsent) {
+          return 'Confirm that the person has agreed to this profile.';
+        }
       case 2:
         if (d.displayName.length < 2) return 'Enter your full name.';
         if (!d.hasGender) return 'Select your gender.';
         if (d.maritalStatus.isEmpty) return 'Select your marital status.';
         if (d.marriageReadiness.isEmpty) return 'Select your marriage readiness.';
+        if (d.maritalStatus != OptionLists.maritalStatus.first && d.children.isEmpty) {
+          return 'Tell us about children.';
+        }
       case 3:
         if (d.city.isEmpty) return 'Choose your home city.';
         if (!d.workSameAsHome && d.workCity.isEmpty) return 'Choose your current city.';
       case 4:
         if (d.dateOfBirth == null) return 'Select your date of birth.';
         if ((d.age ?? 0) < 18) return 'You must be at least 18.';
-        if (d.caste.isEmpty) return 'Select your caste.';
         if (d.height.isEmpty) return 'Select your height.';
         final int digits = d.phone.length;
         if (d.phoneCode == '+91' ? digits != 10 : digits < 7 || digits > 13) {
@@ -87,12 +97,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 5:
         if (d.almaMaters.isEmpty) return 'Select your alma mater.';
         if (d.qualification.isEmpty) return 'Select your qualification.';
-        if (OptionLists.qualifications[d.qualification] == false) {
+        if (context.read<AppStore>().graduatesOnly &&
+            OptionLists.qualifications[d.qualification] == false) {
           return 'This community is for graduates and degree students.';
         }
         if (d.profession.isEmpty) return 'Select your profession.';
       case 6:
         if (d.photos.isEmpty) return 'Add at least one photo.';
+      case 7:
+        final AppStore store = context.read<AppStore>();
+        final VerificationDoc id = store.verificationDocs
+            .firstWhere((VerificationDoc x) => x.id == 'name-proof');
+        if (store.requireIdProof &&
+            (id.status == VerificationDocStatus.missing ||
+                id.status == VerificationDocStatus.rejected)) {
+          return 'Upload your ID to submit your profile.';
+        }
+        if (!d.intentConfirmed) return 'Confirm that you are here for marriage.';
+        if (!d.dataConsent) return 'Agree to how your details are used.';
     }
     return null;
   }
@@ -101,10 +123,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_busy) return;
     final WardProfile typed = _withTyped();
     final String? problem = _problem(typed);
-    if (problem != null) {
-      showAppSnack(context, problem);
-      return;
-    }
+    setState(() => _error = problem);
+    if (problem != null) return;
     setState(() => _busy = true);
     final AppStore store = context.read<AppStore>();
     try {
@@ -134,6 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     FocusScope.of(context).unfocus();
     setState(() {
       _d = _withTyped();
+      _error = null;
       _step--;
     });
   }
@@ -299,6 +320,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: <Widget>[
         option('self', Icons.person_outline_rounded, 'Myself', 'I am creating this profile for myself'),
         option('family', Icons.people_outline_rounded, 'A family Member', 'I am helping a family member'),
+        if (_d.managedBy == 'family')
+          CheckboxListTile(
+            key: const Key('candidate_consent'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('The person this profile is for has agreed to it and is 18 or older.'),
+            value: _d.candidateConsent,
+            onChanged: (bool? v) => _set(_d.copyWith(candidateConsent: v ?? false)),
+          ),
       ],
     );
   }
@@ -347,6 +376,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onTap: () => _choose('Marriage readiness', OptionLists.marriageReadiness,
               (String v) => _set(_d.copyWith(marriageReadiness: v))),
         ),
+        if (_d.maritalStatus.isNotEmpty &&
+            _d.maritalStatus != OptionLists.maritalStatus.first) ...<Widget>[
+          _label('Children', required: true),
+          _picker(
+            key: const Key('pick_children'),
+            icon: Icons.child_care_rounded,
+            value: _d.children,
+            hint: 'Select',
+            onTap: () => _choose('Children', OptionLists.children,
+                (String v) => _set(_d.copyWith(children: v))),
+          ),
+        ],
       ],
     );
   }
@@ -412,7 +453,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           hint: 'Select your date of birth',
           onTap: _pickDob,
         ),
-        _label('Caste', required: true),
+        _label('Caste (optional)'),
         _picker(
           key: const Key('pick_caste'),
           icon: Icons.people_outline_rounded,
@@ -420,6 +461,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           hint: 'Select caste',
           onTap: () => _choose('Caste', OptionLists.castes,
               (String v) => _set(_d.copyWith(caste: v))),
+        ),
+        if (_d.caste.isNotEmpty && _d.caste != OptionLists.noCaste)
+          SwitchListTile(
+            key: const Key('show_caste'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show caste on my profile'),
+            value: _d.showCaste,
+            onChanged: (bool v) => _set(_d.copyWith(showCaste: v)),
+          ),
+        _label('Sect (optional)'),
+        _picker(
+          key: const Key('pick_sect'),
+          icon: Icons.mosque_outlined,
+          value: _d.sect,
+          hint: 'Select sect',
+          onTap: () => _choose('Sect', OptionLists.sects,
+              (String v) => _set(_d.copyWith(sect: v))),
         ),
         _label('Partner caste'),
         _picker(
@@ -563,6 +621,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _PhotoTile(stored: p, onRemove: () => _removePhoto(p)),
             ],
           ),
+        SwitchListTile(
+          key: const Key('photos_after_match'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Show my photos only after we match'),
+          subtitle: const Text('Others see your details, but not your face, until you match.'),
+          value: _d.photoPrivacy == 'matches',
+          onChanged: (bool v) =>
+              _set(_d.copyWith(photoPrivacy: v ? 'matches' : 'everyone')),
+        ),
         const SizedBox(height: 18),
         Text('PLEASE AVOID', style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.slate400)),
         const SizedBox(height: 10),
@@ -604,12 +671,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         row('Education', _d.qualification),
         row('Profession', <String>[_d.profession, _d.company].where((String s) => s.isNotEmpty).join(', ')),
         row('Photos', '${_d.photos.length}'),
+        ListTile(
+          key: const Key('add_deen'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Deen and values (optional)'),
+          subtitle: const Text('Prayer, Quran and lifestyle'),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () async {
+            final AppStore s = context.read<AppStore>();
+            await s.saveDraft(_withTyped());
+            if (!mounted) return;
+            await context.push(AppRoutes.practice);
+            if (mounted && s.profile != null) _set(s.profile!);
+          },
+        ),
         const SizedBox(height: 14),
-        Text('Verification (optional now)',
+        Text('Verification',
             style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900)),
         const SizedBox(height: 4),
         Text(
-          'Upload documents now or later from your profile to earn the verified badge.',
+          store.requireIdProof
+              ? 'Your ID is needed to go live. Our team reviews it and it is never shown to members.'
+              : 'Upload documents to earn the verified badge.',
           style: AppTheme.bodySmall,
         ),
         for (final VerificationDoc doc in store.verificationDocs)
@@ -620,6 +703,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push(AppRoutes.verifyProfile),
           ),
+        CheckboxListTile(
+          key: const Key('confirm_intent'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('I am here for marriage, and my details are true.'),
+          value: _d.intentConfirmed,
+          onChanged: (bool? v) => _set(_d.copyWith(intentConfirmed: v ?? false)),
+        ),
+        CheckboxListTile(
+          key: const Key('confirm_consent'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'I agree that my details, photos and documents are used for review and matching, '
+            'as described in the Privacy Policy.',
+          ),
+          value: _d.dataConsent,
+          onChanged: (bool? v) => _set(_d.copyWith(dataConsent: v ?? false)),
+        ),
       ],
     );
   }
@@ -641,18 +741,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: title,
       subtitle: subtitle,
       onBack: _step > 1 ? _back : null,
-      bottom: PrimaryButton(
-        key: const Key('onboarding_next'),
-        label: _busy
-            ? 'Please wait…'
-            : needsPhotos
-                ? 'Add photos'
-                : _step == OnboardingShell.totalSteps
-                    ? 'Submit for review'
-                    : 'Next',
-        icon: needsPhotos ? Icons.add_photo_alternate_outlined : Icons.arrow_forward_rounded,
-        progress: _busy,
-        onPressed: _busy ? null : (needsPhotos ? _pickPhotos : _next),
+      bottom: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                _error!,
+                key: const Key('onboarding_error'),
+                textAlign: TextAlign.center,
+                style: AppTheme.ts(13, FontWeight.w600, color: AppTheme.danger),
+              ),
+            ),
+          PrimaryButton(
+            key: const Key('onboarding_next'),
+            label: _busy
+                ? 'Please wait…'
+                : needsPhotos
+                    ? 'Add photos'
+                    : _step == OnboardingShell.totalSteps
+                        ? 'Submit for review'
+                        : 'Next',
+            icon: needsPhotos ? Icons.add_photo_alternate_outlined : Icons.arrow_forward_rounded,
+            progress: _busy,
+            onPressed: _busy ? null : (needsPhotos ? _pickPhotos : _next),
+          ),
+        ],
       ),
       child: body,
     );

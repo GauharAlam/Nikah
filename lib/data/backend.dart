@@ -83,6 +83,8 @@ class MatchThread {
     this.lastMessage = '',
     this.lastMessageAt,
     this.unread = 0,
+    this.myStep,
+    this.theirStep,
   });
 
   final String pairId;
@@ -91,6 +93,8 @@ class MatchThread {
   final String lastMessage;
   final DateTime? lastMessageAt;
   final int unread;
+  final String? myStep;
+  final String? theirStep;
 }
 
 class ContactRequestRecord {
@@ -161,6 +165,13 @@ abstract class Backend {
   Future<void> unmatch(String other);
   Future<void> blockProfile(String target);
   Future<void> reportProfile(String target, String reason);
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
+  Future<void> touchActive();
+
+  // Nikah Journey
+  Future<void> setJourneyStep(String pairId, String uid, String step);
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> answers);
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid);
 
   // Notifications
   Stream<List<NotificationItem>> watchNotifications(String uid);

@@ -115,4 +115,53 @@ test('contact needs the recipient, and a repeat request is not charged twice', a
   assert.equal((await db.doc(`contactShares/${pair}`).get()).data()?.phones.h, '+911111111111');
 });
 
+test('a declined contact request gives the credit back', async () => {
+  const k = await user('k', { approved: true });
+  const g = await user('g', { approved: true });
+  const month = new Date().toISOString().slice(0, 7);
+  await db.doc('accounts/k').set({ creditMonth: month, creditsSpent: 4 }, { merge: true });
+  await k('requestContact', { to: 'g' });
+  assert.equal((await db.doc('accounts/k').get()).data()?.creditsSpent, 5);
+  await g('respondContact', { from: 'k', accept: false });
+  assert.equal((await db.doc('accounts/k').get()).data()?.creditsSpent, 4);
+});
+
+test('private photos stay hidden from a viewer who is not matched', async () => {
+  await db.doc('profiles/p1').set(profile('p1', 'female', { photos: ['https://x/p.jpg'], photoPrivacy: 'matches', showCaste: false }));
+  const k = await user('k', { approved: true });
+  const [card] = (await k('getProfiles', { ids: ['p1'] })).profiles;
+  assert.deepEqual(card.photos, []);
+  assert.equal(card.photosHidden, true);
+  assert.equal(card.caste, '');
+});
+
+test('three different reporters hold a profile; one reporter repeating does not', async () => {
+  await db.doc('profiles/bad').set(profile('bad', 'female'));
+  const r1 = await user('r1', {});
+  await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
+  await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
+  await r1('reportProfile', { target: 'bad', reason: 'Fake profile' });
+  assert.equal((await db.doc('profiles/bad').get()).data()?.live, true);
+  const r2 = await user('r2', {});
+  const r3 = await user('r3', {});
+  await r2('reportProfile', { target: 'bad', reason: 'Fake profile' });
+  await r3('reportProfile', { target: 'bad', reason: 'Fake profile' });
+  const held = (await db.doc('profiles/bad').get()).data();
+  assert.equal(held?.live, false);
+  assert.equal(held?.held, true);
+});
+
+test('submission needs an ID document', async () => {
+  const u = await user('sub', {});
+  await db.doc('drafts/sub').set({
+    fullName: 'S', gender: 'female', maritalStatus: 'Never married', marriageReadiness: 'Just exploring',
+    homeCity: 'Delhi', height: `5'4"`, phone: '+911', almaMaters: ['AMU'], qualification: 'MBA',
+    qualificationGraduate: true, profession: 'Doctor', dateOfBirth: Date.UTC(1998, 0, 1), photos: ['p'],
+    intentConfirmed: true, dataConsent: true,
+  });
+  assert.equal(await code(u('submitProfile')), 'functions/failed-precondition');
+  await db.doc('accounts/sub/documents/name-proof').set({ status: 'pending' });
+  assert.equal((await u('submitProfile')).stage, 'submitted');
+});
+
 test.after(async () => { /* client apps close with the process */ void deleteApp; });

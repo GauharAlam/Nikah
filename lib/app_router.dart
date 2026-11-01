@@ -11,6 +11,7 @@ import 'screens/phone_signin_screen.dart';
 import 'screens/plans_screen.dart';
 import 'screens/review_queue_screen.dart';
 import 'screens/review_status_screen.dart';
+import 'screens/safety_center_screen.dart';
 import 'screens/start_profile_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/activities_screen.dart';
@@ -21,6 +22,7 @@ import 'screens/edit_profile_screen.dart';
 import 'screens/filters_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/islamic_practice_screen.dart';
+import 'screens/journey_screen.dart';
 import 'screens/landing_front_screen.dart';
 import 'screens/match_detail_screen.dart';
 import 'screens/matches_hub_screen.dart';
@@ -61,6 +63,7 @@ class AppRoutes {
   static const String verifyProfile = '/profile/verify';
   static const String practice = '/profile/practice';
   static const String plans = '/plans';
+  static const String safety = '/safety';
   static const String contactDetails = '/profile/contact';
   static const String reviewQueue = '/admin/review';
   static const String waliHub = '/wali/hub';
@@ -69,6 +72,7 @@ class AppRoutes {
 
   static String matchDetail(String id) => '/match/$id';
   static String chat(String id) => '/chat/$id';
+  static String journey(String id) => '/journey/$id';
   static String schedule(String id) => '/schedule/$id';
   static String photo(String id) => '/photo/$id';
 }
@@ -95,8 +99,7 @@ String? guardRoute(AppStore store, String location) {
     if (entry) return AppRoutes.homeDiscovery;
     final bool guardianRoute =
         location.startsWith('/wali') ||
-        location.startsWith('/schedule') ||
-        at(AppRoutes.practice);
+        location.startsWith('/schedule');
     if (guardianRoute && !AppConfig.guardianFeatures) {
       return AppRoutes.homeDiscovery;
     }
@@ -107,7 +110,9 @@ String? guardRoute(AppStore store, String location) {
   }
 
   // Signed in, not approved.
-  if (at(AppRoutes.verifyProfile)) return null;
+  if (at(AppRoutes.verifyProfile) || at(AppRoutes.practice) || at(AppRoutes.safety)) {
+    return null;
+  }
   return switch (store.reviewStage) {
     ReviewStage.submitted =>
       at(AppRoutes.reviewStatus) ? null : AppRoutes.reviewStatus,
@@ -152,6 +157,12 @@ GoRouter buildRouter(AppStore store) {
       GoRoute(
         path: AppRoutes.contactDetails,
         builder: (_, _) => const ContactDetailsScreen(),
+      ),
+      GoRoute(path: AppRoutes.safety, builder: (_, _) => const SafetyCenterScreen()),
+      GoRoute(
+        path: '/journey/:id',
+        builder: (_, GoRouterState state) =>
+            JourneyScreen(matchId: state.pathParameters['id']!),
       ),
       GoRoute(path: AppRoutes.plans, builder: (_, _) => const PlansScreen()),
       GoRoute(
