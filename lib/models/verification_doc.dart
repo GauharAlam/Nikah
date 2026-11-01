@@ -1,24 +1,47 @@
 import 'dart:convert';
 
-enum VerificationDocStatus { missing, pending, approved, rejected }
+enum VerificationDocStatus {
+  missing,
+  pending,
+  underReview,
+  approved,
+  rejected,
+  resubmissionRequired;
+
+  static VerificationDocStatus fromWire(Object? value) => switch (value) {
+        'pending' => pending,
+        'under_review' => underReview,
+        'approved' => approved,
+        'rejected' => rejected,
+        'resubmission_required' => resubmissionRequired,
+        _ => missing,
+      };
+
+  bool get needsUpload => this == missing || this == rejected || this == resubmissionRequired;
+  bool get isWaiting => this == pending || this == underReview;
+}
 
 extension VerificationDocStatusX on VerificationDocStatus {
   String get label => switch (this) {
     VerificationDocStatus.missing => 'Not started',
-    VerificationDocStatus.pending => 'Under review',
+    VerificationDocStatus.pending => 'Waiting for review',
+    VerificationDocStatus.underReview => 'Under review',
     VerificationDocStatus.approved => 'Approved',
-    VerificationDocStatus.rejected => 'Needs attention',
+    VerificationDocStatus.rejected => 'Not accepted',
+    VerificationDocStatus.resubmissionRequired => 'New upload needed',
   };
 
   String get detail => switch (this) {
     VerificationDocStatus.missing => 'Tap to upload this document.',
-    VerificationDocStatus.pending => 'Our team is reviewing your upload.',
-    VerificationDocStatus.approved => 'Verified by the Barkat team.',
-    VerificationDocStatus.rejected => 'Tap to upload a new document.',
+    VerificationDocStatus.pending => 'Your upload is in the queue.',
+    VerificationDocStatus.underReview => 'Our team is reviewing your upload.',
+    VerificationDocStatus.approved => 'We reviewed this document.',
+    VerificationDocStatus.rejected => 'Tap to upload a different document.',
+    VerificationDocStatus.resubmissionRequired => 'Tap to upload it again.',
   };
 }
 
-/// A single document in the Barkat Verified badge flow (name proof,
+/// A single document in the verified badge flow (name proof,
 /// education proof, photo proof…).
 class VerificationDoc {
   final String id;

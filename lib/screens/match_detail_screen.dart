@@ -1,11 +1,17 @@
 // Match detail — Barkat-style profile sheet: photo carousel with quote
 // overlay, "TAKE THE NEXT STEP" stacked context actions, then the biodata.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../data/backend.dart';
+import '../data/option_lists.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -61,13 +67,32 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     }
   }
 
-  static const List<String> _reportReasons = <String>[
-    'Fake profile',
-    'Asked for money',
-    'Inappropriate photos or messages',
-    'Harassment',
-    'Already married',
-  ];
+  Future<void> _shareToCircle(MatchProfile match) async {
+    try {
+      await context.read<AppStore>().shareWithFamily(match.id);
+      if (mounted) showSuccessSnack(context, 'Shared with your Family Circle.');
+    } on BackendException catch (e) {
+      if (mounted) showAppSnack(context, e.message);
+    }
+  }
+
+  /// A short summary with no photo or contact, for the member's own family.
+  void _shareWithFamily(MatchProfile match) {
+    if (!match.allowFamilyShare) {
+      showAppSnack(context, 'This member has turned off sharing.');
+      return;
+    }
+    final String summary = <String>[
+      '${match.firstName}, ${match.age}',
+      if (match.education.isNotEmpty) match.education,
+      if (match.university.isNotEmpty) match.university,
+      if (match.profession.isNotEmpty) match.profession,
+      if (match.location.isNotEmpty) match.location,
+      if (match.maritalStatus.isNotEmpty) match.maritalStatus,
+    ].join('\n');
+    unawaited(SharePlus.instance.share(ShareParams(text: summary)));
+  }
+
 
   Future<void> _showSafetyMenu(MatchProfile match) async {
     final String? action = await showModalBottomSheet<String>(
@@ -104,7 +129,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            for (final String r in _reportReasons)
+            for (final String r in OptionLists.reportReasons)
               ListTile(
                 title: Text(r),
                 onTap: () => Navigator.of(ctx).pop(r),
@@ -117,7 +142,9 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     context.read<AppStore>().reportProfile(match.id, reason);
     showAppSnack(
       context,
-      'Report saved on this device. It is not sent to a reviewer yet.',
+      AppConfig.isDemo
+          ? 'Demo build: the report stays on this device.'
+          : 'Report sent. Our team will review it.',
       icon: Icons.flag_outlined,
     );
   }
@@ -206,18 +233,20 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         title: Text(
-          'Profile details',
+          tr('Profile details'),
           style: _t(16.5, FontWeight.w800, AppTheme.slate900),
         ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Share profile',
-            onPressed: () => showAppSnack(
-              context,
-              'Sharing is not available yet.',
-              icon: Icons.ios_share_rounded,
-            ),
+            onPressed: () => _shareWithFamily(match),
             icon: const Icon(Icons.ios_share_rounded, size: 21),
+          ),
+          IconButton(
+            key: const Key('share_family_circle'),
+            tooltip: 'Share with Family Circle',
+            onPressed: () => _shareToCircle(match),
+            icon: const Icon(Icons.groups_outlined, size: 21),
           ),
           IconButton(
             key: const Key('detail_more'),
@@ -263,21 +292,33 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   _ContactCard(match: match),
                   const SizedBox(height: 18),
                 ],
-                const SectionHeader(
-                  'Biodata Snapshot',
+                if (match.photosHidden) ...<Widget>[
+                  const InfoBanner(
+                    icon: Icons.visibility_off_outlined,
+                    variant: InfoVariant.info,
+                    text: 'This member shares photos after you match.',
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                _WhatWasChecked(match: match),
+                const SizedBox(height: 18),
+                SectionHeader(
+                  tr('Biodata Snapshot'),
                   subtitle: 'Key details',
                 ),
                 const SizedBox(height: 12),
                 _demGrid(<(String, String)>[
                   ('Age', '${match.age} years'),
-                  ('Height', match.height),
+                  (tr('Height'), match.height),
                   ('Education', match.education),
                   ('University', match.university),
                   ('Marital Status', match.maritalStatus),
                   ('Location', match.location),
-                  ('Profession', match.employer),
+                  (tr('Profession'), match.employer),
                   ('Sect', match.sect),
-                ]),
+                  ('Caste', match.caste),
+                  (tr('Children'), match.children),
+                ].where(((String, String) c) => c.$2.isNotEmpty).toList()),
                 const SizedBox(height: 22),
                 if (match.religiousPractices.isNotEmpty) ...<Widget>[
                   const SectionLabel('Faith Practice'),
@@ -285,10 +326,12 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   _PracticeCard(practices: match.religiousPractices),
                   const SizedBox(height: 22),
                 ],
-                const SectionHeader('About Me'),
-                const SizedBox(height: 8),
-                Text(match.aboutMe, style: AppTheme.bodyLarge),
-                const SizedBox(height: 22),
+                if (match.aboutMe.isNotEmpty) ...<Widget>[
+                  SectionHeader(tr('About Me')),
+                  const SizedBox(height: 8),
+                  Text(match.aboutMe, style: AppTheme.bodyLarge),
+                  const SizedBox(height: 22),
+                ],
                 if (match.languages.isNotEmpty) const SectionHeader('Languages & Interests'),
                 const SizedBox(height: 10),
                 Wrap(
@@ -453,6 +496,13 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               ),
             ],
           ),
+          if (match.activeDaysAgo != null) ...<Widget>[
+            const SizedBox(height: 5),
+            Text(
+              match.activeDaysAgo == 0 ? 'Active today' : 'Active ${match.activeDaysAgo}d ago',
+              style: _t(12, FontWeight.w600, AppTheme.slate500),
+            ),
+          ],
           const SizedBox(height: 7),
           Row(
             children: <Widget>[
@@ -506,8 +556,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('detail_accept'),
-          title: 'Accept Request',
-          subtitle: 'They sent you an interest',
+          title: tr('Accept Request'),
+          subtitle: tr('They sent you an interest'),
           icon: Icons.check_rounded,
           onTap: () {
             if (store.acceptProposal(match.id)) {
@@ -520,7 +570,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         ),
         const SizedBox(height: 10),
         _StepButton(
-          title: 'Send Message',
+          title: tr('Send Message'),
           subtitle: 'Opens once you accept the proposal',
           icon: Icons.chat_bubble_outline_rounded,
           ghost: true,
@@ -551,10 +601,19 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('detail_chat'),
-          title: 'Send Message',
+          title: tr('Send Message'),
           subtitle: 'Chat with ${match.firstName}',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
+        ),
+        const SizedBox(height: 10),
+        _StepButton(
+          key: const Key('detail_journey'),
+          title: tr('Nikah Journey'),
+          subtitle: tr('Important Questions and next steps'),
+          icon: Icons.route_outlined,
+          ghost: true,
+          onTap: () => context.push(AppRoutes.journey(match.id)),
         ),
         const SizedBox(height: 10),
         PositiveOutlinedButton(
@@ -608,7 +667,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('detail_chat'),
-          title: 'Send Message',
+          title: tr('Send Message'),
           subtitle: 'Chaperoned chat with ${match.firstName}',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
@@ -651,7 +710,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     return <Widget>[
       _StepButton(
         key: const Key('detail_intro'),
-        title: 'Send Proposal',
+        title: tr('Send Proposal'),
         subtitle: 'Share your interest',
         icon: Icons.favorite_rounded,
         onTap: () => _sendProposal(match),
@@ -1013,7 +1072,64 @@ class _CoverPill extends StatelessWidget {
   }
 }
 
-/// Revealed contact card shown once both families approve.
+/// Says exactly what a reviewer checked, and what nobody checks.
+class _WhatWasChecked extends StatelessWidget {
+  const _WhatWasChecked({required this.match});
+
+  final MatchProfile match;
+
+  static const List<(String, String)> _docs = <(String, String)>[
+    ('name-proof', 'ID'),
+    ('education-proof', 'Education'),
+    ('employment-proof', 'Employment'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      key: const Key('what_was_checked'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(tr('What we checked'), style: _t(14, FontWeight.w800, AppTheme.slate900)),
+          const SizedBox(height: 8),
+          for (final (String id, String label) in _docs)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    match.verifiedDocs.contains(id)
+                        ? Icons.check_circle_rounded
+                        : Icons.remove_circle_outline_rounded,
+                    size: 16,
+                    color: match.verifiedDocs.contains(id)
+                        ? AppTheme.success
+                        : AppTheme.slate400,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      match.verifiedDocs.contains(id) ? label : '$label not yet checked',
+                      style: _t(12.5, FontWeight.w600, AppTheme.slate700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 6),
+          Text(
+            'We do not check criminal records, family background or income. '
+            'Please do your own checks.',
+            style: AppTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Revealed contact card shown once both sides agree.
 class _ContactCard extends StatelessWidget {
   const _ContactCard({required this.match});
 

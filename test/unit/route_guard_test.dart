@@ -73,6 +73,17 @@ void main() {
     expect(guardRoute(store, AppRoutes.homeDiscovery), isNull);
   });
 
+  test('someone who joined as family goes to the family view, not the app', () async {
+    backend.auth.add(const AuthUser(uid: 'me'));
+    await settle();
+    backend.account.add(const AccountState(familyOf: 'member1'));
+    await settle();
+    expect(guardRoute(store, AppRoutes.startProfile), AppRoutes.familyView);
+    expect(guardRoute(store, AppRoutes.homeDiscovery), AppRoutes.familyView);
+    expect(guardRoute(store, AppRoutes.chat('a')), AppRoutes.familyView);
+    expect(guardRoute(store, AppRoutes.familyView), isNull);
+  });
+
   test('the review queue needs the reviewer claim', () async {
     await member(ReviewStage.approved);
     expect(guardRoute(store, AppRoutes.reviewQueue), AppRoutes.homeDiscovery);

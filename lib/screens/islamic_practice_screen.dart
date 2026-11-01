@@ -87,6 +87,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
           ),
         );
     showSuccessSnack(context, 'Practice profile saved. MashaAllah!');
+    context.read<AppStore>().submitEdits();
     context.pop();
   }
 

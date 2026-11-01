@@ -1,13 +1,14 @@
 # Setup and release
 
-The app has two modes, chosen at build time.
+The backend is chosen at build time. Release builds always use Firebase, whatever is passed.
 
 | Mode | Command | Data |
 |---|---|---|
-| Demo (default) | `flutter run` | Seeded sample data on the device, with a DEMO banner. The sign-in code is `123456`. |
-| Production | `flutter run --dart-define=BACKEND=firebase` | Firebase only. No sample data, no demo sign-in, no guardian screens. |
+| Demo (debug default) | `flutter run` | Seeded sample data on the device, with a DEMO banner. The sign-in code is `123456`. Compiled out of release builds. |
+| Emulator | `flutter run --dart-define=BACKEND=emulator` | The real app against local Firebase emulators, project `demo-nikah`. Set `EMULATOR_HOST` if not on an Android emulator. |
+| Firebase | `flutter run --dart-define=BACKEND=firebase`, or any release build | Firebase only. No sample data, no demo sign-in, no guardian screens. |
 
-A production build without its Firebase files opens a "missing configuration" screen.
+A Firebase build without its config files opens a "missing configuration" screen.
 
 ## 1. Firebase project
 
@@ -44,8 +45,14 @@ Create `config/app` in Firestore. Anything you leave out uses the default.
 
 ```json
 { "limits": { "proposalsPerDay": 5, "decisionsPerDay": 10, "pendingLimit": 15,
-              "monthlyContactCredits": 30, "hideDays": 7, "proposalExpiryDays": 30, "minPhotos": 1 } }
+              "monthlyContactCredits": 30, "hideDays": 7, "proposalExpiryDays": 30, "minPhotos": 1,
+              "requireIdProof": true, "graduatesOnly": true, "staleDays": 45,
+              "reportHoldThreshold": 3, "contactExpiryDays": 14,
+              "freeProfileLimit": 15, "freeProfileWindow": "total",
+              "inviteRewardCredits": 2, "inviteRewardCap": 10 } }
 ```
+
+`freeProfileWindow` can be `total`, `month` or `day`.
 
 5, 10 and 15 were seen in the Barkat app. The others are placeholders for you to decide.
 
@@ -77,6 +84,7 @@ service account also needs Play Developer API access.
 ## 6. Before release
 
 - Replace `support@example.com` and the example URLs: `--dart-define=SUPPORT_EMAIL=… TERMS_URL=… PRIVACY_URL=…`
+- Set `APP_LINK` to the Play Store link. It appears in invites and on every biodata.
 - Choose the final name in `AppBrand`, the platform labels and the app IDs.
 - Add a release signing config. `android/app/build.gradle.kts` still signs with debug keys.
 - Replace the landing artwork and the default launcher icon.

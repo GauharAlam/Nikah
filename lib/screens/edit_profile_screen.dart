@@ -52,7 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     final WardProfile base =
-        context.read<AppStore>().profile ?? WardProfile.demoWard;
+        context.read<AppStore>().profile ?? const WardProfile();
     _name = TextEditingController(text: base.displayName);
     _phone = TextEditingController(text: base.phone);
     _email = TextEditingController(text: base.email);
@@ -113,6 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         );
     showSuccessSnack(context, 'Biodata updated, barakallahu feek.');
+    context.read<AppStore>().submitEdits();
     context.pop();
   }
 

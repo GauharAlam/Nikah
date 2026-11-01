@@ -6,7 +6,21 @@ import '../models/proposal.dart';
 import '../models/verification_doc.dart';
 
 /// Review progress of a member's profile. Owned by the server.
-enum ReviewStage { draft, submitted, approved, rejected }
+enum ReviewStage {
+  draft,
+  submitted,
+  approved,
+  changesRequested,
+  rejected;
+
+  static ReviewStage fromWire(Object? value) => switch (value) {
+        'submitted' => submitted,
+        'approved' => approved,
+        'changes_requested' => changesRequested,
+        'rejected' => rejected,
+        _ => draft,
+      };
+}
 
 class AuthUser {
   const AuthUser({
@@ -29,15 +43,24 @@ class AccountState {
   const AccountState({
     this.stage = ReviewStage.draft,
     this.rejectionReason = '',
+    this.rejectedPhotos = const <String>[],
+    this.editsPending = false,
     this.proposalsSentToday = 0,
     this.decisionsToday = 0,
     this.contactCreditsLeft = 0,
     this.premiumUntil,
     this.plan = '',
+    this.familyOf,
   });
 
   final ReviewStage stage;
   final String rejectionReason;
+
+  /// Photos a reviewer asked the member to replace.
+  final List<String> rejectedPhotos;
+
+  /// Published-profile edits waiting for review.
+  final bool editsPending;
   final int proposalsSentToday;
   final int decisionsToday;
 
@@ -46,6 +69,9 @@ class AccountState {
   final int contactCreditsLeft;
   final DateTime? premiumUntil;
   final String plan;
+
+  /// The member whose circle this account belongs to, if any.
+  final String? familyOf;
 
   bool get isPremium =>
       premiumUntil != null && premiumUntil!.isAfter(DateTime.now());
@@ -58,17 +84,32 @@ class AppLimits {
     this.decisionsPerDay = 10,
     this.pendingLimit = 15,
     this.monthlyContactCredits = 30,
+    this.requireIdProof = true,
+    this.graduatesOnly = true,
   });
 
   final int proposalsPerDay;
   final int decisionsPerDay;
   final int pendingLimit;
   final int monthlyContactCredits;
+  final bool requireIdProof;
+  final bool graduatesOnly;
 }
 
 class IntroductionPage {
-  const IntroductionPage(this.profiles, this.cursor);
+  const IntroductionPage(
+    this.profiles,
+    this.cursor, {
+    this.freeLeft,
+    this.freeLimit = 15,
+    this.limitReached = false,
+  });
   final List<MatchProfile> profiles;
+
+  /// Free views left. Null for premium members.
+  final int? freeLeft;
+  final int freeLimit;
+  final bool limitReached;
 
   /// Null when there is nothing further to load.
   final int? cursor;
@@ -83,6 +124,8 @@ class MatchThread {
     this.lastMessage = '',
     this.lastMessageAt,
     this.unread = 0,
+    this.myStep,
+    this.theirStep,
   });
 
   final String pairId;
@@ -91,6 +134,8 @@ class MatchThread {
   final String lastMessage;
   final DateTime? lastMessageAt;
   final int unread;
+  final String? myStep;
+  final String? theirStep;
 }
 
 class ContactRequestRecord {
@@ -105,11 +150,63 @@ class ContactRequestRecord {
   final String status;
 }
 
+class InviteInfo {
+  const InviteInfo(this.code, this.invited, this.earned);
+  final String code;
+  final int invited;
+  final int earned;
+}
+
+/// A profile summary shared with family. Never holds a photo or contact.
+class FamilyPick {
+  const FamilyPick({
+    required this.id,
+    required this.title,
+    required this.summary,
+    this.opinions = const <String, String>{},
+  });
+
+  final String id;
+  final String title;
+  final String summary;
+
+  /// Guardian uid to opinion.
+  final Map<String, String> opinions;
+}
+
+class FamilyState {
+  const FamilyState({
+    this.guardians = const <String, String>{},
+    this.shortlist = const <FamilyPick>[],
+  });
+
+  /// Guardian uid to display name.
+  final Map<String, String> guardians;
+  final List<FamilyPick> shortlist;
+}
+
+/// What a screen should do about a failure.
+enum FailureKind { offline, notAllowed, notFound, limitReached, recentSignInNeeded, invalid, other }
+
 /// Server failure with text that is safe to show a member.
 class BackendException implements Exception {
   const BackendException(this.message, {this.code = ''});
   final String message;
   final String code;
+
+  FailureKind get kind => kindOf(code);
+
+  /// Maps Firebase error codes to the action a screen should take.
+  static FailureKind kindOf(String code) => switch (code) {
+        'unavailable' || 'network-request-failed' || 'deadline-exceeded' => FailureKind.offline,
+        'permission-denied' || 'unauthenticated' => FailureKind.notAllowed,
+        'not-found' => FailureKind.notFound,
+        'resource-exhausted' || 'too-many-requests' => FailureKind.limitReached,
+        'requires-recent-login' => FailureKind.recentSignInNeeded,
+        'invalid-argument' || 'failed-precondition' => FailureKind.invalid,
+        _ => FailureKind.other,
+      };
+
   @override
   String toString() => message;
 }
@@ -120,8 +217,11 @@ abstract class Backend {
   // Auth
   Stream<AuthUser?> get authChanges;
 
-  /// Sends a code. Resolves to a verification id.
-  Future<String> sendOtp(String e164Phone);
+  /// Sends a code. Resolves to a verification id, or null when the device
+  /// verified the number by itself and no code is needed.
+  Future<String?> sendOtp(String e164Phone);
+
+  /// Signs in, or links the number when already signed in another way.
   Future<void> confirmOtp(String verificationId, String code);
   Future<void> signInWithGoogle();
   Future<void> refreshClaims();
@@ -134,7 +234,7 @@ abstract class Backend {
   Future<Map<String, dynamic>?> loadDraft(String uid);
   Future<void> saveDraft(String uid, Map<String, dynamic> draft);
   Future<void> submitProfile();
-  Future<String> uploadPhoto(String uid, String localPath);
+  Future<String> uploadPhoto(String uid, String localPath, {void Function(double)? onProgress});
   Future<String> photoUrl(String storagePath);
   Future<void> deletePhoto(String storagePath);
 
@@ -161,6 +261,25 @@ abstract class Backend {
   Future<void> unmatch(String other);
   Future<void> blockProfile(String target);
   Future<void> reportProfile(String target, String reason);
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
+  Future<void> touchActive();
+
+  // Invites and edits
+  Future<InviteInfo> getInviteCode();
+  Future<void> submitEdits();
+
+  // Family Circle
+  Stream<FamilyState> watchFamily(String member);
+  Future<String> createFamilyInvite();
+  Future<void> joinFamily(String code, String name);
+  Future<void> removeGuardian(String guardian, {String? member});
+  Future<void> shareWithFamily(String profileId);
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion);
+
+  // Nikah Journey
+  Future<void> setJourneyStep(String pairId, String uid, String step);
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> answers);
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid);
 
   // Notifications
   Stream<List<NotificationItem>> watchNotifications(String uid);
@@ -182,11 +301,23 @@ abstract class Backend {
   // Review tools, reviewer accounts only
   Future<List<Map<String, dynamic>>> listReviewQueue();
   Future<List<String>> documentUrls(String uid, String type);
-  Future<void> reviewProfile(String uid, {required bool approve, String reason});
+
+
+  /// [decision] is `approve`, `changes` or `reject`. [version] is the
+  /// submission the reviewer actually saw.
+  Future<void> reviewProfile(
+    String uid, {
+    required String decision,
+    required int version,
+    String reason,
+    List<String> rejectedPhotos,
+  });
+
+  /// [decision] is `approve`, `reject` or `resubmit`.
   Future<void> reviewDocument(
     String uid,
     String type, {
-    required bool approve,
+    required String decision,
     String reason,
   });
 }

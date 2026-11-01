@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -76,25 +77,26 @@ Future<void> showHowToUseSheet(BuildContext context, AppStore store) {
             ),
             const SizedBox(height: 4),
             Text(
-              'Three ways to take decision on each profile',
+              tr('Three ways to take decision on each profile'),
               textAlign: TextAlign.center,
               style: AppTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            action(Icons.close_rounded, AppTheme.danger, 'Hides the profile',
+            action(Icons.close_rounded, AppTheme.danger, tr('Hides the profile'),
                 ' for few days.', 'Won\'t send notification.'),
-            action(Icons.favorite_rounded, AppTheme.green, 'Shares your interest',
+            action(Icons.favorite_rounded, AppTheme.green, tr('Shares your interest'),
                 ' to start chat.', 'Sends notification.'),
-            action(Icons.call_rounded, AppTheme.goldAccent, 'Requests contact no.',
+            action(Icons.call_rounded, AppTheme.goldAccent, tr('Requests contact no.'),
                 ' to connect.', 'Sends notification.'),
             const SizedBox(height: 6),
-            stat(store.decisionsPerDay, 'Decisions you can take'),
-            stat(store.pendingLimit, 'Profiles in waiting you can have'),
+            stat(store.decisionsPerDay, tr('Decisions you can take')),
+            stat(store.pendingLimit, tr('Profiles in waiting you can have')),
+            stat(store.freeProfileAllowance, tr('Free profiles to view')),
             const SizedBox(height: 16),
             FilledButton(
               key: const Key('how_to_got_it'),
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Got it'),
+              child: Text(tr('Got it')),
             ),
           ],
         ),

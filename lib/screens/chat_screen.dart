@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../services/scam_detector.dart';
 import '../models/chat_message.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -166,6 +167,12 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: <Widget>[
           IconButton(
+            key: const Key('open_journey'),
+            tooltip: 'Nikah Journey',
+            icon: const Icon(Icons.route_outlined, size: 22),
+            onPressed: () => context.push(AppRoutes.journey(widget.matchId)),
+          ),
+          IconButton(
             tooltip: 'View ${match.firstName}\'s profile',
             icon: const Icon(Icons.info_outline_rounded, size: 22),
             onPressed: () =>
@@ -197,7 +204,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
-            if (messages.length <= _seedMessageCount) const _HadithQuoteStrip(),
+            if (ScamDetector.threadIsRisky(messages))
+              const _ScamWarning()
+            else if (messages.length <= _seedMessageCount)
+              const _HadithQuoteStrip(),
             _IcebreakerChips(onPick: _insertIcebreaker),
             _ChatInputBar(
               controller: _textController,

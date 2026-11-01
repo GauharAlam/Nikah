@@ -2,7 +2,7 @@ import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
-import { ref, uploadBytes, getBytes } from 'firebase/storage';
+import { deleteObject, getBytes, listAll, ref, uploadBytes } from 'firebase/storage';
 
 let env: RulesTestEnvironment;
 const member = (uid: string, approved = true) => env.authenticatedContext(uid, { approved }).firestore();
@@ -95,6 +95,41 @@ test('a member moves only their own read marker', async () => {
   await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { status: 'active', 'unread.a': 5 }));
 });
 
+test('a member moves only their own journey step, to a known step', async () => {
+  await assertSucceeds(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.a': 'questions' }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.b': 'questions' }));
+  await assertFails(updateDoc(doc(member('a'), 'matches/a_b'), { 'journey.a': 'married' }));
+  await assertFails(updateDoc(doc(member('z'), 'matches/a_b'), { 'journey.z': 'questions' }));
+});
+
+test('answers stay hidden until you give yours', async () => {
+  const a = member('a');
+  const b = member('b');
+  await assertSucceeds(setDoc(doc(a, 'matches/a_b/answers/a'), { answers: { q1: 'Yes' } }));
+  await assertFails(getDoc(doc(b, 'matches/a_b/answers/a')));
+  await assertSucceeds(setDoc(doc(b, 'matches/a_b/answers/b'), { answers: { q1: 'No' } }));
+  await assertSucceeds(getDoc(doc(b, 'matches/a_b/answers/a')));
+  await assertFails(setDoc(doc(a, 'matches/a_b/answers/b'), { answers: {} }));
+  await assertFails(getDoc(doc(member('z'), 'matches/a_b/answers/a')));
+  await assertFails(setDoc(doc(a, 'matches/a_c/answers/a'), { answers: {} }));
+});
+
+test('family summaries reach only the member and their guardians', async () => {
+  await env.withSecurityRulesDisabled(async (c) => {
+    await setDoc(doc(c.firestore(), 'family/a'), { guardians: ['parent'], names: { parent: 'Abu' } });
+    await setDoc(doc(c.firestore(), 'family/a/shortlist/b'), { firstName: 'B' });
+  });
+  await assertSucceeds(getDoc(doc(member('a'), 'family/a/shortlist/b')));
+  await assertSucceeds(getDoc(doc(member('parent', false), 'family/a/shortlist/b')));
+  await assertFails(getDoc(doc(member('z'), 'family/a/shortlist/b')));
+  await assertFails(setDoc(doc(member('parent', false), 'family/a'), { guardians: ['z'] }));
+  await assertFails(updateDoc(doc(member('parent', false), 'family/a/shortlist/b'), { firstName: 'X' }));
+  await assertFails(getDoc(doc(member('parent', false), 'matches/a_b')));
+  await assertFails(getDoc(doc(member('parent', false), 'matches/a_b/messages/m')));
+  await assertFails(getDoc(doc(member('parent', false), 'accounts/a')));
+  await assertFails(getDoc(doc(member('parent', false), 'accounts/a/documents/name-proof')));
+});
+
 test('notifications: mark read only', async () => {
   await assertSucceeds(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { read: true }));
   await assertFails(updateDoc(doc(member('a'), 'accounts/a/notifications/n1'), { title: 'x' }));
@@ -109,12 +144,42 @@ test('reports and unknown collections are closed', async () => {
 const image = new Uint8Array([1, 2, 3]);
 const store = (uid: string, approved = true) => env.authenticatedContext(uid, { approved }).storage();
 
-test('photos: owner writes images, approved members read', async () => {
+test('photos: only the owner writes and reads their originals', async () => {
   await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/1.jpg'), image, { contentType: 'image/jpeg' }));
   await assertFails(uploadBytes(ref(store('z'), 'photos/a/2.jpg'), image, { contentType: 'image/jpeg' }));
   await assertFails(uploadBytes(ref(store('a'), 'photos/a/3.exe'), image, { contentType: 'application/octet-stream' }));
-  await assertSucceeds(getBytes(ref(store('b'), 'photos/a/1.jpg')));
-  await assertFails(getBytes(ref(store('b', false), 'photos/a/1.jpg')));
+  await assertSucceeds(getBytes(ref(store('a'), 'photos/a/1.jpg')));
+});
+
+test('SEC-01: an approved stranger cannot read or list another member\'s photos', async () => {
+  await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/2.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertFails(getBytes(ref(store('b'), 'photos/a/2.jpg')));
+  await assertFails(listAll(ref(store('b'), 'photos/a')));
+  await assertFails(getBytes(ref(store('b', false), 'photos/a/2.jpg')));
+});
+
+test('SEC-02: a photo cannot be replaced after upload', async () => {
+  await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/4.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertFails(uploadBytes(ref(store('a'), 'photos/a/4.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertSucceeds(deleteObject(ref(store('a'), 'photos/a/4.jpg')));
+});
+
+test('SEC-15: SVG uploads are refused', async () => {
+  await assertFails(uploadBytes(ref(store('a'), 'photos/a/5.svg'), image, { contentType: 'image/svg+xml' }));
+  await assertFails(uploadBytes(ref(store('a'), 'verification/a/name-proof/5.svg'), image, { contentType: 'image/svg+xml' }));
+});
+
+test('SEC-14: drafts accept only known fields of a sensible size', async () => {
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { fullName: 'A', invented: true }));
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { fullName: 'x'.repeat(200) }));
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { photos: Array(20).fill('p') }));
+});
+
+test('submissions and published photos are closed to clients', async () => {
+  await assertFails(getDoc(doc(member('a'), 'submissions/a')));
+  await assertFails(setDoc(doc(member('a'), 'submissions/a'), { version: 9 }));
+  await assertFails(getBytes(ref(store('a'), 'published/a/1.jpg')));
+  await assertFails(uploadBytes(ref(store('a'), 'published/a/1.jpg'), image, { contentType: 'image/jpeg' }));
 });
 
 test('verification documents cannot be read back by anyone', async () => {

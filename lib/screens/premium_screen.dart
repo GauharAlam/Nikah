@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -45,7 +46,7 @@ class PremiumScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
         children: <Widget>[
           Text(
-            'Premium',
+            tr('Premium'),
             style: AppTheme.ts(24, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 3),
@@ -76,7 +77,7 @@ class PremiumScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  store.isPremium ? 'Barkat Premium' : 'Free plan',
+                  store.isPremium ? 'Barkat Premium' : tr('Free plan'),
                   style:
                       AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
                 ),
@@ -84,7 +85,7 @@ class PremiumScreen extends StatelessWidget {
                 Text(
                   store.isPremium
                       ? 'Renews on ${DateFormat.yMMMd().format(store.premiumUntil!)}'
-                      : 'No subscription active',
+                      : tr('No subscription active'),
                   style:
                       AppTheme.ts(12, FontWeight.w500, color: AppTheme.slate500),
                 ),
@@ -178,6 +179,8 @@ class PremiumScreen extends StatelessWidget {
                 const _CheckRow('Limited profile proposals.'),
                 const _CheckRow('Restricted Contact Requests.'),
                 const _CheckRow('Basic profile visibility'),
+                if (!store.isPremium)
+                  _CheckRow('${store.freeProfileAllowance} free profiles to view'),
                 const SizedBox(height: 14),
 
                 // Daily quota info tiles.
@@ -238,7 +241,7 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PrimaryButton(
-            label: 'Compare Plans',
+            label: tr('Compare Plans'),
             icon: Icons.workspace_premium_outlined,
             onPressed: () => context.push(AppRoutes.plans),
           ),
@@ -307,7 +310,7 @@ class _AvailablePanel extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   child:                   Text(
-                    'Buy more',
+                    tr('Buy more'),
                     textAlign: TextAlign.center,
                     style: AppTheme.ts(
                       11.5,

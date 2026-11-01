@@ -1,7 +1,9 @@
-// Verification screen — Barkat-style centered trust header with the gold
-// "Barkat Verified" pill, benefits list, per-document cards and FAQs.
+// Verification screen: trust header with the verified pill, benefits list,
+// per-document cards and FAQs.
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -18,19 +20,112 @@ import '../widgets/app_snacks.dart';
 class VerificationScreen extends StatelessWidget {
   const VerificationScreen({super.key});
 
+  static const int _maxBytes = 10 * 1024 * 1024;
+
+  /// Asks where the file comes from. Returns local paths, or null if cancelled.
+  Future<List<String>?> _choose(BuildContext context) async {
+    final String? source = await showModalBottomSheet<String>(
+      context: context,
+      builder: (BuildContext ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              key: const Key('doc_camera'),
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(ctx).pop('camera'),
+            ),
+            ListTile(
+              key: const Key('doc_gallery'),
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose photos'),
+              onTap: () => Navigator.of(ctx).pop('gallery'),
+            ),
+            ListTile(
+              key: const Key('doc_file'),
+              leading: const Icon(Icons.picture_as_pdf_outlined),
+              title: const Text('Choose a PDF'),
+              onTap: () => Navigator.of(ctx).pop('file'),
+            ),
+          ],
+        ),
+      ),
+    );
+    switch (source) {
+      case 'camera':
+        final XFile? photo = await ImagePicker().pickImage(source: ImageSource.camera);
+        return photo == null ? null : <String>[photo.path];
+      case 'gallery':
+        final List<XFile> files = await ImagePicker().pickMultiImage(limit: 2);
+        return files.take(2).map((XFile f) => f.path).toList();
+      case 'file':
+        final List<PlatformFile> picked = await FilePicker.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: <String>['pdf'],
+        );
+        final String? path = picked.isEmpty ? null : picked.first.path;
+        return path == null ? null : <String>[path];
+    }
+    return null;
+  }
+
+  /// Size is checked here for a quick answer; Storage rules enforce it.
+  Future<bool> _tooLarge(List<String> paths) async {
+    for (final String p in paths) {
+      if (await File(p).length() > _maxBytes) return true;
+    }
+    return false;
+  }
+
+  Future<bool> _preview(BuildContext context, VerificationDoc doc, List<String> paths) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(doc.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final String p in paths)
+              p.toLowerCase().endsWith('.pdf')
+                  ? ListTile(
+                      leading: const Icon(Icons.picture_as_pdf_outlined),
+                      title: Text(p.split('/').last),
+                    )
+                  : Image.file(File(p), height: 160, fit: BoxFit.contain),
+            const SizedBox(height: 8),
+            const Text('Only our review team can open this file. It is never shown to members.'),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          FilledButton(
+            key: const Key('doc_confirm'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Upload'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _upload(
     BuildContext context,
     AppStore store,
     VerificationDoc doc,
   ) async {
-    final List<XFile> files = await ImagePicker().pickMultiImage(limit: 2);
-    if (files.isEmpty || !context.mounted) return;
+    final List<String>? paths = await _choose(context);
+    if (paths == null || paths.isEmpty || !context.mounted) return;
+    if (await _tooLarge(paths)) {
+      if (context.mounted) showAppSnack(context, 'Files must be under 10 MB.');
+      return;
+    }
+    if (!context.mounted || !await _preview(context, doc, paths)) return;
+    if (!context.mounted) return;
     showAppSnack(context, 'Uploading ${doc.title}…', icon: Icons.upload_rounded);
     try {
-      await store.uploadVerificationDoc(
-        doc.id,
-        files.take(2).map((XFile f) => f.path).toList(),
-      );
+      await store.uploadVerificationDoc(doc.id, paths);
       if (context.mounted) {
         showSuccessSnack(
           context,
@@ -164,13 +259,12 @@ class VerificationScreen extends StatelessWidget {
             _DocCard(
               doc: doc,
               onTap: () {
-                if (doc.status == VerificationDocStatus.missing ||
-                    doc.status == VerificationDocStatus.rejected) {
+                if (doc.status.needsUpload) {
                   unawaited(_upload(context, store, doc));
-                } else if (doc.status == VerificationDocStatus.pending) {
+                } else if (doc.status.isWaiting) {
                   showAppSnack(
                     context,
-                    '${doc.title} is waiting for review by the Barkat team.',
+                    '${doc.title} is waiting for review by our team.',
                     icon: Icons.hourglass_bottom_rounded,
                   );
                 } else {
@@ -297,7 +391,7 @@ class _DocCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool approved = doc.status == VerificationDocStatus.approved;
-    final bool pending = doc.status == VerificationDocStatus.pending;
+    final bool pending = doc.status.isWaiting;
     final Color fg = approved
         ? AppTheme.success
         : (pending ? AppTheme.warning : AppTheme.slate500);

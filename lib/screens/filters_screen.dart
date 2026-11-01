@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../data/option_lists.dart';
 import '../models/filters.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -31,54 +32,25 @@ class _FiltersScreenState extends State<FiltersScreen> {
     'Widowed',
   ];
 
-  static const List<String> _castes = <String>[
+  static final List<String> _castes = <String>[_any, ...OptionLists.castes];
+
+  static final List<String> _almaMaters = <String>[
     _any,
-    'Syed',
-    'Sheikh',
-    'Pathan',
-    'Ansari',
-    'Qureshi',
+    for (final List<String> group in OptionLists.universities.values) ...group,
   ];
 
-  static const List<String> _almaMaters = <String>[
+  static final List<String> _educationLevels = <String>[
     _any,
-    'Imperial',
-    'Manchester',
-    'Bath',
-    'Leicester',
-    'Cairo',
-    'AMU',
-    'Jamia',
-    'IIT',
-    'Harvard',
-    'Oxford',
+    ...OptionLists.qualifications.entries
+        .where((MapEntry<String, bool> q) => q.value)
+        .map((MapEntry<String, bool> q) => q.key),
   ];
 
-  static const List<String> _educationLevels = <String>[
-    _any,
-    'Bachelors',
-    'Masters',
-    'Doctorate',
-  ];
+  static final List<String> _professionFields = <String>[_any, ...OptionLists.professions];
 
-  static const List<String> _professionFields = <String>[
-    _any,
-    'Engineering',
-    'Healthcare',
-    'Education',
-    'Finance',
-    'Architecture',
-    'Business',
-  ];
+  static final List<String> _locations = <String>[_any, ...OptionLists.locations.keys];
 
-  static const List<String> _locations = <String>[
-    _any,
-    'London',
-    'Birmingham',
-    'Manchester',
-    'Leicester',
-    'Dubai',
-  ];
+  static final List<String> _sects = <String>[_any, ...OptionLists.sects];
 
   static const List<String> _contactModes = <String>[
     MatchFilters.manualApproval,
@@ -278,6 +250,17 @@ class _FiltersScreenState extends State<FiltersScreen> {
                     _draft.caste,
                     _castes,
                     (String v) => _draft = _draft.copyWith(caste: v),
+                  ),
+                ),
+                const _RowDivider(),
+                _PreferenceRow(
+                  label: 'Sect',
+                  value: _draft.sect,
+                  onTap: () => _pickValue(
+                    'Sect',
+                    _draft.sect,
+                    _sects,
+                    (String v) => _draft = _draft.copyWith(sect: v),
                   ),
                 ),
                 const _RowDivider(),

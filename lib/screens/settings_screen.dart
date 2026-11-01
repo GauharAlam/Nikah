@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../models/wali.dart';
@@ -11,6 +12,7 @@ import '../widgets/app_banners.dart';
 import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_switch.dart';
+import '../widgets/picker_sheets.dart';
 
 /// Settings & privacy hub: notifications, modesty toggles, guardian
 /// surfaces and account data controls.
@@ -22,10 +24,11 @@ class SettingsScreen extends StatelessWidget {
     final AppStore store = context.watch<AppStore>();
     return Scaffold(
       backgroundColor: AppTheme.canvas,
-      appBar: AppBar(title: const Text('Settings & Privacy')),
+      appBar: AppBar(title: Text(tr('Settings & Privacy'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 60),
         children: <Widget>[
+          if (AppConfig.isDemo) ...<Widget>[
           const SectionLabel('Notifications'),
           const SizedBox(height: 10),
           AppCard(
@@ -49,6 +52,7 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+          ],
           const SizedBox(height: 22),
           const SectionLabel('Privacy & modesty'),
           const SizedBox(height: 10),
@@ -64,14 +68,40 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 20),
                 SwitchTile(
+                  key: const Key('photos_after_match_setting'),
+                  icon: Icons.visibility_off_outlined,
+                  title: tr('Show my photos only after we match'),
+                  subtitle: tr('Others see your details, but not your face'),
+                  value: store.profile?.photoPrivacy == 'matches',
+                  onChanged: (bool v) =>
+                      store.updatePrivacy(photoPrivacy: v ? 'matches' : 'everyone'),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  icon: Icons.groups_outlined,
+                  title: tr('Show my caste'),
+                  subtitle: tr('Turn off to keep it private'),
+                  value: store.profile?.showCaste ?? true,
+                  onChanged: (bool v) => store.updatePrivacy(showCaste: v),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
+                  icon: Icons.share_outlined,
+                  title: tr('Allow sharing with families'),
+                  subtitle: tr('A summary with no photo or number'),
+                  value: store.profile?.allowFamilyShare ?? true,
+                  onChanged: (bool v) => store.updatePrivacy(allowFamilyShare: v),
+                ),
+                if (AppConfig.isDemo) const Divider(height: 20),
+                if (AppConfig.isDemo) SwitchTile(
                   icon: Icons.blur_on_rounded,
                   title: 'Modesty blur on photos',
                   subtitle: 'Soft blur until mutual approval',
                   value: store.privacy('blurPhotos'),
                   onChanged: (bool v) => store.togglePrivacy('blurPhotos', v),
                 ),
-                const Divider(height: 20),
-                SwitchTile(
+                if (AppConfig.isDemo) const Divider(height: 20),
+                if (AppConfig.isDemo) SwitchTile(
                   icon: Icons.done_all_rounded,
                   title: 'Read receipts for matches',
                   subtitle: 'Show when you have read a message',
@@ -104,6 +134,21 @@ class SettingsScreen extends StatelessWidget {
           const SectionLabel('Account'),
           const SizedBox(height: 10),
           SettingsTile(
+            key: const Key('settings_language'),
+            icon: Icons.translate_rounded,
+            title: tr('Language'),
+            subtitle: store.language.label,
+            onTap: () => pickLanguage(context),
+          ),
+          const SizedBox(height: 10),
+          SettingsTile(
+            icon: Icons.shield_outlined,
+            title: tr('Safety Centre'),
+            subtitle: tr('Scams to watch for and how to report'),
+            onTap: () => context.push(AppRoutes.safety),
+          ),
+          const SizedBox(height: 10),
+          SettingsTile(
             icon: Icons.edit_outlined,
             title: 'Edit Biodata',
             subtitle: 'Update your visible profile',
@@ -118,7 +163,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 26),
           DangerButton(
-            label: 'Delete Account',
+            label: tr('Delete Account'),
             onPressed: () => _confirmReset(context, store),
           ),
           const SizedBox(height: 26),

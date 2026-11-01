@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../data/option_lists.dart';
+import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import 'app_snacks.dart';
 
@@ -33,6 +36,20 @@ class _SheetHeader extends StatelessWidget {
   }
 }
 
+/// Lets the member choose the app language.
+Future<void> pickLanguage(BuildContext context) async {
+  final AppStore store = context.read<AppStore>();
+  final String? picked = await showOptionSheet(
+    context,
+    title: tr('Language'),
+    options: AppStrings.languageLabels,
+  );
+  if (picked == null) return;
+  store.setLanguage(
+    AppLanguage.values.firstWhere((AppLanguage l) => l.label == picked),
+  );
+}
+
 /// Single choice from a list.
 Future<String?> showOptionSheet(
   BuildContext context, {
@@ -60,7 +77,7 @@ Future<String?> showOptionSheet(
                 itemCount: options.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (_, int i) => ListTile(
-                  title: Text(options[i]),
+                  title: Text(tr(options[i])),
                   onTap: () => Navigator.of(ctx).pop(options[i]),
                 ),
               ),
@@ -121,7 +138,7 @@ class _AlmaMaterSheetState extends State<_AlmaMaterSheet> {
       child: SafeArea(
         child: Column(
           children: <Widget>[
-            const _SheetHeader('Select Alma Mater'),
+            _SheetHeader(tr('Select Alma Mater')),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(

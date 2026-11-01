@@ -1,25 +1,27 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    function isImage() { return request.resource.contentType.matches('image/.*'); }
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    function isPhoto() { return request.resource.contentType.matches('image/(jpeg|png|webp)'); }
+    function isDocument() { return isPhoto() || request.resource.contentType == 'application/pdf'; }
     function under10MB() { return request.resource.size < 10 * 1024 * 1024; }
 
+    // Originals. Only the owner reads them. Create-only, so a reviewed photo
+    // cannot be swapped. Members see copies under published/, served by signed URL.
     match /photos/{uid}/{file} {
-      allow write: if request.auth != null && request.auth.uid == uid
-        && (request.resource == null || (isImage() && under10MB()));
-      allow read: if request.auth != null
-        && (request.auth.uid == uid || request.auth.token.approved == true);
+      allow get: if owner(uid);
+      allow create: if owner(uid) && resource == null && isPhoto() && under10MB();
+      allow delete: if owner(uid);
     }
 
     // Members upload; nobody reads directly. Reviewers get short-lived signed
     // URLs from getDocumentUrl.
     match /verification/{uid}/{docType}/{file} {
-      allow create: if request.auth != null && request.auth.uid == uid
-        && under10MB()
-        && (isImage() || request.resource.contentType == 'application/pdf');
+      allow create: if owner(uid) && resource == null && under10MB() && isDocument();
       allow read, update, delete: if false;
     }
 
+    // published/ and everything else: server only.
     match /{allPaths=**} {
       allow read, write: if false;
     }

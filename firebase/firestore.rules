@@ -6,6 +6,31 @@ service cloud.firestore {
     function isApproved() { return signedIn() && request.auth.token.approved == true; }
     function isReviewer() { return signedIn() && request.auth.token.reviewer == true; }
 
+    function under(d, field, max) {
+      return !(field in d) || (d[field] is string && d[field].size() <= max);
+    }
+
+    // An allow-list, so a member can never write a field the server reads as
+    // state. The full validator runs at submission.
+    function validDraft(d) {
+      return d.keys().hasOnly([
+          'managedBy', 'fullName', 'gender', 'maritalStatus', 'marriageReadiness', 'homeCity', 'homeState',
+          'homeCountry', 'workCity', 'workSameAsHome', 'dateOfBirth', 'caste', 'partnerCaste', 'height',
+          'phoneCode', 'phoneNumber', 'phone', 'almaMaters', 'qualification', 'qualificationGraduate',
+          'profession', 'incomeRange', 'company', 'photos', 'aboutMe', 'step', 'stepVersion', 'sect', 'children',
+          'photoPrivacy', 'showCaste', 'allowFamilyShare', 'intentConfirmed', 'dataConsent', 'candidateConsent',
+          'inviteCode', 'prayer', 'prayerFrequency', 'quranComfort', 'practices', 'extraPractices',
+          'halalLifestyle', 'preferredLanguage', 'familyType', 'familyBackground', 'familyValues',
+          'familyLocation', 'siblings', 'graduationYear', 'educationStatus', 'employmentStatus',
+          'careerDescription', 'subjectName', 'subjectPhone', 'relationship'
+        ])
+        && under(d, 'fullName', 80) && under(d, 'aboutMe', 1500) && under(d, 'company', 80)
+        && under(d, 'familyBackground', 1000) && under(d, 'familyValues', 500)
+        && under(d, 'careerDescription', 1000) && under(d, 'familyLocation', 120)
+        && (!('photos' in d) || (d.photos is list && d.photos.size() <= 6))
+        && (!('almaMaters' in d) || (d.almaMaters is list && d.almaMaters.size() <= 5));
+    }
+
     // Limits and option lists.
     match /config/{doc} {
       allow read: if signedIn();
@@ -16,9 +41,7 @@ service cloud.firestore {
     // here reaches other members until a reviewer approves it.
     match /drafts/{uid} {
       allow read: if isUser(uid) || isReviewer();
-      allow create, update: if isUser(uid)
-        && request.resource.size() < 60
-        && !request.resource.data.keys().hasAny(['stage', 'approved', 'verified', 'entitlement', 'credits']);
+      allow create, update: if isUser(uid) && validDraft(request.resource.data);
       allow delete: if false;
     }
 
@@ -28,6 +51,10 @@ service cloud.firestore {
       allow write: if false;
 
       match /documents/{docType} {
+        allow read: if isUser(uid);
+        allow write: if false;
+      }
+      match /consents/{category} {
         allow read: if isUser(uid);
         allow write: if false;
       }
@@ -73,10 +100,25 @@ service cloud.firestore {
       }
       allow read: if signedIn() && request.auth.uid in resource.data.users;
       // A member may only move their own read marker.
-      allow update: if signedIn() && request.auth.uid in resource.data.users
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
-        && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]);
+      allow update: if signedIn() && request.auth.uid in resource.data.users && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+          && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['journey'])
+          && request.resource.data.journey.diff(resource.data.get('journey', {})).affectedKeys().hasOnly([request.auth.uid])
+          && request.resource.data.journey[request.auth.uid] in ['talking', 'questions', 'families', 'istikhara', 'decision'])
+      );
       allow create, delete: if false;
+
+      // Important Questions: you see the other answers only after giving yours.
+      match /answers/{uid} {
+        allow read: if participant() && (request.auth.uid == uid
+          || exists(/databases/$(database)/documents/matches/$(pair)/answers/$(request.auth.uid)));
+        allow create, update: if participant() && open() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['answers', 'updatedAt'])
+          && request.resource.data.answers is map
+          && request.resource.data.answers.size() <= 40;
+        allow delete: if false;
+      }
 
       match /messages/{id} {
         allow read: if participant();
@@ -88,6 +130,20 @@ service cloud.firestore {
           && request.resource.data.text.size() <= 2000
           && request.resource.data.sentAt == request.time;
         allow update, delete: if false;
+      }
+    }
+
+    // Family Circle: the member and their guardians read short summaries only.
+    match /family/{member} {
+      function inCircle() {
+        return signedIn() && (request.auth.uid == member
+          || request.auth.uid in get(/databases/$(database)/documents/family/$(member)).data.guardians);
+      }
+      allow read: if inCircle();
+      allow write: if false;
+      match /shortlist/{profile} {
+        allow read: if inCircle();
+        allow write: if false;
       }
     }
 

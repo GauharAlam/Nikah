@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
 import '../models/ward_profile.dart';
@@ -59,7 +60,7 @@ class _ApprovedScreenState extends State<ApprovedScreen> {
               const Icon(Icons.star_rounded, size: 56, color: AppTheme.goldAccent),
               const SizedBox(height: 8),
               Text(
-                'Your profile is approved!',
+                tr('Your profile is approved!'),
                 style: AppTheme.ts(24, FontWeight.w800, color: AppTheme.slate900),
               ),
               const SizedBox(height: 20),
@@ -114,7 +115,7 @@ class _ApprovedScreenState extends State<ApprovedScreen> {
                   key: const Key('start_bismillah'),
                   style: FilledButton.styleFrom(shape: const StadiumBorder()),
                   icon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.goldAccent),
-                  label: const Text('Start with Bismillah'),
+                  label: Text(tr('Start with Bismillah')),
                   onPressed: () => _start(store),
                 ),
               ),

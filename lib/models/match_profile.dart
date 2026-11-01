@@ -43,6 +43,18 @@ class MatchProfile {
   final List<String> photos;
   final bool isVerified;
 
+  /// Photos held back until a match. Set by the server.
+  final bool photosHidden;
+
+  /// Documents a reviewer approved.
+  final List<String> verifiedDocs;
+  final int? activeDaysAgo;
+  final String children;
+  final bool allowFamilyShare;
+
+  /// 'male' or 'female'. Used to choose demo profiles; the server filters real ones.
+  final String gender;
+
   const MatchProfile({
     required this.id,
     required this.name,
@@ -77,6 +89,12 @@ class MatchProfile {
     this.professionField = '',
     this.photos = const <String>[],
     this.isVerified = false,
+    this.photosHidden = false,
+    this.verifiedDocs = const <String>[],
+    this.activeDaysAgo,
+    this.children = '',
+    this.allowFamilyShare = true,
+    this.gender = 'male',
   });
 
   /// Shown while a real profile is loading or after it became unavailable.
@@ -117,11 +135,16 @@ class MatchProfile {
       faithTags: const <String>[],
       marriageQuote: c['aboutMe'] as String? ?? '',
       aboutMe: c['aboutMe'] as String? ?? '',
-      sect: '',
+      photosHidden: c['photosHidden'] as bool? ?? false,
+      verifiedDocs: (c['verifiedDocs'] as List?)?.cast<String>() ?? const <String>[],
+      activeDaysAgo: (c['activeDaysAgo'] as num?)?.toInt(),
+      children: c['children'] as String? ?? '',
+      allowFamilyShare: c['allowFamilyShare'] as bool? ?? true,
+      sect: c['sect'] as String? ?? '',
       height: c['height'] as String? ?? '',
       education: c['education'] as String? ?? '',
       relocation: '',
-      religiousPractices: const <String>[],
+      religiousPractices: (c['practices'] as List?)?.cast<String>() ?? const <String>[],
       waliName: '',
       waliRelation: '',
       maritalStatus: c['maritalStatus'] as String? ?? '',
@@ -130,7 +153,7 @@ class MatchProfile {
       university: c['university'] as String? ?? '',
       employer: c['employer'] as String? ?? '',
       caste: c['caste'] as String? ?? '',
-      matchPercent: 0,
+      matchPercent: (c['matchPercent'] as num?)?.toInt() ?? 0,
       isSelfManaged: c['selfManaged'] as bool? ?? true,
       isNew: c['isNew'] as bool? ?? false,
       marriageReadiness: c['marriageReadiness'] as String? ?? '',
@@ -430,6 +453,212 @@ class MatchProfile {
     salman,
   ];
 
+  /// Sample women shown to male members in demo builds.
+  static const List<MatchProfile> femaleSeeds = <MatchProfile>[
+    MatchProfile(
+      id: 'hafsa-1',
+      name: 'Hafsa Qureshi',
+      age: 26,
+      profession: 'Paediatric Doctor',
+      location: 'Lucknow, Uttar Pradesh',
+      imageUrl: '',
+      isWaliVerified: false,
+      faithTags: <String>[],
+      marriageQuote: 'Hoping to build a calm home with kindness and shared deen.',
+      sect: 'Sunni',
+      height: '5\'3"',
+      education: 'MBBS — Aligarh Muslim University',
+      relocation: 'Open to discuss',
+      religiousPractices: <String>[],
+      waliName: '',
+      waliRelation: '',
+      aboutMe: 'Hoping to build a calm home with kindness and shared deen.',
+      maritalStatus: 'Never married',
+      nationality: 'India',
+      languages: 'Urdu, Hindi, English',
+      university: 'Aligarh Muslim University',
+      employer: 'Paediatric Doctor',
+      caste: 'Beyond Caste',
+      matchPercent: 87,
+      marriageReadiness: 'Ready within 1 year',
+      degreeLevel: 'MBBS',
+      professionField: 'Healthcare',
+      gender: 'female',
+    ),
+    MatchProfile(
+      id: 'sumayya-2',
+      name: 'Sumayya Ansari',
+      age: 25,
+      profession: 'Software Engineer',
+      location: 'Bengaluru, Karnataka',
+      imageUrl: '',
+      isWaliVerified: false,
+      faithTags: <String>[],
+      marriageQuote: 'Looking for an honest partner who values family and growth.',
+      sect: 'Sunni',
+      height: '5\'4"',
+      education: 'B.Tech / BE — Jamia Millia Islamia',
+      relocation: 'Open to discuss',
+      religiousPractices: <String>[],
+      waliName: '',
+      waliRelation: '',
+      aboutMe: 'Looking for an honest partner who values family and growth.',
+      maritalStatus: 'Never married',
+      nationality: 'India',
+      languages: 'Urdu, Hindi, English',
+      university: 'Jamia Millia Islamia',
+      employer: 'Software Engineer',
+      caste: 'Beyond Caste',
+      matchPercent: 84,
+      marriageReadiness: 'Ready within 6 months',
+      degreeLevel: 'B.Tech / BE',
+      professionField: 'Engineering',
+      gender: 'female',
+    ),
+    MatchProfile(
+      id: 'noor-3',
+      name: 'Noor Siddiqui',
+      age: 27,
+      profession: 'Chartered Accountant',
+      location: 'Mumbai, Maharashtra',
+      imageUrl: '',
+      isWaliVerified: false,
+      faithTags: <String>[],
+      marriageQuote: 'A simple nikah and a sincere marriage matter most to me.',
+      sect: 'Just Muslim',
+      height: '5\'2"',
+      education: 'B.Com — Mumbai University',
+      relocation: 'Open to discuss',
+      religiousPractices: <String>[],
+      waliName: '',
+      waliRelation: '',
+      aboutMe: 'A simple nikah and a sincere marriage matter most to me.',
+      maritalStatus: 'Never married',
+      nationality: 'India',
+      languages: 'Urdu, Hindi, English',
+      university: 'Mumbai University',
+      employer: 'Chartered Accountant',
+      caste: 'Beyond Caste',
+      matchPercent: 79,
+      marriageReadiness: 'Ready within 1 year',
+      degreeLevel: 'B.Com',
+      professionField: 'Finance',
+      gender: 'female',
+    ),
+    MatchProfile(
+      id: 'iqra-4',
+      name: 'Iqra Khan',
+      age: 24,
+      profession: 'Lecturer',
+      location: 'Delhi',
+      imageUrl: '',
+      isWaliVerified: false,
+      faithTags: <String>[],
+      marriageQuote: 'Education and good character are what I value most.',
+      sect: 'Sunni',
+      height: '5\'5"',
+      education: 'MA — Delhi University',
+      relocation: 'Open to discuss',
+      religiousPractices: <String>[],
+      waliName: '',
+      waliRelation: '',
+      aboutMe: 'Education and good character are what I value most.',
+      maritalStatus: 'Never married',
+      nationality: 'India',
+      languages: 'Urdu, Hindi, English',
+      university: 'Delhi University',
+      employer: 'Lecturer',
+      caste: 'Beyond Caste',
+      matchPercent: 82,
+      marriageReadiness: 'Planning for the future',
+      degreeLevel: 'MA',
+      professionField: 'Education',
+      gender: 'female',
+    ),
+    MatchProfile(
+      id: 'rukhsar-5',
+      name: 'Rukhsar Shaikh',
+      age: 29,
+      profession: 'Architect',
+      location: 'Hyderabad, Telangana',
+      imageUrl: '',
+      isWaliVerified: false,
+      faithTags: <String>[],
+      marriageQuote: 'Divorced, with a clear heart and hope for a fresh start.',
+      sect: 'Sunni',
+      height: '5\'3"',
+      education: 'B.Arch — Osmania University',
+      relocation: 'Open to discuss',
+      religiousPractices: <String>[],
+      waliName: '',
+      waliRelation: '',
+      aboutMe: 'Divorced, with a clear heart and hope for a fresh start.',
+      maritalStatus: 'Divorced',
+      nationality: 'India',
+      languages: 'Urdu, Hindi, English',
+      university: 'Osmania University',
+      employer: 'Architect',
+      caste: 'Beyond Caste',
+      matchPercent: 80,
+      marriageReadiness: 'Actively looking to marry now',
+      degreeLevel: 'B.Arch',
+      professionField: 'Architecture',
+      gender: 'female',
+      children: 'No children',
+    ),
+  ];
+
+  /// More sample profiles, so the free limit can be reached in demo builds.
+  static final Map<String, List<MatchProfile>> _extras = <String, List<MatchProfile>>{};
+
+  static List<MatchProfile> demoExtras(String gender) =>
+      _extras[gender] ??= _buildExtras(gender);
+
+  static List<MatchProfile> _buildExtras(String gender) {
+    const List<String> women = <String>['Aaliya', 'Bushra', 'Fariha', 'Ghazala', 'Hina', 'Javeria', 'Kulsum', 'Lubna', 'Mehwish', 'Nida', 'Rabia', 'Saba', 'Tahira', 'Uzma', 'Yumna', 'Zoya'];
+    const List<String> men = <String>['Adil', 'Danish', 'Ehsan', 'Faisal', 'Ghulam', 'Haris', 'Junaid', 'Kashif', 'Luqman', 'Mudassir', 'Nadeem', 'Owais', 'Rehan', 'Shoaib', 'Tariq', 'Yasir'];
+    const List<String> cities = <String>['Delhi', 'Lucknow', 'Mumbai', 'Hyderabad', 'Bengaluru', 'Aligarh'];
+    final List<String> names = gender == 'female' ? women : men;
+    return <MatchProfile>[
+      for (int i = 0; i < names.length; i++)
+        MatchProfile(
+          id: 'demo-$gender-$i',
+          name: '${names[i]} Sample',
+          age: 24 + i % 9,
+          profession: 'Software Engineer / Developer',
+          location: cities[i % cities.length],
+          imageUrl: '',
+          isWaliVerified: false,
+          faithTags: const <String>[],
+          marriageQuote: 'Looking for a sincere partner for nikah.',
+          sect: 'Sunni',
+          height: '5\'6"',
+          education: 'B.Tech / BE',
+          relocation: 'Open to discuss',
+          religiousPractices: const <String>[],
+          waliName: '',
+          waliRelation: '',
+          aboutMe: 'Sample profile for this demo build.',
+          nationality: 'India',
+          languages: 'Urdu, Hindi, English',
+          university: 'Delhi University',
+          employer: 'Sample Company',
+          matchPercent: 70 + i % 20,
+          gender: gender,
+        ),
+    ];
+  }
+
+  static List<MatchProfile>? _all;
+
   static MatchProfile byId(String id) =>
-      seeds.firstWhere((p) => p.id == id, orElse: () => zayd);
+      (_all ??= <MatchProfile>[
+        ...seeds,
+        ...femaleSeeds,
+        ...demoExtras('male'),
+        ...demoExtras('female'),
+      ]).firstWhere(
+        (p) => p.id == id,
+        orElse: () => zayd,
+      );
 }

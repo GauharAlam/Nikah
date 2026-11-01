@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../providers/app_store.dart';
 import '../services/purchase_service.dart';
@@ -20,12 +21,13 @@ class PlansScreen extends StatefulWidget {
 }
 
 class _PlansScreenState extends State<PlansScreen> {
-  late final PurchaseService _purchases = PurchaseService(context.read<AppStore>());
+  late final PurchaseService _purchases;
   List<ProductDetails>? _products;
 
   @override
   void initState() {
     super.initState();
+    _purchases = PurchaseService(context.read<AppStore>());
     if (AppConfig.isDemo) {
       _products = const <ProductDetails>[];
       return;
@@ -61,7 +63,7 @@ class _PlansScreenState extends State<PlansScreen> {
     final List<ProductDetails>? products = _products;
     return Scaffold(
       backgroundColor: AppTheme.ivoryWarm,
-      appBar: AppBar(title: const Text('Plans')),
+      appBar: AppBar(title: Text(tr('Plans'))),
       body: products == null
           ? const Center(child: CircularProgressIndicator())
           : products.isEmpty
@@ -86,7 +88,7 @@ class _PlansScreenState extends State<PlansScreen> {
                       ),
                     TextButton(
                       onPressed: () => unawaited(_purchases.restore()),
-                      child: const Text('Restore purchases'),
+                      child: Text(tr('Restore purchases')),
                     ),
                   ],
                 ),

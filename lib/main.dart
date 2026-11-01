@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_router.dart';
 import 'config/app_config.dart';
 import 'data/firebase_backend.dart';
+import 'l10n/app_strings.dart';
 import 'providers/app_store.dart';
+import 'providers/demo_app_store.dart';
 import 'services/privacy_shield.dart';
 import 'theme/app_theme.dart';
 
@@ -28,8 +31,13 @@ void main() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
 
   final AppStore store;
-  if (AppConfig.isDemo) {
-    store = AppStore(prefs);
+  final BackendMode mode = AppConfig.mode;
+  // The release check lets the compiler remove the demo from production.
+  if (!kReleaseMode && mode == BackendMode.demo) {
+    store = DemoAppStore(prefs);
+  } else if (!kReleaseMode && mode == BackendMode.emulator) {
+    await Firebase.initializeApp(options: _emulatorOptions);
+    store = RemoteAppStore(prefs, FirebaseBackend.emulator(AppConfig.emulatorHost));
   } else {
     try {
       await Firebase.initializeApp();
@@ -40,7 +48,7 @@ void main() async {
     store = RemoteAppStore(prefs, FirebaseBackend());
   }
   final GoRouter router = buildRouter(store);
-  if (!AppConfig.isDemo) unawaited(_routePushTaps(router));
+  if (mode == BackendMode.firebase) unawaited(_routePushTaps(router));
 
   runApp(
     MultiProvider(
@@ -51,6 +59,15 @@ void main() async {
     ),
   );
 }
+
+/// The local emulators accept any values for an isolated `demo-` project.
+const FirebaseOptions _emulatorOptions = FirebaseOptions(
+  apiKey: 'demo-key',
+  appId: '1:1:android:1',
+  messagingSenderId: '1',
+  projectId: 'demo-nikah',
+  storageBucket: 'demo-nikah.appspot.com',
+);
 
 /// Opens the screen named by a tapped notification.
 Future<void> _routePushTaps(GoRouter router) async {
@@ -105,13 +122,16 @@ class _BarkatNikahAppState extends State<BarkatNikahApp> {
       scaffoldMessengerKey: _messenger,
       theme: AppTheme.lightTheme,
       routerConfig: widget.router,
-      builder: (_, Widget? child) => AppConfig.isDemo
-          ? Banner(
-              message: 'DEMO',
-              location: BannerLocation.topEnd,
-              child: child ?? const SizedBox.shrink(),
-            )
-          : child ?? const SizedBox.shrink(),
+      builder: (BuildContext context, Widget? child) {
+        // Rebuilds every screen when the language changes.
+        final Widget page = KeyedSubtree(
+          key: ValueKey<AppLanguage>(context.select<AppStore, AppLanguage>((AppStore s) => s.language)),
+          child: child ?? const SizedBox.shrink(),
+        );
+        return AppConfig.isDemo
+            ? Banner(message: 'DEMO', location: BannerLocation.topEnd, child: page)
+            : page;
+      },
     );
   }
 }

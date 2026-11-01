@@ -2,6 +2,40 @@
 
 part of 'chat_screen.dart';
 
+/// Shown when a message looks like a known scam. It never blocks the chat.
+class _ScamWarning extends StatelessWidget {
+  const _ScamWarning();
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: const Key('scam_warning'),
+      onTap: () => context.push(AppRoutes.safety),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 2),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: AppTheme.dangerBg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.shield_outlined, size: 18, color: AppTheme.danger),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Be careful. Never send money or share codes with someone you '
+                'have not met with your family. Tap to learn more.',
+                style: AppTheme.ts(12, FontWeight.w600, color: AppTheme.slate800, height: 1.35),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Emerald supervision strip rendered directly under the app bar.
 class _ChaperoneHeader extends StatelessWidget {
   const _ChaperoneHeader({required this.text});

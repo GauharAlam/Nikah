@@ -1,12 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../models/ward_profile.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
+import '../services/biodata_pdf.dart';
+import '../services/profile_strength.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
 import '../widgets/app_buttons.dart';
@@ -123,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                           : profile.education,
                     ),
                     InfoTile(
-                      label: 'Profession',
+                      label: tr('Profession'),
                       value: profile.profession.isEmpty
                           ? '—'
                           : profile.profession,
@@ -159,6 +166,46 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
+                _StrengthCard(store: store),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  key: const Key('open_biodata'),
+                  icon: Icons.picture_as_pdf_outlined,
+                  title: tr('Biodata PDF'),
+                  subtitle: tr('Share with families on WhatsApp'),
+                  onTap: () => _shareBiodata(context, store),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  key: const Key('open_family_circle'),
+                  icon: Icons.groups_outlined,
+                  title: tr('Family Circle'),
+                  subtitle: tr('Let family give their opinion'),
+                  onTap: () => context.push(AppRoutes.familyCircle),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  key: const Key('open_invite'),
+                  icon: Icons.card_giftcard_outlined,
+                  title: tr('Invite and earn'),
+                  subtitle: tr('Earn contact credits'),
+                  onTap: () => context.push(AppRoutes.invite),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  icon: Icons.shield_outlined,
+                  title: tr('Safety Centre'),
+                  subtitle: tr('Scams to watch for and how to report'),
+                  onTap: () => context.push(AppRoutes.safety),
+                ),
+                const SizedBox(height: 10),
+                SettingsTile(
+                  icon: Icons.mosque_outlined,
+                  title: tr('Deen and values'),
+                  subtitle: tr('Prayer, Quran and lifestyle'),
+                  onTap: () => context.push(AppRoutes.practice),
+                ),
+                const SizedBox(height: 10),
                 if (store.isReviewer) ...<Widget>[
                   SettingsTile(
                     icon: Icons.fact_check_outlined,
@@ -284,6 +331,38 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  static Future<void> _shareBiodata(BuildContext context, AppStore store) async {
+    final WardProfile? p = store.profile;
+    if (p == null) return;
+    final bool? withPhone = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Include your phone number?'),
+        content: const Text('Your photo is never added. Anyone you send this to can forward it.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('No number'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Add number'),
+          ),
+        ],
+      ),
+    );
+    if (withPhone == null) return;
+    final Directory dir = await getTemporaryDirectory();
+    final File file = File('${dir.path}/biodata.pdf');
+    await file.writeAsBytes(await BiodataPdf.build(
+      p,
+      appName: AppBrand.name,
+      link: AppConfig.appLink,
+      includePhone: withPhone,
+    ));
+    await SharePlus.instance.share(ShareParams(files: <XFile>[XFile(file.path)]));
+  }
+
   static String _initials(String name) {
     final List<String> parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return 'A';
@@ -314,6 +393,43 @@ class ProfileScreen extends StatelessWidget {
     );
     if (confirmed != true) return;
     store.signOut();
+  }
+}
+
+class _StrengthCard extends StatelessWidget {
+  const _StrengthCard({required this.store});
+
+  final AppStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final WardProfile? p = store.profile;
+    if (p == null) return const SizedBox.shrink();
+    final ProfileStrength s = profileStrength(p, store.verificationDocs);
+    return AppCard(
+      key: const Key('profile_strength'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Profile strength ${s.percent}%',
+            style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: s.percent / 100,
+            minHeight: 7,
+            borderRadius: BorderRadius.circular(4),
+            color: AppTheme.green,
+            backgroundColor: AppTheme.slate200,
+          ),
+          if (s.nextTip != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(s.nextTip!, style: AppTheme.bodySmall),
+          ],
+        ],
+      ),
+    );
   }
 }
 

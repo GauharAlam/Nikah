@@ -17,10 +17,57 @@ class OptionLists {
     'Just exploring',
   ];
 
+  static const List<String> familyTypes = <String>['Joint family', 'Nuclear family', 'Other'];
+
+  static const List<String> familyValues = <String>[
+    'Religious', 'Practising', 'Moderate', 'Liberal',
+  ];
+
+  static const List<String> siblingCounts = <String>[
+    'None', '1', '2', '3', '4', '5 or more', 'Prefer not to say',
+  ];
+
+  static const List<String> educationStatuses = <String>['Completed', 'Currently studying'];
+
+  static const List<String> employmentStatuses = <String>[
+    'Employed', 'Self-employed', 'Business owner', 'Student', 'Not working',
+  ];
+
+  static const List<String> languages = <String>[
+    'English', 'Hindi', 'Urdu', 'Arabic', 'Bengali', 'Malayalam', 'Tamil', 'Telugu',
+    'Marathi', 'Gujarati', 'Kannada', 'Punjabi', 'Kashmiri', 'Other',
+  ];
+
   static const String beyondCaste = 'Beyond Caste';
+  static const String noCaste = 'Prefer not to say';
+
+  static const List<String> sects = <String>[
+    'Sunni',
+    'Shia',
+    'Ahl-e-Hadith',
+    'Just Muslim',
+    'Prefer not to say',
+  ];
+
+  static const List<String> children = <String>[
+    'No children',
+    'Yes, living with me',
+    'Yes, not living with me',
+  ];
+
+  static const List<String> reportReasons = <String>[
+    'Asked for money',
+    'Pushed investment or crypto',
+    'Asked to leave the app quickly',
+    'Fake profile',
+    'Already married',
+    'Inappropriate photos or messages',
+    'Harassment',
+  ];
 
   static const List<String> castes = <String>[
     beyondCaste,
+    noCaste,
     'Syed',
     'Shaikh',
     'Pathan',

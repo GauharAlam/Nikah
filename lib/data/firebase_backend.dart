@@ -20,44 +20,65 @@ import 'backend.dart';
 /// [Backend] on Firebase. Reads Firestore directly where rules allow it; every
 /// decision with consequences goes through a Cloud Function.
 class FirebaseBackend implements Backend {
-  FirebaseBackend()
+  FirebaseBackend({this.pushAvailable = true})
       : _auth = FirebaseAuth.instance,
         _db = FirebaseFirestore.instance,
         _storage = FirebaseStorage.instance,
         _functions = FirebaseFunctions.instanceFor(region: 'asia-south1');
+
+  /// Points every service at the local emulators. The emulators have no
+  /// Cloud Messaging, so push stays off.
+  factory FirebaseBackend.emulator(String host) {
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    FirebaseFunctions.instanceFor(region: 'asia-south1').useFunctionsEmulator(host, 5001);
+    FirebaseStorage.instance.useStorageEmulator(host, 9199);
+    unawaited(FirebaseAuth.instance.useAuthEmulator(host, 9099));
+    return FirebaseBackend(pushAvailable: false);
+  }
+
+  final bool pushAvailable;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
   final FirebaseStorage _storage;
   final FirebaseFunctions _functions;
   bool _googleReady = false;
+  int? _resendToken;
+  String? _resendPhone;
 
   Future<T> _guard<T>(Future<T> Function() run) async {
     try {
       return await run();
     } on FirebaseFunctionsException catch (e) {
-      final bool userFacing = e.code != 'internal' && e.code != 'unavailable';
+      if (e.code == 'unavailable') throw BackendException(_offline, code: e.code);
       throw BackendException(
-        userFacing ? (e.message ?? _generic) : _generic,
+        e.code == 'internal' ? _generic : (e.message ?? _generic),
         code: e.code,
       );
     } on FirebaseAuthException catch (e) {
       throw BackendException(_authMessage(e.code), code: e.code);
     } on FirebaseException catch (e) {
-      throw BackendException(_generic, code: e.code);
+      throw BackendException(
+        BackendException.kindOf(e.code) == FailureKind.offline ? _offline : _generic,
+        code: e.code,
+      );
     } on SocketException {
-      throw const BackendException('You appear to be offline.');
+      throw const BackendException(_offline, code: 'unavailable');
     }
   }
 
   static const String _generic = 'Something went wrong. Please try again.';
+  static const String _offline = 'You appear to be offline.';
 
   static String _authMessage(String code) => switch (code) {
         'invalid-verification-code' => 'That code is not correct.',
         'session-expired' => 'That code has expired. Request a new one.',
         'too-many-requests' => 'Too many attempts. Please try again later.',
         'invalid-phone-number' => 'Enter a valid phone number.',
-        'network-request-failed' => 'You appear to be offline.',
+        'network-request-failed' => _offline,
+        'credential-already-in-use' || 'account-exists-with-different-credential' =>
+          'This number already has an account. Sign in with it instead.',
+        'requires-recent-login' => 'Please verify it is you, then try again.',
         _ => _generic,
       };
 
@@ -84,36 +105,62 @@ class FirebaseBackend implements Backend {
         );
       });
 
+  /// Links to the signed-in account when there is one, otherwise signs in, so
+  /// one number can only ever belong to one account.
+  Future<void> _apply(PhoneAuthCredential credential) async {
+    final User? current = _auth.currentUser;
+    if (current == null) {
+      await _auth.signInWithCredential(credential);
+    } else {
+      await current.linkWithCredential(credential);
+      await current.getIdToken(true);
+    }
+  }
+
   @override
-  Future<String> sendOtp(String e164Phone) {
-    final Completer<String> done = Completer<String>();
+  Future<String?> sendOtp(String e164Phone) {
+    final Completer<String?> done = Completer<String?>();
     unawaited(_auth.verifyPhoneNumber(
       phoneNumber: e164Phone,
       timeout: const Duration(seconds: 60),
+      // A resend for the same number keeps its place with the SMS provider.
+      forceResendingToken: _resendPhone == e164Phone ? _resendToken : null,
       verificationCompleted: (PhoneAuthCredential credential) async {
-        // Android can read the code itself; the auth stream then moves on.
-        await _auth.signInWithCredential(credential);
+        // Android can read the code itself.
+        try {
+          await _apply(credential);
+          if (!done.isCompleted) done.complete(null);
+        } on FirebaseAuthException catch (e) {
+          if (!done.isCompleted) {
+            done.completeError(BackendException(_authMessage(e.code), code: e.code));
+          }
+        }
       },
       verificationFailed: (FirebaseAuthException e) {
         if (!done.isCompleted) {
           done.completeError(BackendException(_authMessage(e.code), code: e.code));
         }
       },
-      codeSent: (String verificationId, int? _) {
+      codeSent: (String verificationId, int? resendToken) {
+        _resendToken = resendToken;
+        _resendPhone = e164Phone;
         if (!done.isCompleted) done.complete(verificationId);
       },
       codeAutoRetrievalTimeout: (_) {},
     ));
-    return done.future;
+    return done.future.timeout(
+      const Duration(seconds: 90),
+      onTimeout: () => throw const BackendException(
+        'We could not send a code. Please try again.',
+        code: 'unavailable',
+      ),
+    );
   }
 
   @override
-  Future<void> confirmOtp(String verificationId, String code) => _guard(() async {
-        await _auth.signInWithCredential(PhoneAuthProvider.credential(
-          verificationId: verificationId,
-          smsCode: code,
-        ));
-      });
+  Future<void> confirmOtp(String verificationId, String code) => _guard(() => _apply(
+        PhoneAuthProvider.credential(verificationId: verificationId, smsCode: code),
+      ));
 
   @override
   Future<void> signInWithGoogle() => _guard(() async {
@@ -136,7 +183,7 @@ class FirebaseBackend implements Backend {
   @override
   Future<void> signOut() async {
     final String? uid = _auth.currentUser?.uid;
-    if (uid != null) {
+    if (uid != null && pushAvailable) {
       // ignore: deprecated_member_use
       final String? token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
@@ -162,14 +209,17 @@ class FirebaseBackend implements Backend {
         final String day = now.toIso8601String().substring(0, 10);
         final String month = now.toIso8601String().substring(0, 7);
         return AccountState(
-          stage: ReviewStage.values.asNameMap()[d['stage']] ?? ReviewStage.draft,
+          stage: ReviewStage.fromWire(d['stage']),
           rejectionReason: d['rejectionReason'] as String? ?? '',
+          rejectedPhotos: (d['rejectedPhotos'] as List?)?.cast<String>() ?? const <String>[],
+          editsPending: d['editsPending'] as bool? ?? false,
           proposalsSentToday: d['proposalDay'] == day ? (d['proposalCount'] as int? ?? 0) : 0,
           decisionsToday: d['decisionDay'] == day ? (d['decisionCount'] as int? ?? 0) : 0,
           contactCreditsLeft: (d['purchasedCredits'] as int? ?? 0) -
               (d['creditMonth'] == month ? (d['creditsSpent'] as int? ?? 0) : 0),
           premiumUntil: (d['premiumUntil'] as Timestamp?)?.toDate(),
           plan: d['plan'] as String? ?? '',
+          familyOf: d['familyOf'] as String?,
         );
       });
 
@@ -183,6 +233,8 @@ class FirebaseBackend implements Backend {
           decisionsPerDay: l['decisionsPerDay'] as int? ?? 10,
           pendingLimit: l['pendingLimit'] as int? ?? 15,
           monthlyContactCredits: l['monthlyContactCredits'] as int? ?? 30,
+          requireIdProof: l['requireIdProof'] as bool? ?? true,
+          graduatesOnly: l['graduatesOnly'] as bool? ?? true,
         );
       });
 
@@ -200,12 +252,24 @@ class FirebaseBackend implements Backend {
   Future<void> submitProfile() => _call('submitProfile');
 
   @override
-  Future<String> uploadPhoto(String uid, String localPath) => _guard(() async {
+  Future<String> uploadPhoto(String uid, String localPath, {void Function(double)? onProgress}) =>
+      _guard(() async {
         final String path = 'photos/$uid/${DateTime.now().microsecondsSinceEpoch}.jpg';
-        await _storage.ref(path).putFile(
+        final UploadTask task = _storage.ref(path).putFile(
               File(localPath),
               SettableMetadata(contentType: 'image/jpeg'),
             );
+        final StreamSubscription<TaskSnapshot> progress = task.snapshotEvents.listen(
+          (TaskSnapshot s) {
+            if (s.totalBytes > 0) onProgress?.call(s.bytesTransferred / s.totalBytes);
+          },
+          onError: (Object _) {},
+        );
+        try {
+          await task;
+        } finally {
+          await progress.cancel();
+        }
         return path;
       });
 
@@ -231,10 +295,17 @@ class FirebaseBackend implements Backend {
         'education': f.education,
         'profession': f.profession,
         'location': f.location,
+        'sect': f.sect,
       },
       'cursor': cursor,
     });
-    return IntroductionPage(_cards(res['profiles']), (res['cursor'] as num?)?.toInt());
+    return IntroductionPage(
+      _cards(res['profiles']),
+      (res['cursor'] as num?)?.toInt(),
+      freeLeft: (res['freeLeft'] as num?)?.toInt(),
+      freeLimit: (res['freeLimit'] as num?)?.toInt() ?? 15,
+      limitReached: res['limitReached'] as bool? ?? false,
+    );
   }
 
   static List<MatchProfile> _cards(dynamic list) => (list as List? ?? const <dynamic>[])
@@ -375,6 +446,9 @@ class FirebaseBackend implements Backend {
               lastMessage: d['lastMessage'] as String? ?? '',
               lastMessageAt: (d['lastMessageAt'] as Timestamp?)?.toDate(),
               unread: ((d['unread'] as Map?)?[uid] as int?) ?? 0,
+              myStep: (d['journey'] as Map?)?[uid] as String?,
+              theirStep: (d['journey'] as Map?)?[
+                  (d['users'] as List).cast<String>().firstWhere((String u) => u != uid)] as String?,
             );
           }).toList());
 
@@ -424,6 +498,125 @@ class FirebaseBackend implements Backend {
   Future<void> reportProfile(String target, String reason) =>
       _call('reportProfile', <String, dynamic>{'target': target, 'reason': reason});
 
+  @override
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+      _call('updatePrivacy', <String, dynamic>{
+        'photoPrivacy': ?photoPrivacy,
+        'showCaste': ?showCaste,
+        'allowFamilyShare': ?allowFamilyShare,
+      });
+
+  @override
+  Future<void> touchActive() => _call('touchActive');
+
+  // ─── Invites and edits ─────────────────────────────────────────────────────
+
+  @override
+  Future<InviteInfo> getInviteCode() async {
+    final Map<String, dynamic> res = await _call('getInviteCode');
+    return InviteInfo(
+      res['code'] as String,
+      (res['invited'] as num?)?.toInt() ?? 0,
+      (res['earned'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  Future<void> submitEdits() => _call('submitEdits');
+
+  // ─── Family Circle ─────────────────────────────────────────────────────────
+
+  @override
+  Stream<FamilyState> watchFamily(String member) {
+    final DocumentReference<Map<String, dynamic>> root = _db.doc('family/$member');
+    Map<String, String> names = <String, String>{};
+    List<FamilyPick> picks = <FamilyPick>[];
+    late final StreamController<FamilyState> out;
+    StreamSubscription<dynamic>? a;
+    StreamSubscription<dynamic>? b;
+    void emit() => out.add(FamilyState(guardians: names, shortlist: picks));
+    out = StreamController<FamilyState>(
+      onListen: () {
+        a = root.snapshots().listen((DocumentSnapshot<Map<String, dynamic>> s) {
+          names = (s.data()?['names'] as Map?)?.cast<String, String>() ?? <String, String>{};
+          emit();
+        }, onError: out.addError);
+        b = root.collection('shortlist').snapshots().listen((QuerySnapshot<Map<String, dynamic>> q) {
+          picks = q.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> s) {
+            final Map<String, dynamic> d = s.data();
+            return FamilyPick(
+              id: s.id,
+              title: '${d['firstName']}, ${d['age']}',
+              summary: <dynamic>[d['education'], d['university'], d['profession'], d['location'], d['maritalStatus']]
+                  .where((dynamic v) => v is String && v.isNotEmpty)
+                  .join(' · '),
+              opinions: (d['opinions'] as Map?)?.cast<String, String>() ?? const <String, String>{},
+            );
+          }).toList();
+          emit();
+        }, onError: out.addError);
+      },
+      onCancel: () async {
+        await a?.cancel();
+        await b?.cancel();
+      },
+    );
+    return out.stream;
+  }
+
+  @override
+  Future<String> createFamilyInvite() async =>
+      (await _call('createFamilyInvite'))['code'] as String;
+
+  @override
+  Future<void> joinFamily(String code, String name) =>
+      _call('joinFamily', <String, dynamic>{'code': code, 'name': name});
+
+  @override
+  Future<void> removeGuardian(String guardian, {String? member}) =>
+      _call('removeGuardian', <String, dynamic>{'guardian': guardian, 'member': ?member});
+
+  @override
+  Future<void> shareWithFamily(String profileId) =>
+      _call('shareWithFamily', <String, dynamic>{'profile': profileId});
+
+  @override
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion) =>
+      _call('giveFamilyOpinion', <String, dynamic>{
+        'member': member,
+        'profile': profileId,
+        'opinion': opinion,
+      });
+
+  // ─── Nikah Journey ─────────────────────────────────────────────────────────
+
+  @override
+  Future<void> setJourneyStep(String pairId, String uid, String step) => _guard(() async {
+        await _db.doc('matches/$pairId').update(<String, dynamic>{'journey.$uid': step});
+      });
+
+  @override
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> answers) =>
+      _guard(() async {
+        await _db.doc('matches/$pairId/answers/$uid').set(<String, dynamic>{
+          'answers': answers,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+  @override
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid) async {
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> s =
+          await _db.doc('matches/$pairId/answers/$uid').get();
+      return (s.data()?['answers'] as Map?)?.cast<String, String>();
+    } on FirebaseException catch (e) {
+      // Rules hide the other person's answers until you have given yours.
+      if (e.code == 'permission-denied') return null;
+      throw const BackendException(_generic);
+    }
+  }
+
   // ─── Notifications ─────────────────────────────────────────────────────────
 
   @override
@@ -457,6 +650,7 @@ class FirebaseBackend implements Backend {
 
   @override
   Future<void> registerPushToken(String uid) => _guard(() async {
+        if (!pushAvailable) return;
         await FirebaseMessaging.instance.requestPermission();
         // ignore: deprecated_member_use
         final String? token = await FirebaseMessaging.instance.getToken();
@@ -481,7 +675,7 @@ class FirebaseBackend implements Backend {
           final Map<String, dynamic>? d = byType[doc.id];
           if (d == null) return doc;
           return doc.copyWith(
-            status: VerificationDocStatus.values.asNameMap()[d['status']] ?? VerificationDocStatus.pending,
+            status: VerificationDocStatus.fromWire(d['status']),
             rejectionReason: d['rejectionReason'] as String? ?? '',
           );
         }).toList();
@@ -492,12 +686,16 @@ class FirebaseBackend implements Backend {
     final List<String> paths = await _guard(() async {
       final List<String> uploaded = <String>[];
       for (final String local in localPaths) {
-        final String ext = local.toLowerCase().endsWith('.pdf') ? 'pdf' : 'jpg';
+        final String lower = local.toLowerCase();
+        final (String ext, String type_) = lower.endsWith('.pdf')
+            ? ('pdf', 'application/pdf')
+            : lower.endsWith('.png')
+                ? ('png', 'image/png')
+                : lower.endsWith('.webp')
+                    ? ('webp', 'image/webp')
+                    : ('jpg', 'image/jpeg');
         final String path = 'verification/$uid/$type/${DateTime.now().microsecondsSinceEpoch}.$ext';
-        await _storage.ref(path).putFile(
-              File(local),
-              SettableMetadata(contentType: ext == 'pdf' ? 'application/pdf' : 'image/jpeg'),
-            );
+        await _storage.ref(path).putFile(File(local), SettableMetadata(contentType: type_));
         uploaded.add(path);
       }
       return uploaded;
@@ -539,20 +737,32 @@ class FirebaseBackend implements Backend {
   }
 
   @override
-  Future<void> reviewProfile(String uid, {required bool approve, String reason = ''}) =>
-      _call('reviewProfile', <String, dynamic>{'uid': uid, 'approve': approve, 'reason': reason});
+  Future<void> reviewProfile(
+    String uid, {
+    required String decision,
+    required int version,
+    String reason = '',
+    List<String> rejectedPhotos = const <String>[],
+  }) =>
+      _call('reviewProfile', <String, dynamic>{
+        'uid': uid,
+        'decision': decision,
+        'version': version,
+        'reason': reason,
+        'rejectedPhotos': rejectedPhotos,
+      });
 
   @override
   Future<void> reviewDocument(
     String uid,
     String type, {
-    required bool approve,
+    required String decision,
     String reason = '',
   }) =>
       _call('reviewDocument', <String, dynamic>{
         'uid': uid,
         'type': type,
-        'approve': approve,
+        'decision': decision,
         'reason': reason,
       });
 }

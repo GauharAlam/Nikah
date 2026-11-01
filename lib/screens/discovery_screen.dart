@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../models/match_profile.dart';
@@ -31,7 +32,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(context.read<AppStore>().refreshIntroductions());
+    final AppStore store = context.read<AppStore>();
+    unawaited(store.refreshIntroductions());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final List<MatchProfile> deck = store.discoveredProfiles;
+      if (mounted && deck.isNotEmpty) store.markProfileViewed(deck.first.id);
+    });
   }
 
   @override
@@ -159,6 +165,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   'Assalamu Alaikum, $firstName 👋',
                   style: AppTheme.ts(14, FontWeight.w600, color: AppTheme.slate500),
                 ),
+                if (store.freeProfilesLeft != null)
+                  Text(
+                    key: const Key('free_profiles_left'),
+                    '${store.freeProfilesLeft} ${tr('of')} ${store.freeProfileAllowance} ${tr('free profiles left')}',
+                    style: AppTheme.ts(12, FontWeight.w700, color: AppTheme.goldDeep),
+                  ),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -200,32 +212,39 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           Expanded(
             child: profiles.isEmpty && store.isLoadingIntroductions
                 ? const Center(child: CircularProgressIndicator())
+                : profiles.isEmpty && store.reachedProfileLimit
+                ? _UnlockMoreCard(limit: store.freeProfileAllowance)
                 : profiles.isEmpty && store.introductionsError != null
                 ? EmptyState(
                     icon: Icons.wifi_off_rounded,
                     title: 'Could not load introductions',
                     body: store.introductionsError!,
-                    actionLabel: 'Try again',
+                    actionLabel: tr('Try again'),
                     onAction: store.refreshIntroductions,
                   )
                 : profiles.isEmpty
                 ? EmptyState(
                     icon: Icons.explore_off_rounded,
-                    title: 'All reviewed',
+                    title: tr('All reviewed'),
                     body: 'Every profile matching your preferences has been '
                         'considered. Broaden your search to keep browsing.',
-                    actionLabel: 'Adjust Filters',
+                    actionLabel: tr('Adjust Filters'),
                     onAction: () => context.push(AppRoutes.filters),
                   )
                 : PageView.builder(
                     controller: _pageController,
-                    itemCount: profiles.length,
+                    itemCount: profiles.length + (store.reachedProfileLimit ? 1 : 0),
                     onPageChanged: (int index) {
+                      if (index < profiles.length) {
+                        store.markProfileViewed(profiles[index].id);
+                      }
                       if (index >= profiles.length - 2) {
                         unawaited(store.loadMoreIntroductions());
                       }
                     },
-                    itemBuilder: (BuildContext context, int index) => _DeckCard(
+                    itemBuilder: (BuildContext context, int index) => index >= profiles.length
+                        ? _UnlockMoreCard(limit: store.freeProfileAllowance)
+                        : _DeckCard(
                       profile: profiles[index],
                       matchPercent: profiles[index].matchPercent,
                       onIncompatible: () =>
@@ -239,6 +258,47 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ),
           const SizedBox(height: 4),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown once the free profiles are used.
+class _UnlockMoreCard extends StatelessWidget {
+  const _UnlockMoreCard({required this.limit});
+
+  final int limit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        key: const Key('unlock_more'),
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.lock_outline_rounded, size: 52, color: AppTheme.goldAccent),
+            const SizedBox(height: 14),
+            Text(
+              '${tr('You have seen your free profiles')} ($limit)',
+              textAlign: TextAlign.center,
+              style: AppTheme.ts(20, FontWeight.w800, color: AppTheme.slate900),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose a plan to see more. Proposals you sent and received stay free.',
+              textAlign: TextAlign.center,
+              style: AppTheme.bodySmall,
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              key: const Key('see_plans'),
+              onPressed: () => context.push(AppRoutes.plans),
+              child: Text(tr('See plans')),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -480,7 +540,7 @@ class _DeckCard extends StatelessWidget {
                           Flexible(
                             child: _CircleAction(
                               key: Key('discovery_pass_${profile.id}'),
-                              label: 'Incompatible',
+                              label: tr('Incompatible'),
                               background: Colors.white,
                               iconColor: AppTheme.danger,
                               icon: Icons.close_rounded,
@@ -490,7 +550,7 @@ class _DeckCard extends StatelessWidget {
                           Flexible(
                             child: _CircleAction(
                               key: Key('discovery_intro_${profile.id}'),
-                              label: 'Send Proposal',
+                              label: tr('Send Proposal'),
                               background: AppTheme.green,
                               iconColor: Colors.white,
                               icon: Icons.favorite_rounded,
@@ -502,7 +562,7 @@ class _DeckCard extends StatelessWidget {
                           Flexible(
                             child: _CircleAction(
                               key: Key('discovery_contact_${profile.id}'),
-                              label: 'Request Contact',
+                              label: tr('Request Contact'),
                               background: AppTheme.goldAccent,
                               iconColor: Colors.white,
                               icon: Icons.phone_rounded,
@@ -531,7 +591,7 @@ class _DeckCard extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 Text(
-                                  'Explore next profile',
+                                  tr('Explore next profile'),
                                   style: AppTheme.ts(
                                     12.5,
                                     FontWeight.w800,

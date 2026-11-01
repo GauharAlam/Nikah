@@ -100,6 +100,25 @@ class WardProfile {
   final String company;
   final List<String> photos;
   final int onboardingStep;
+  final String sect;
+  final String children;
+  final String photoPrivacy;
+  final bool showCaste;
+  final bool allowFamilyShare;
+  final bool intentConfirmed;
+  final bool dataConsent;
+  final bool candidateConsent;
+  final String inviteCode;
+  final String preferredLanguage;
+  final String familyType;
+  final String familyBackground;
+  final String familyValues;
+  final String familyLocation;
+  final String siblings;
+  final String graduationYear;
+  final String educationStatus;
+  final String employmentStatus;
+  final String careerDescription;
 
   const WardProfile({
     this.displayName = '',
@@ -139,6 +158,25 @@ class WardProfile {
     this.company = '',
     this.photos = const <String>[],
     this.onboardingStep = 1,
+    this.sect = '',
+    this.children = '',
+    this.photoPrivacy = 'everyone',
+    this.showCaste = true,
+    this.allowFamilyShare = true,
+    this.intentConfirmed = false,
+    this.dataConsent = false,
+    this.candidateConsent = false,
+    this.inviteCode = '',
+    this.preferredLanguage = '',
+    this.familyType = '',
+    this.familyBackground = '',
+    this.familyValues = '',
+    this.familyLocation = '',
+    this.siblings = '',
+    this.graduationYear = '',
+    this.educationStatus = '',
+    this.employmentStatus = '',
+    this.careerDescription = '',
   });
 
   WardProfile copyWith({
@@ -179,6 +217,25 @@ class WardProfile {
     String? company,
     List<String>? photos,
     int? onboardingStep,
+    String? sect,
+    String? children,
+    String? photoPrivacy,
+    bool? showCaste,
+    bool? allowFamilyShare,
+    bool? intentConfirmed,
+    bool? dataConsent,
+    bool? candidateConsent,
+    String? inviteCode,
+    String? preferredLanguage,
+    String? familyType,
+    String? familyBackground,
+    String? familyValues,
+    String? familyLocation,
+    String? siblings,
+    String? graduationYear,
+    String? educationStatus,
+    String? employmentStatus,
+    String? careerDescription,
   }) {
     return WardProfile(
       displayName: displayName ?? this.displayName,
@@ -218,6 +275,25 @@ class WardProfile {
       company: company ?? this.company,
       photos: photos ?? this.photos,
       onboardingStep: onboardingStep ?? this.onboardingStep,
+      sect: sect ?? this.sect,
+      children: children ?? this.children,
+      photoPrivacy: photoPrivacy ?? this.photoPrivacy,
+      showCaste: showCaste ?? this.showCaste,
+      allowFamilyShare: allowFamilyShare ?? this.allowFamilyShare,
+      intentConfirmed: intentConfirmed ?? this.intentConfirmed,
+      dataConsent: dataConsent ?? this.dataConsent,
+      candidateConsent: candidateConsent ?? this.candidateConsent,
+      inviteCode: inviteCode ?? this.inviteCode,
+      preferredLanguage: preferredLanguage ?? this.preferredLanguage,
+      familyType: familyType ?? this.familyType,
+      familyBackground: familyBackground ?? this.familyBackground,
+      familyValues: familyValues ?? this.familyValues,
+      familyLocation: familyLocation ?? this.familyLocation,
+      siblings: siblings ?? this.siblings,
+      graduationYear: graduationYear ?? this.graduationYear,
+      educationStatus: educationStatus ?? this.educationStatus,
+      employmentStatus: employmentStatus ?? this.employmentStatus,
+      careerDescription: careerDescription ?? this.careerDescription,
     );
   }
 
@@ -271,6 +347,25 @@ class WardProfile {
     'company': company,
     'photos': photos,
     'onboardingStep': onboardingStep,
+    'sect': sect,
+    'children': children,
+    'photoPrivacy': photoPrivacy,
+    'showCaste': showCaste,
+    'allowFamilyShare': allowFamilyShare,
+    'intentConfirmed': intentConfirmed,
+    'dataConsent': dataConsent,
+    'candidateConsent': candidateConsent,
+    'inviteCode': inviteCode,
+    'preferredLanguage': preferredLanguage,
+    'familyType': familyType,
+    'familyBackground': familyBackground,
+    'familyValues': familyValues,
+    'familyLocation': familyLocation,
+    'siblings': siblings,
+    'graduationYear': graduationYear,
+    'educationStatus': educationStatus,
+    'employmentStatus': employmentStatus,
+    'careerDescription': careerDescription,
   };
 
   static WardProfile fromJson(Map<String, dynamic> json) => WardProfile(
@@ -322,6 +417,25 @@ class WardProfile {
     company: json['company'] as String? ?? '',
     photos: (json['photos'] as List?)?.cast<String>() ?? const <String>[],
     onboardingStep: json['onboardingStep'] as int? ?? 1,
+    sect: json['sect'] as String? ?? '',
+    children: json['children'] as String? ?? '',
+    photoPrivacy: json['photoPrivacy'] as String? ?? 'everyone',
+    showCaste: json['showCaste'] as bool? ?? true,
+    allowFamilyShare: json['allowFamilyShare'] as bool? ?? true,
+    intentConfirmed: json['intentConfirmed'] as bool? ?? false,
+    dataConsent: json['dataConsent'] as bool? ?? false,
+    candidateConsent: json['candidateConsent'] as bool? ?? false,
+    inviteCode: json['inviteCode'] as String? ?? '',
+    preferredLanguage: json['preferredLanguage'] as String? ?? '',
+    familyType: json['familyType'] as String? ?? '',
+    familyBackground: json['familyBackground'] as String? ?? '',
+    familyValues: json['familyValues'] as String? ?? '',
+    familyLocation: json['familyLocation'] as String? ?? '',
+    siblings: json['siblings'] as String? ?? '',
+    graduationYear: json['graduationYear'] as String? ?? '',
+    educationStatus: json['educationStatus'] as String? ?? '',
+    employmentStatus: json['employmentStatus'] as String? ?? '',
+    careerDescription: json['careerDescription'] as String? ?? '',
   );
 
   /// Full E.164 number, or empty when unset.
@@ -360,7 +474,45 @@ class WardProfile {
         'photos': photos,
         'aboutMe': aboutMe,
         'step': onboardingStep,
+        'stepVersion': 2,
+        'sect': sect,
+        'children': children,
+        'photoPrivacy': photoPrivacy,
+        'showCaste': showCaste,
+        'allowFamilyShare': allowFamilyShare,
+        'intentConfirmed': intentConfirmed,
+        'dataConsent': dataConsent,
+        'candidateConsent': candidateConsent,
+        'inviteCode': inviteCode,
+        'preferredLanguage': preferredLanguage,
+        'familyType': familyType,
+        'familyBackground': familyBackground,
+        'familyValues': familyValues,
+        'familyLocation': familyLocation,
+        'siblings': siblings,
+        'graduationYear': graduationYear,
+        'educationStatus': educationStatus,
+        'employmentStatus': employmentStatus,
+        'careerDescription': careerDescription,
+        'prayer': prayerFrequency.label,
+        'prayerFrequency': prayerFrequency.name,
+        'quranComfort': quranComfort.name,
+        'practices': <String>[...extraPractices, ...halalLifestyle],
+        'extraPractices': extraPractices,
+        'halalLifestyle': halalLifestyle,
       };
+
+  /// Drafts saved under the old seven-step flow resume at the matching step.
+  static int migrateStep(int? step, int? version) {
+    if (step == null) return 1;
+    if (version == 2) return step;
+    return switch (step) {
+      <= 4 => 1,
+      5 => 3,
+      6 => 4,
+      _ => 5,
+    };
+  }
 
   static WardProfile fromDraft(Map<String, dynamic> d) => WardProfile(
         managedBy: d['managedBy'] as String? ?? 'self',
@@ -389,7 +541,32 @@ class WardProfile {
         company: d['company'] as String? ?? '',
         photos: (d['photos'] as List?)?.cast<String>() ?? const <String>[],
         aboutMe: d['aboutMe'] as String? ?? '',
-        onboardingStep: d['step'] as int? ?? 1,
+        onboardingStep: migrateStep(d['step'] as int?, d['stepVersion'] as int?),
+        sect: d['sect'] as String? ?? '',
+        children: d['children'] as String? ?? '',
+        photoPrivacy: d['photoPrivacy'] as String? ?? 'everyone',
+        showCaste: d['showCaste'] as bool? ?? true,
+        allowFamilyShare: d['allowFamilyShare'] as bool? ?? true,
+        intentConfirmed: d['intentConfirmed'] as bool? ?? false,
+        dataConsent: d['dataConsent'] as bool? ?? false,
+        candidateConsent: d['candidateConsent'] as bool? ?? false,
+        inviteCode: d['inviteCode'] as String? ?? '',
+        preferredLanguage: d['preferredLanguage'] as String? ?? '',
+        familyType: d['familyType'] as String? ?? '',
+        familyBackground: d['familyBackground'] as String? ?? '',
+        familyValues: d['familyValues'] as String? ?? '',
+        familyLocation: d['familyLocation'] as String? ?? '',
+        siblings: d['siblings'] as String? ?? '',
+        graduationYear: d['graduationYear'] as String? ?? '',
+        educationStatus: d['educationStatus'] as String? ?? '',
+        employmentStatus: d['employmentStatus'] as String? ?? '',
+        careerDescription: d['careerDescription'] as String? ?? '',
+        prayerFrequency: PrayerFrequency.values.asNameMap()[d['prayerFrequency']] ??
+            PrayerFrequency.always,
+        quranComfort: QuranComfort.values.asNameMap()[d['quranComfort']] ??
+            QuranComfort.intermediate,
+        extraPractices: (d['extraPractices'] as List?)?.cast<String>() ?? const <String>[],
+        halalLifestyle: (d['halalLifestyle'] as List?)?.cast<String>() ?? const <String>[],
       );
 
   static String encode(WardProfile p) => jsonEncode(p.toJson());

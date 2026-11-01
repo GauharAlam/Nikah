@@ -33,6 +33,7 @@ class FakeBackend implements Backend {
   Map<String, dynamic>? savedDraft;
   List<IntroductionPage> pages = <IntroductionPage>[];
   Object? failNext;
+  Object? failDraft;
 
   Future<void> _record(String call) async {
     calls.add(call);
@@ -44,7 +45,7 @@ class FakeBackend implements Backend {
   @override
   Stream<AuthUser?> get authChanges => auth.stream;
   @override
-  Future<String> sendOtp(String e164Phone) async => 'verification';
+  Future<String?> sendOtp(String e164Phone) async => 'verification';
   @override
   Future<void> confirmOtp(String verificationId, String code) => _record('confirmOtp');
   @override
@@ -60,7 +61,12 @@ class FakeBackend implements Backend {
   @override
   Stream<AppLimits> watchLimits() => limits.stream;
   @override
-  Future<Map<String, dynamic>?> loadDraft(String uid) async => draft;
+  Future<Map<String, dynamic>?> loadDraft(String uid) async {
+    final Object? failure = failDraft;
+    failDraft = null;
+    if (failure != null) throw failure;
+    return draft;
+  }
   @override
   Future<void> saveDraft(String uid, Map<String, dynamic> d) async {
     savedDraft = d;
@@ -70,7 +76,11 @@ class FakeBackend implements Backend {
   @override
   Future<void> submitProfile() => _record('submitProfile');
   @override
-  Future<String> uploadPhoto(String uid, String localPath) async => 'photos/$uid/1.jpg';
+  Future<String> uploadPhoto(String uid, String localPath, {void Function(double)? onProgress}) async {
+    onProgress?.call(1);
+    return 'photos/$uid/1.jpg';
+  }
+
   @override
   Future<String> photoUrl(String storagePath) async => 'https://example.com/p.jpg';
   @override
@@ -124,6 +134,40 @@ class FakeBackend implements Backend {
   @override
   Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
   @override
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+      _record('privacy:$photoPrivacy');
+  @override
+  Future<void> touchActive() => _record('touchActive');
+  final StreamController<FamilyState> familyStream = StreamController<FamilyState>.broadcast();
+  @override
+  Future<InviteInfo> getInviteCode() async => const InviteInfo('ABC234', 1, 2);
+  @override
+  Future<void> submitEdits() => _record('submitEdits');
+  @override
+  Stream<FamilyState> watchFamily(String member) => familyStream.stream;
+  @override
+  Future<String> createFamilyInvite() async => 'FAM234';
+  @override
+  Future<void> joinFamily(String code, String name) => _record('joinFamily:$code');
+  @override
+  Future<void> removeGuardian(String guardian, {String? member}) => _record('removeGuardian:$guardian');
+  @override
+  Future<void> shareWithFamily(String profileId) => _record('shareFamily:$profileId');
+  @override
+  Future<void> giveFamilyOpinion(String member, String profileId, String opinion) =>
+      _record('opinion:$member:$profileId:$opinion');
+  final Map<String, Map<String, String>> answers = <String, Map<String, String>>{};
+  @override
+  Future<void> setJourneyStep(String pairId, String uid, String step) => _record('journey:$step');
+  @override
+  Future<void> saveAnswers(String pairId, String uid, Map<String, String> a) async {
+    answers[uid] = a;
+    await _record('answers');
+  }
+
+  @override
+  Future<Map<String, String>?> loadAnswers(String pairId, String uid) async => answers[uid];
+  @override
   Stream<List<NotificationItem>> watchNotifications(String uid) => notifications.stream;
   @override
   Future<void> markNotificationRead(String uid, String id) => _record('notified:$id');
@@ -147,9 +191,15 @@ class FakeBackend implements Backend {
   @override
   Future<List<String>> documentUrls(String uid, String type) async => const <String>[];
   @override
-  Future<void> reviewProfile(String uid, {required bool approve, String reason = ''}) =>
-      _record('review:$uid');
+  Future<void> reviewProfile(
+    String uid, {
+    required String decision,
+    required int version,
+    String reason = '',
+    List<String> rejectedPhotos = const <String>[],
+  }) =>
+      _record('reviewProfile:$uid:$decision:$version');
   @override
-  Future<void> reviewDocument(String uid, String type, {required bool approve, String reason = ''}) =>
-      _record('reviewDoc:$uid');
+  Future<void> reviewDocument(String uid, String type, {required String decision, String reason = ''}) =>
+      _record('reviewDocument:$uid:$type:$decision');
 }

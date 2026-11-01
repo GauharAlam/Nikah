@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -89,7 +90,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      'Matches',
+                      tr('Matches'),
                       style: _t(26, FontWeight.w800, AppTheme.slate900),
                     ),
                   ),
@@ -114,7 +115,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 2, 18, 0),
               child: Text(
-                'Manage your matches here',
+                tr('Manage your matches here'),
                 style: _t(12.5, FontWeight.w600, AppTheme.slate500),
               ),
             ),
@@ -126,7 +127,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                   Expanded(
                     child: _ModePill(
                       key: const Key('matches_mode_contacts'),
-                      label: 'Shared Contacts',
+                      label: tr('Shared Contacts'),
                       icon: Icons.phone_in_talk_outlined,
                       count: contacts.length,
                       selected: !isChats,
@@ -137,7 +138,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                   Expanded(
                     child: _ModePill(
                       key: const Key('matches_mode_chats'),
-                      label: 'Chat Matches',
+                      label: tr('Chat Matches'),
                       icon: Icons.chat_bubble_outline_rounded,
                       count: chats.length,
                       selected: isChats,
@@ -153,7 +154,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
               children: <Widget>[
                 Flexible(
                   child: Text(
-                    isChats ? 'Chat Matches' : 'Shared Contacts',
+                    isChats ? tr('Chat Matches') : tr('Shared Contacts'),
                     style: _t(18, FontWeight.w800, AppTheme.slate900),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -201,7 +202,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                           )
                         : EmptyState(
                             icon: Icons.phone_disabled_outlined,
-                            title: 'No shared contacts yet',
+                            title: tr('No shared contacts yet'),
                             body: 'Contact details appear here once both '
                                 'families approve a request.',
                             actionLabel: 'Review Requests',
@@ -650,7 +651,7 @@ class _MatchDeckCard extends StatelessWidget {
                             Expanded(
                               child: _DeckButton(
                                 key: Key('match_msg_${profile.id}'),
-                                label: 'Message',
+                                label: tr('Message'),
                                 icon: Icons.chat_bubble_outline_rounded,
                                 background: AppTheme.green,
                                 foreground: Colors.white,
@@ -661,7 +662,7 @@ class _MatchDeckCard extends StatelessWidget {
                             Expanded(
                               child: _DeckButton(
                                 key: Key('match_unmatch_${profile.id}'),
-                                label: 'Unmatch',
+                                label: tr('Unmatch'),
                                 icon: Icons.close_rounded,
                                 iconColor: AppTheme.danger,
                                 background: AppTheme.ivoryWarm,

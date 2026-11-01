@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/models/match_profile.dart';
+import 'package:nikah_app/models/nikah_journey.dart';
 import 'package:nikah_app/models/proposal.dart';
 import 'package:nikah_app/models/ward_profile.dart';
 import 'package:nikah_app/providers/app_store.dart';
@@ -82,7 +83,7 @@ void main() {
   });
 
   test('a saved draft restores the member to their step', () async {
-    backend.draft = <String, dynamic>{'fullName': 'Sara', 'step': 4, 'gender': 'female'};
+    backend.draft = <String, dynamic>{'fullName': 'Sara', 'step': 4, 'stepVersion': 2, 'gender': 'female'};
     await signIn(approved: false);
     expect(store.profile!.displayName, 'Sara');
     expect(store.profile!.onboardingStep, 4);
@@ -275,6 +276,88 @@ void main() {
     await settle();
     expect(backend.calls, contains('deleteAccount'));
     expect(store.pledgeAccepted, isFalse);
+  });
+
+  test('privacy changes reach the server once approved', () async {
+    await signIn();
+    backend.account.add(const AccountState(stage: ReviewStage.approved));
+    await settle();
+    store.updatePrivacy(photoPrivacy: 'matches');
+    await settle();
+    expect(backend.calls, contains('privacy:matches'));
+    expect(store.profile!.photoPrivacy, 'matches');
+  });
+
+  test('journey steps and answers go to the server', () async {
+    await signIn();
+    backend.matches.add(const <MatchThread>[
+      MatchThread(pairId: 'p', otherId: 'a', isOpen: true, myStep: 'families', theirStep: 'questions'),
+    ]);
+    await settle();
+    expect(store.journeyStep('a'), JourneyStep.families);
+    expect(store.theirJourneyStep('a'), JourneyStep.questions);
+
+    store.setJourneyStep('a', JourneyStep.istikhara);
+    await settle();
+    expect(backend.calls, contains('journey:istikhara'));
+
+    await store.saveAnswers('a', <String, String>{'deen1': 'Yes'});
+    expect(await store.myAnswers('a'), <String, String>{'deen1': 'Yes'});
+  });
+
+  test('an approved member marks activity', () async {
+    await signIn();
+    expect(backend.calls, contains('touchActive'));
+  });
+
+  test('the free limit comes from the server', () async {
+    await signIn();
+    backend.pages = <IntroductionPage>[
+      IntroductionPage(<MatchProfile>[card('a')], null, freeLeft: 0, limitReached: true),
+    ];
+    await store.refreshIntroductions();
+    expect(store.freeProfilesLeft, 0);
+    expect(store.reachedProfileLimit, isTrue);
+
+    backend.account.add(AccountState(
+      stage: ReviewStage.approved,
+      premiumUntil: DateTime.now().add(const Duration(days: 30)),
+    ));
+    await settle();
+    expect(store.reachedProfileLimit, isFalse);
+    expect(store.freeProfilesLeft, isNull);
+  });
+
+  test('a guardian sees the shared summaries and gives an opinion', () async {
+    await signIn(approved: false);
+    backend.account.add(const AccountState(familyOf: 'member1'));
+    await settle();
+    expect(store.isGuardian, isTrue);
+
+    backend.familyStream.add(const FamilyState(
+      shortlist: <FamilyPick>[FamilyPick(id: 'c', title: 'Sara, 26', summary: 'MBA')],
+    ));
+    await settle();
+    expect(store.guardianView!.shortlist.single.title, 'Sara, 26');
+
+    store.giveFamilyOpinion('c', 'good');
+    await settle();
+    expect(backend.calls, contains('opinion:member1:c:good'));
+  });
+
+  test('edits and family sharing go to the server', () async {
+    await signIn();
+    backend.account.add(const AccountState(stage: ReviewStage.approved));
+    await settle();
+    store.submitEdits();
+    await store.shareWithFamily('a');
+    await settle();
+    expect(backend.calls, containsAll(<String>['submitEdits', 'shareFamily:a']));
+    expect((await store.inviteInfo()).code, 'ABC234');
+  });
+
+  test('match percent comes from the server card', () {
+    expect(MatchProfile.fromCard(<String, dynamic>{'id': 'x', 'matchPercent': 73}).matchPercent, 73);
   });
 
   test('purchases are granted by the server only', () async {
