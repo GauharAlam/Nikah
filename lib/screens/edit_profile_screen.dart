@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/ward_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -112,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             relocation: _relocation,
           ),
         );
-    showSuccessSnack(context, 'Biodata updated, barakallahu feek.');
+    showSuccessSnack(context, tr('Biodata updated, barakallahu feek.'));
     context.read<AppStore>().submitEdits();
     context.pop();
   }
@@ -122,10 +123,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: const Text('Edit Biodata'),
+        title: Text(tr('Edit Biodata')),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Save changes',
+            tooltip: tr('Save changes'),
             onPressed: _dirty ? _save : null,
             icon: Icon(
               Icons.save_outlined,
@@ -142,12 +143,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SectionLabel('Identity'),
             const SizedBox(height: 10),
             AppTextField(
-              label: 'Full name',
+              label: tr('Full name'),
               controller: _name,
               icon: Icons.person_outline_rounded,
               textInputAction: TextInputAction.next,
               validator: (String? v) =>
-                  (v ?? '').trim().length < 3 ? 'Name is required' : null,
+                  (v ?? '').trim().length < 3 ? tr('Name is required') : null,
             ),
             const SizedBox(height: 16),
             Row(
@@ -163,13 +164,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: AppTextField(
-                    label: 'Phone',
+                    label: tr('Phone'),
                     controller: _phone,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     validator: (String? v) =>
                         (v ?? '').replaceAll(RegExp(r'\D'), '').length < 7
-                            ? 'Enter a valid number'
+                            ? tr('Enter a valid number')
                             : null,
                   ),
                 ),
@@ -177,7 +178,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 16),
             AppTextField(
-              label: 'Email (optional)',
+              label: tr('Email (optional)'),
               controller: _email,
               icon: Icons.alternate_email_rounded,
               keyboardType: TextInputType.emailAddress,
@@ -185,19 +186,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               validator: (String? v) {
                 final String t = (v ?? '').trim();
                 if (t.isEmpty) return null;
-                return t.contains('@') ? null : 'Enter a valid email';
+                return t.contains('@') ? null : tr('Enter a valid email');
               },
             ),
             const SizedBox(height: 22),
             const SectionLabel('Home'),
             const SizedBox(height: 10),
             AppTextField(
-              label: 'City',
+              label: tr('City'),
               controller: _city,
               icon: Icons.location_city_outlined,
               textInputAction: TextInputAction.next,
               validator: (String? v) =>
-                  (v ?? '').trim().isEmpty ? 'City is required' : null,
+                  (v ?? '').trim().isEmpty ? tr('City is required') : null,
             ),
             const SizedBox(height: 14),
             Text('COUNTRY',
@@ -222,28 +223,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SectionLabel('Background'),
             const SizedBox(height: 10),
             AppTextField(
-              label: 'Education',
+              label: tr('Education'),
               controller: _education,
               icon: Icons.school_outlined,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
             AppTextField(
-              label: 'Profession',
+              label: tr('Profession'),
               controller: _profession,
               icon: Icons.work_outline_rounded,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
             AppTextField(
-              label: 'About me',
+              label: tr('About me'),
               controller: _aboutMe,
-              hint: 'Your deen, home values and what you seek…',
+              hint: tr('Your deen, home values and what you seek…'),
               minLines: 4,
               maxLines: 6,
               maxLength: 600,
               validator: (String? v) => (v ?? '').trim().length < 40
-                  ? 'Please write at least 40 characters'
+                  ? tr('Please write at least 40 characters')
                   : null,
             ),
             const SizedBox(height: 22),
@@ -265,14 +266,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 26),
             PrimaryButton(
-              label: 'Save Changes',
+              label: tr('Save Changes'),
               icon: Icons.check_rounded,
               onPressed: _dirty ? _save : null,
             ),
             const SizedBox(height: 14),
-            const InfoBanner(
+            InfoBanner(
               icon: Icons.visibility_off_outlined,
-              text: 'Photo modesty controls live in Settings & Privacy.',
+              text: tr('Photo modesty controls live in Settings & Privacy.'),
               variant: InfoVariant.neutral,
               tight: true,
             ),

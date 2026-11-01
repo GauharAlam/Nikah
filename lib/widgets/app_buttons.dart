@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Consistent pill-styled primary button (uses themed ElevatedButton).
@@ -39,7 +40,7 @@ class PrimaryButton extends StatelessWidget {
           Icon(icon, size: 18, color: Colors.white),
         if ((progress || icon != null)) const SizedBox(width: 9),
         Flexible(
-          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Text(tr(label), maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
       ],
     );

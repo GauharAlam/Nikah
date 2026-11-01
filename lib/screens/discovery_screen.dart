@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -78,8 +78,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     if (!ok) {
       showAppSnack(
         context,
-        'Daily limit reached — ${store.dailyProposalLimit}/${store.dailyProposalLimit} '
-        'proposals sent. More slots unlock tomorrow.',
+        trArgs(
+          'Daily limit reached — {limit}/{limit} proposals sent. More slots unlock tomorrow.',
+          <String, Object>{'limit': store.dailyProposalLimit},
+        ),
         icon: Icons.hourglass_bottom_rounded,
         background: AppTheme.goldDeep,
       );
@@ -87,7 +89,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     }
     showSuccessSnack(
       context,
-      'Proposal sent to ${profile.firstName}.',
+      trArgs('Proposal sent to {name}.', <String, Object>{'name': profile.firstName}),
     );
     _advanceCard(index, store.discoveredProfiles.length);
   }
@@ -104,7 +106,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
       );
       return;
     }
-    showWaliSnack(context, 'Contact request sent to ${profile.firstName}');
+    showWaliSnack(context, trArgs('Contact request sent to {name}', <String, Object>{'name': profile.firstName}));
     _advanceCard(index, store.discoveredProfiles.length);
   }
 
@@ -152,7 +154,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         actions: <Widget>[
           IconButton(
             key: const Key('discovery_open_search'),
-            tooltip: 'Search Rishtey',
+            tooltip: tr('Search Rishtey'),
             onPressed: () => context.push(AppRoutes.search),
             icon: const Icon(Icons.search_rounded),
           ),
@@ -162,7 +164,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ),
           IconButton(
             key: const Key('discovery_open_filters'),
-            tooltip: 'Search & Filters',
+            tooltip: tr('Search & Filters'),
             onPressed: () => context.push(AppRoutes.filters),
             icon: Badge.count(
               isLabelVisible: store.filters.activeCount > 0,
@@ -184,7 +186,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Assalamu Alaikum, $firstName 👋',
+                  trArgs('Assalamu Alaikum, {name} 👋', <String, Object>{'name': firstName}),
                   style: AppTheme.ts(14, FontWeight.w600, color: AppTheme.slate500),
                 ),
                 if (store.freeProfilesLeft != null)
@@ -239,7 +241,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 : profiles.isEmpty && store.introductionsError != null
                 ? EmptyState(
                     icon: Icons.wifi_off_rounded,
-                    title: 'Could not load introductions',
+                    title: tr('Could not load introductions'),
                     body: store.introductionsError!,
                     actionLabel: tr('Try again'),
                     onAction: store.refreshIntroductions,
@@ -252,8 +254,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                         EmptyState(
                     icon: Icons.explore_off_rounded,
                     title: tr('All reviewed'),
-                    body: 'Every profile matching your preferences has been '
-                        'considered. Broaden your search to keep browsing.',
+                    body: tr('Every profile matching your preferences has been '
+                        'considered. Broaden your search to keep browsing.'),
                     actionLabel: tr('Adjust Filters'),
                     onAction: () => context.push(AppRoutes.filters),
                         ),
@@ -287,7 +289,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 if (store.introductionsError != null) {
                                   return EmptyState(
                                     icon: Icons.wifi_off_rounded,
-                                    title: 'Could not load introductions',
+                                    title: tr('Could not load introductions'),
                                     body: store.introductionsError!,
                                     actionLabel: tr('Try again'),
                                     onAction: store.loadMoreIntroductions,
@@ -378,7 +380,7 @@ class _UnlockMoreCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Choose a plan to see more. Proposals you sent and received stay free.',
+              tr('Choose a plan to see more. Proposals you sent and received stay free.'),
               textAlign: TextAlign.center,
               style: AppTheme.bodySmall,
             ),

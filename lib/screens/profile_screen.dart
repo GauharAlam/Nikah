@@ -6,9 +6,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../models/ward_profile.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
@@ -29,7 +29,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
     final WardProfile profile = store.profile ?? const WardProfile();
-    final String name = profile.displayName.isEmpty ? 'Member' : profile.displayName;
+    final String name = profile.displayName.isEmpty ? tr('Member') : profile.displayName;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       body: ListView(
@@ -37,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
         children: <Widget>[
           _ProfileHeader(
             name: name,
-            city: profile.city.isEmpty ? 'Set your city' : profile.city,
+            city: profile.city.isEmpty ? tr('Set your city') : profile.city,
             age: profile.age,
             verified: store.isVerifiedMember,
             initials: _initials(name),
@@ -115,15 +115,15 @@ class ProfileScreen extends StatelessWidget {
                   childAspectRatio: 2.4,
                   children: <Widget>[
                     InfoTile(
-                      label: 'City',
+                      label: tr('City'),
                       value: profile.city.isEmpty ? '—' : profile.city,
                     ),
                     InfoTile(
-                      label: 'Country',
+                      label: tr('Country'),
                       value: profile.country.isEmpty ? '—' : profile.country,
                     ),
                     InfoTile(
-                      label: 'Education',
+                      label: tr('Education'),
                       value: profile.education.isEmpty
                           ? '—'
                           : profile.education,
@@ -144,13 +144,13 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       _DeenRow(
-                          label: 'Prayer',
+                          label: tr('Prayer'),
                           value: profile.prayerFrequency.label),
                       _DeenRow(
                           label: 'Qur\'an comfort',
                           value: profile.quranComfort.label),
-                      _DeenRow(label: 'Timeline', value: profile.timeline),
-                      _DeenRow(label: 'Relocation', value: profile.relocation),
+                      _DeenRow(label: tr('Timeline'), value: profile.timeline),
+                      _DeenRow(label: tr('Relocation'), value: profile.relocation),
                       if (profile.halalLifestyle.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 8),
                         Wrap(
@@ -272,7 +272,7 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Verified',
+                                    tr('Verified'),
                                     style: AppTheme.ts(10.5, FontWeight.w700,
                                         color: AppTheme.success),
                                   ),
@@ -287,7 +287,7 @@ class ProfileScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                'Pending',
+                                tr('Pending'),
                                 style: AppTheme.ts(10.5, FontWeight.w700,
                                     color: AppTheme.warning),
                               ),
@@ -300,8 +300,8 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.notifications_none_rounded,
                   title: tr('Notifications'),
                   subtitle: store.unreadNotificationCount > 0
-                      ? '${store.unreadNotificationCount} unread updates'
-                      : 'All caught up, alhamdulillah',
+                      ? trArgs('{count} unread updates', <String, Object>{'count': store.unreadNotificationCount})
+                      : tr('All caught up, alhamdulillah'),
                   onTap: () => context.push(AppRoutes.notifications),
                 ),
                 const SizedBox(height: 10),
@@ -318,7 +318,7 @@ class ProfileScreen extends StatelessWidget {
                   SectionLabel(tr('Account')),
                   const SizedBox(height: 10),
                   DangerButton(
-                    label: 'Sign out',
+                    label: tr('Sign out'),
                     onPressed: () => _confirmSignOut(context, store),
                   ),
                 ],
@@ -336,16 +336,16 @@ class ProfileScreen extends StatelessWidget {
     final bool? withPhone = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Include your phone number?'),
-        content: const Text('Your photo is never added. Anyone you send this to can forward it.'),
+        title: Text(tr('Include your phone number?')),
+        content: Text(tr('Your photo is never added. Anyone you send this to can forward it.')),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('No number'),
+            child: Text(tr('No number')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Add number'),
+            child: Text(tr('Add number')),
           ),
         ],
       ),
@@ -373,19 +373,19 @@ class ProfileScreen extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
-          'You can sign back in at any time. Your profile stays saved, ready '
-          'when you return.',
+        title: Text(tr('Sign out?')),
+        content: Text(
+          tr('You can sign back in at any time. Your profile stays saved, ready '
+          'when you return.'),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Stay'),
+            child: Text(tr('Stay')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sign out'),
+            child: Text(tr('Sign out')),
           ),
         ],
       ),
@@ -411,7 +411,7 @@ class _StrengthCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Profile strength ${s.percent}%',
+            trArgs('Profile strength {percent}%', <String, Object>{'percent': s.percent}),
             style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
@@ -473,7 +473,7 @@ class _ProfileHeader extends StatelessWidget {
               const Spacer(),
               NotificationBell(unread: unread, onTap: onNotifications),
               IconButton(
-                tooltip: 'Settings',
+                tooltip: tr('Settings'),
                 onPressed: onSettings,
                 icon: const Icon(Icons.settings_outlined,
                     color: Colors.white, size: 23),
@@ -499,7 +499,7 @@ class _ProfileHeader extends StatelessWidget {
           Text(
             <String>[
               city,
-              if (age != null) '$age years',
+              if (age != null) trArgs('{age} years', <String, Object>{'age': age!}),
             ].join(' · '),
             style: AppTheme.ts(13, FontWeight.w600,
                 color: Colors.white.withValues(alpha: 0.82)),

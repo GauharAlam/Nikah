@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
@@ -35,7 +35,7 @@ class PremiumScreen extends StatelessWidget {
           ),
           IconButton(
             key: const Key('premium_settings'),
-            tooltip: 'Settings',
+            tooltip: tr('Settings'),
             onPressed: () => context.push(AppRoutes.settings),
             icon: const Icon(Icons.settings_outlined, size: 21),
           ),
@@ -51,7 +51,7 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            'Manage subscription & credits usage',
+            tr('Manage subscription & credits usage'),
             style: AppTheme.ts(12.5, FontWeight.w600, color: AppTheme.slate500),
           ),
           const SizedBox(height: 14),
@@ -65,7 +65,7 @@ class PremiumScreen extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     Text(
-                      'CURRENT PLAN',
+                      tr('CURRENT PLAN'),
                       style: AppTheme.ts(
                         9.5,
                         FontWeight.w800,
@@ -105,7 +105,7 @@ class PremiumScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Contact Requests',
+                            tr('Contact Requests'),
                             style: AppTheme.ts(
                               15,
                               FontWeight.w800,
@@ -114,7 +114,7 @@ class PremiumScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Will be used to send contact requests.',
+                            tr('Will be used to send contact requests.'),
                             style: AppTheme.ts(
                               11.5,
                               FontWeight.w500,
@@ -136,7 +136,7 @@ class PremiumScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'Purchase history',
+                                  tr('Purchase history'),
                                   style: AppTheme.ts(
                                     12,
                                     FontWeight.w700,
@@ -167,7 +167,7 @@ class PremiumScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'WHAT\'S INCLUDED',
+                  tr('WHAT\'S INCLUDED'),
                   style: AppTheme.ts(
                     9.5,
                     FontWeight.w800,
@@ -179,7 +179,7 @@ class PremiumScreen extends StatelessWidget {
                 const _CheckRow('Limited profile proposals.'),
                 const _CheckRow('Restricted Contact Requests.'),
                 if (!store.isPremium)
-                  _CheckRow('${store.freeProfileAllowance} free profiles to view'),
+                  _CheckRow(trArgs('{count} free profiles to view', <String, Object>{'count': store.freeProfileAllowance})),
                 const SizedBox(height: 14),
 
                 // Daily quota info tiles.
@@ -188,17 +188,17 @@ class PremiumScreen extends StatelessWidget {
                     Expanded(
                       child: _QuotaTile(
                         icon: Icons.favorite_rounded,
-                        label: 'Daily Proposals',
+                        label: tr('Daily Proposals'),
                         value: store.isPremium
                             ? 'Unlimited'
-                            : '${store.dailyProposalLimit} per day',
+                            : trArgs('{count} per day', <String, Object>{'count': store.dailyProposalLimit}),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _QuotaTile(
                         icon: Icons.phone_in_talk_outlined,
-                        label: 'Contact Credits',
+                        label: tr('Contact Credits'),
                         value: '$total / month',
                       ),
                     ),
@@ -212,7 +212,7 @@ class PremiumScreen extends StatelessWidget {
           // ── Why upgrade ─────────────────────────────────────────────────
           Center(
             child: Text(
-              'WHY UPGRADE',
+              tr('WHY UPGRADE'),
               style: AppTheme.ts(
                 10.5,
                 FontWeight.w800,
@@ -222,14 +222,14 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'See more. Decide sooner.',
+            tr('See more. Decide sooner.'),
             textAlign: TextAlign.center,
             style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
           Text(
-            'Upgrade to see every profile and send as many proposals as you '
-            'need each day.',
+            tr('Upgrade to see every profile and send as many proposals as you '
+            'need each day.'),
             textAlign: TextAlign.center,
             style: AppTheme.ts(
               12.5,
@@ -276,7 +276,7 @@ class _AvailablePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'AVAILABLE',
+            tr('AVAILABLE'),
             style: AppTheme.ts(
               8.5,
               FontWeight.w800,
@@ -290,7 +290,7 @@ class _AvailablePanel extends StatelessWidget {
             style: AppTheme.ts(30, FontWeight.w800, color: AppTheme.green),
           ),
           Text(
-            'remaining out of $total',
+            trArgs('remaining out of {total}', <String, Object>{'total': total}),
             style: AppTheme.ts(
               10,
               FontWeight.w600,
@@ -356,7 +356,7 @@ class _CheckRow extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-              text,
+              tr(text),
               style: AppTheme.ts(12.5, FontWeight.w600, color: AppTheme.slate700),
             ),
           ),
@@ -395,7 +395,7 @@ class _QuotaTile extends StatelessWidget {
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
-                  label,
+                  tr(label),
                   style: AppTheme.ts(
                     10.5,
                     FontWeight.w600,
@@ -409,7 +409,7 @@ class _QuotaTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            value,
+            tr(value),
             style: AppTheme.ts(13, FontWeight.w800, color: AppTheme.slate900),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

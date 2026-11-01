@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/option_lists.dart';
+import '../l10n/app_strings.dart';
 import '../models/filters.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -128,7 +129,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
   void _clearAll() {
     context.read<AppStore>().setFilters(const MatchFilters());
     setState(() => _draft = const MatchFilters());
-    showSuccessSnack(context, 'Filters cleared — showing all profiles.');
+    showSuccessSnack(context, tr('Filters cleared — showing all profiles.'));
   }
 
   @override
@@ -138,7 +139,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
       appBar: AppBar(
         centerTitle: true,
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: tr('Close'),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -149,13 +150,13 @@ class _FiltersScreenState extends State<FiltersScreen> {
           icon: const Icon(Icons.close_rounded),
         ),
         title: Text(
-          'Profile Settings',
+          tr('Profile Settings'),
           style: AppTheme.ts(16.5, FontWeight.w800, color: AppTheme.slate900),
         ),
         actions: <Widget>[
           IconButton(
             key: const Key('open_search'),
-            tooltip: 'Search Rishtey',
+            tooltip: tr('Search Rishtey'),
             icon: const Icon(Icons.search_rounded),
             onPressed: () => context.push(AppRoutes.search),
           ),
@@ -163,7 +164,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
             key: const Key('reset_filters'),
             onPressed: _clearAll,
             child: Text(
-              'Clear all',
+              tr('Clear all'),
               style: AppTheme.ts(13, FontWeight.w800, color: AppTheme.slate700),
             ),
           ),
@@ -183,12 +184,12 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 Row(
                   children: <Widget>[
                     Text(
-                      'Age',
+                      tr('Age'),
                       style: AppTheme.ts(14, FontWeight.w700, color: AppTheme.slate900),
                     ),
                     const Spacer(),
                     Text(
-                      '${_draft.minAge}-${_draft.maxAge} years',
+                      trArgs('{min}-{max} years', <String, Object>{'min': _draft.minAge, 'max': _draft.maxAge}),
                       style: AppTheme.ts(12.5, FontWeight.w600, color: AppTheme.slate500),
                     ),
                   ],
@@ -238,7 +239,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
             child: Column(
               children: <Widget>[
                 _PreferenceRow(
-                  label: 'Marriage Status',
+                  label: tr('Marriage Status'),
                   value: _draft.marriageStatus,
                   onTap: () => _pickValue(
                     'Marriage Status',
@@ -249,7 +250,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Caste',
+                  label: tr('Caste'),
                   value: _draft.caste,
                   onTap: () => _pickValue(
                     'Caste',
@@ -260,7 +261,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Sect',
+                  label: tr('Sect'),
                   value: _draft.sect,
                   onTap: () => _pickValue(
                     'Sect',
@@ -271,7 +272,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Alma Mater',
+                  label: tr('Alma Mater'),
                   value: _draft.almaMater,
                   onTap: () => _pickValue(
                     'Alma Mater',
@@ -282,7 +283,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Education',
+                  label: tr('Education'),
                   value: _draft.education,
                   premium: true,
                   onTap: () => _pickValue(
@@ -294,7 +295,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Profession',
+                  label: tr('Profession'),
                   value: _draft.profession,
                   premium: true,
                   onTap: () => _pickValue(
@@ -306,7 +307,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 ),
                 const _RowDivider(),
                 _PreferenceRow(
-                  label: 'Location',
+                  label: tr('Location'),
                   value: _draft.location,
                   premium: true,
                   onTap: () => _pickValue(
@@ -350,7 +351,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Contact Sharing',
+                    tr('Contact Sharing'),
                     style: AppTheme.ts(
                       15,
                       FontWeight.w800,
@@ -370,7 +371,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Text(
-                        'Edit',
+                        tr('Edit'),
                         style: AppTheme.ts(12.5, FontWeight.w800, color: AppTheme.green),
                       ),
                       const SizedBox(width: 3),
@@ -402,7 +403,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                     child: Row(
                       children: <Widget>[
                         Text(
-                          'Sharing',
+                          tr('Sharing'),
                           style: AppTheme.ts(
                             14,
                             FontWeight.w700,
@@ -448,7 +449,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                   child: Text(
-                    'Your number is shared only when you accept a request.',
+                    tr('Your number is shared only when you accept a request.'),
                     style: AppTheme.ts(
                       11.5,
                       FontWeight.w500,
@@ -476,14 +477,14 @@ class _FiltersScreenState extends State<FiltersScreen> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                '$_matchCount profiles match',
+                trArgs('{count} profiles match', <String, Object>{'count': _matchCount}),
                 key: const Key('filter_match_count'),
                 style: AppTheme.ts(11, FontWeight.w600, color: AppTheme.slate500),
               ),
               const SizedBox(height: 8),
               PrimaryButton(
                 key: const Key('apply_filters'),
-                label: 'Apply',
+                label: tr('Apply'),
                 onPressed: () {
                   final AppStore store = context.read<AppStore>();
                   store.setFilters(_draft);

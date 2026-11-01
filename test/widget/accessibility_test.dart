@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nikah_app/data/backend.dart';
+import 'package:nikah_app/l10n/app_strings.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/screens/account_screens.dart';
 import 'package:nikah_app/screens/family_circle_screen.dart';
@@ -43,8 +44,11 @@ void main() {
     'blocked': const BlockedMembersScreen(),
   };
 
-  for (final MapEntry<String, Widget> s in screens.entries) {
-    testWidgets('${s.key} holds at 320dp with large text', (WidgetTester tester) async {
+  for (final AppLanguage language in <AppLanguage>[AppLanguage.english, AppLanguage.hindi]) {
+    for (final MapEntry<String, Widget> s in screens.entries) {
+    testWidgets('${s.key} holds at 320dp with large text in ${language.name}', (WidgetTester tester) async {
+      AppStrings.current = language;
+      addTearDown(() => AppStrings.current = AppLanguage.english);
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -73,5 +77,6 @@ void main() {
       expect(tester.takeException(), isNull);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     });
+    }
   }
 }

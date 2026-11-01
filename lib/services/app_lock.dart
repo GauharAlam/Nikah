@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_strings.dart';
+
 /// Optional lock on opening the app. Holds no secret: it only asks the phone
 /// to confirm its owner, using the phone's own lock.
 class AppLock {
@@ -88,7 +90,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                   key: const Key('app_unlock'),
                   onPressed: _unlock,
                   icon: const Icon(Icons.lock_open_rounded),
-                  label: const Text('Unlock'),
+                  label: Text(tr('Unlock')),
                 ),
               ),
             ),

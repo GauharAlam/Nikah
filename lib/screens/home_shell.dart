@@ -81,11 +81,11 @@ class HomeShell extends StatelessWidget {
             ),
             BottomNavigationBarItem(
               icon: _ProfileAvatar(
-                name: store.profile?.displayName ?? 'Member',
+                name: store.profile?.displayName ?? tr('Member'),
                 active: false,
               ),
               activeIcon: _ProfileAvatar(
-                name: store.profile?.displayName ?? 'Member',
+                name: store.profile?.displayName ?? tr('Member'),
                 active: true,
               ),
               label: tr('Profile'),

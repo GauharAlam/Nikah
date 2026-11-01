@@ -7,10 +7,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
 import '../services/app_lock.dart';
@@ -79,8 +79,8 @@ class SettingsScreen extends StatelessWidget {
               children: <Widget>[
                 SwitchTile(
                   icon: Icons.translate_rounded,
-                  title: 'Show Arabic lines',
-                  subtitle: 'Display original Arabic verses & du\'a',
+                  title: tr('Show Arabic lines'),
+                  subtitle: tr('Display original Arabic verses & du\'a'),
                   value: store.showArabic,
                   onChanged: store.setShowArabic,
                 ),
@@ -204,15 +204,15 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 10),
           SettingsTile(
             icon: Icons.edit_outlined,
-            title: 'Edit Biodata',
-            subtitle: 'Update your visible profile',
+            title: tr('Edit Biodata'),
+            subtitle: tr('Update your visible profile'),
             onTap: () => context.push(AppRoutes.editProfile),
           ),
           const SizedBox(height: 10),
           SettingsTile(
             icon: Icons.info_outline_rounded,
-            title: 'About Nikah',
-            subtitle: 'FAQs, guidelines & support',
+            title: tr('About Nikah'),
+            subtitle: tr('FAQs, guidelines & support'),
             onTap: () => context.push(AppRoutes.about),
           ),
           const SizedBox(height: 26),

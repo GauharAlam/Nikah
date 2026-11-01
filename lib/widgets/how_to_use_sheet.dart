@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 
@@ -71,7 +71,7 @@ Future<void> showHowToUseSheet(BuildContext context, AppStore store) {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'How to Use ${AppBrand.name}',
+              trArgs('How to Use {brand}', <String, Object>{'brand': AppBrand.name}),
               textAlign: TextAlign.center,
               style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
             ),

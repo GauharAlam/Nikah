@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../services/purchase_service.dart';
 import '../theme/app_theme.dart';
@@ -38,7 +38,7 @@ class _PlansScreenState extends State<PlansScreen> {
         if (mounted) showAppSnack(context, m);
       },
       onDone: () {
-        if (mounted) showSuccessSnack(context, 'Purchase verified.');
+        if (mounted) showSuccessSnack(context, tr('Purchase verified.'));
       },
       onPending: () {
         if (mounted) showAppSnack(context, 'Waiting for the store to confirm your payment.');
@@ -72,10 +72,10 @@ class _PlansScreenState extends State<PlansScreen> {
       body: products == null
           ? const Center(child: CircularProgressIndicator())
           : products.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.storefront_outlined,
-                  title: 'Plans are not available',
-                  body: 'Purchases are not available in this build yet.',
+                  title: tr('Plans are not available'),
+                  body: tr('Purchases are not available in this build yet.'),
                 )
               : ListView(
                   padding: const EdgeInsets.all(16),

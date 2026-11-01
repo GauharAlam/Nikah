@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../models/verification_doc.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -33,19 +34,19 @@ class VerificationScreen extends StatelessWidget {
             ListTile(
               key: const Key('doc_camera'),
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
+              title: Text(tr('Take a photo')),
               onTap: () => Navigator.of(ctx).pop('camera'),
             ),
             ListTile(
               key: const Key('doc_gallery'),
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose photos'),
+              title: Text(tr('Choose photos')),
               onTap: () => Navigator.of(ctx).pop('gallery'),
             ),
             ListTile(
               key: const Key('doc_file'),
               leading: const Icon(Icons.picture_as_pdf_outlined),
-              title: const Text('Choose a PDF'),
+              title: Text(tr('Choose a PDF')),
               onTap: () => Navigator.of(ctx).pop('file'),
             ),
           ],
@@ -82,7 +83,7 @@ class VerificationScreen extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(doc.title),
+        title: Text(tr(doc.title)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -94,15 +95,15 @@ class VerificationScreen extends StatelessWidget {
                     )
                   : Image.file(File(p), height: 160, fit: BoxFit.contain),
             const SizedBox(height: 8),
-            const Text('Only our review team can open this file. It is never shown to members.'),
+            Text(tr('Only our review team can open this file. It is never shown to members.')),
           ],
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(tr('Cancel'))),
           FilledButton(
             key: const Key('doc_confirm'),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Upload'),
+            child: Text(tr('Upload')),
           ),
         ],
       ),
@@ -123,7 +124,7 @@ class VerificationScreen extends StatelessWidget {
     }
     if (!context.mounted || !await _preview(context, doc, paths)) return;
     if (!context.mounted) return;
-    showAppSnack(context, 'Uploading ${doc.title}…', icon: Icons.upload_rounded);
+    showAppSnack(context, trArgs('Uploading {doc}…', <String, Object>{'doc': tr(doc.title)}), icon: Icons.upload_rounded);
     try {
       await store.uploadVerificationDoc(doc.id, paths);
       if (context.mounted) {
@@ -131,7 +132,7 @@ class VerificationScreen extends StatelessWidget {
           context,
           AppConfig.isDemo
               ? 'Demo build: nothing was uploaded.'
-              : '${doc.title} uploaded. Our team will review it.',
+              : trArgs('{doc} uploaded. Our team will review it.', <String, Object>{'doc': tr(doc.title)}),
         );
       }
     } on BackendException catch (e) {
@@ -151,7 +152,7 @@ class VerificationScreen extends StatelessWidget {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Verification',
+          tr('Verification'),
           style: AppTheme.ts(17, FontWeight.w800, color: AppTheme.slate900),
         ),
       ),
@@ -161,7 +162,7 @@ class VerificationScreen extends StatelessWidget {
           // ── Centered trust-signal header ────────────────────────────────
           Center(
             child: Text(
-              'YOUR TRUST SIGNAL',
+              tr('YOUR TRUST SIGNAL'),
               style: AppTheme.ts(
                 10,
                 FontWeight.w800,
@@ -171,17 +172,17 @@ class VerificationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Get the Nikah Verified Badge',
+            tr('Get the Nikah Verified Badge'),
             textAlign: TextAlign.center,
             style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
           Text(
             store.isVerifiedMember
-                ? 'MashaAllah — every required document is approved. Your '
-                      'badge is live on your profile.'
-                : 'Verify your profile to earn the Nikah Verified badge — '
-                      'a mark of trust that members recognise instantly.',
+                ? tr('MashaAllah — every required document is approved. Your '
+                      'badge is live on your profile.')
+                : tr('Verify your profile to earn the Nikah Verified badge — '
+                      'a mark of trust that members recognise instantly.'),
             textAlign: TextAlign.center,
             style: AppTheme.ts(
               12.5,
@@ -213,7 +214,7 @@ class VerificationScreen extends StatelessWidget {
                   const SizedBox(width: 5),
                   Flexible(
                     child: Text(
-                      'Verified',
+                      tr('Verified'),
                       overflow: TextOverflow.ellipsis,
                       style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.goldInk),
                     ),
@@ -225,31 +226,31 @@ class VerificationScreen extends StatelessWidget {
           const SizedBox(height: 7),
           Center(
             child: Text(
-              '${store.verificationProgress}% complete',
+              trArgs('{percent}% complete', <String, Object>{'percent': store.verificationProgress}),
               style: AppTheme.ts(10.5, FontWeight.w700, color: AppTheme.slate500),
             ),
           ),
           const SizedBox(height: 19),
 
           // ── Why verify ──────────────────────────────────────────────────
-          const _BenefitRow(
+          _BenefitRow(
             icon: Icons.verified_user_outlined,
-            title: 'Prove you are who you say you are',
-            body: 'ID and education documents reviewed by our team.',
+            title: tr('Prove you are who you say you are'),
+            body: tr('ID and education documents reviewed by our team.'),
           ),
-          const _BenefitRow(
+          _BenefitRow(
             icon: Icons.favorite_outline_rounded,
-            title: 'Build confidence with serious seekers',
-            body: 'A badge on your profile shows our team reviewed your documents.',
+            title: tr('Build confidence with serious seekers'),
+            body: tr('A badge on your profile shows our team reviewed your documents.'),
             last: true,
           ),
           const SizedBox(height: 20),
 
           // ── Steps ───────────────────────────────────────────────────────
-          SectionLabel('Verification Steps'),
+          SectionLabel(tr('Verification Steps')),
           const SizedBox(height: 4),
           Text(
-            'Upload your documents below to complete verification.',
+            tr('Upload your documents below to complete verification.'),
             style: AppTheme.ts(11.5, FontWeight.w500, color: AppTheme.slate500),
           ),
           const SizedBox(height: 12),
@@ -262,13 +263,13 @@ class VerificationScreen extends StatelessWidget {
                 } else if (doc.status.isWaiting) {
                   showAppSnack(
                     context,
-                    '${doc.title} is waiting for review by our team.',
+                    trArgs('{doc} is waiting for review by our team.', <String, Object>{'doc': tr(doc.title)}),
                     icon: Icons.hourglass_bottom_rounded,
                   );
                 } else {
                   showAppSnack(
                     context,
-                    '${doc.title} is already approved.',
+                    trArgs('{doc} is already approved.', <String, Object>{'doc': tr(doc.title)}),
                     icon: Icons.verified_rounded,
                   );
                 }
@@ -285,22 +286,22 @@ class VerificationScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Good to know',
+                  tr('Good to know'),
                   style: AppTheme.ts(14, FontWeight.w800, color: AppTheme.slate900),
                 ),
                 const SizedBox(height: 12),
-                const _KnowRow(
+                _KnowRow(
                   icon: Icons.image_outlined,
-                  text: 'Clear, well-lit photos. Any image up to 10 MB.',
+                  text: tr('Clear, well-lit photos. Any image up to 10 MB.'),
                 ),
-                const _KnowRow(
+                _KnowRow(
                   icon: Icons.schedule_outlined,
-                  text: 'Usually reviewed within 24–48 hours.',
+                  text: tr('Our team reviews each document before the badge appears.'),
                 ),
-                const _KnowRow(
+                _KnowRow(
                   icon: Icons.lock_outline_rounded,
-                  text: 'Documents stay private and are never shared with '
-                      'members.',
+                  text: tr('Documents stay private and are never shared with '
+                      'members.'),
                   last: true,
                 ),
               ],
@@ -348,12 +349,12 @@ class _BenefitRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  title,
+                  tr(title),
                   style: AppTheme.ts(13, FontWeight.w800, color: AppTheme.slate900),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  body,
+                  tr(body),
                   style: AppTheme.ts(
                     11.5,
                     FontWeight.w500,
@@ -427,7 +428,7 @@ class _DocCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    doc.title,
+                    tr(doc.title),
                     style: AppTheme.ts(
                       13.5,
                       FontWeight.w800,
@@ -438,7 +439,7 @@ class _DocCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    doc.subtitle,
+                    tr(doc.subtitle),
                     style: AppTheme.ts(
                       11.5,
                       FontWeight.w500,
@@ -482,7 +483,7 @@ class _DocCard extends StatelessWidget {
                   children: <Widget>[
                     Flexible(
                       child: Text(
-                        pending ? 'View' : 'Upload',
+                        pending ? tr('View') : 'Upload',
                         overflow: TextOverflow.ellipsis,
                         style: AppTheme.ts(12, FontWeight.w800, color: AppTheme.green),
                       ),

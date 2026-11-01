@@ -17,6 +17,9 @@ void main() {
     'saved on this device', // the profile lives on the server
     'awaiting family approval', // the member answers, not a family
     'nikah.demo',
+    'Usually reviewed', // no review time is promised
+    'exchanged between both families',
+    'Your Wali can see',
     'بركة', // the old brand name
   ];
 

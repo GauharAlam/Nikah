@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
+import '../l10n/app_strings.dart';
 import '../models/match_profile.dart';
 import '../models/proposal.dart';
 import '../providers/app_store.dart';
@@ -58,12 +58,12 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
             options: <SegmentedOption<_ProposalTab>>[
               SegmentedOption<_ProposalTab>(
                 value: _ProposalTab.sent,
-                label: 'Sent (${sent.length})',
+                label: trArgs('Sent ({count})', <String, Object>{'count': sent.length}),
                 icon: Icons.favorite_rounded,
               ),
               SegmentedOption<_ProposalTab>(
                 value: _ProposalTab.received,
-                label: 'Received (${received.length})',
+                label: trArgs('Received ({count})', <String, Object>{'count': received.length}),
                 icon: Icons.mark_email_unread_outlined,
               ),
             ],
@@ -76,8 +76,8 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
               EmptyState(
                 icon: Icons.favorite_outline_rounded,
                 title: tr('No proposals yet'),
-                body: 'Tap the green heart on a profile to send your first '
-                    'proposal.',
+                body: tr('Tap the green heart on a profile to send your first '
+                    'proposal.'),
               )
             else
               for (final Proposal p in sent) ...<Widget>[
@@ -92,8 +92,8 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
               EmptyState(
                 icon: Icons.mark_email_read_outlined,
                 title: tr('No proposals received'),
-                body: 'When someone sends you a proposal it will appear here '
-                    'for you to accept or decline.',
+                body: tr('When someone sends you a proposal it will appear here '
+                    'for you to accept or decline.'),
               )
             else
               for (final Proposal p in received) ...<Widget>[
@@ -108,7 +108,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
               ListTile(
                 key: Key('contact_request_${p.id}'),
                 title: Text(p.name),
-                subtitle: const Text('Requested your contact details'),
+                subtitle: Text(tr('Requested your contact details')),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -118,7 +118,7 @@ class _ProposalsScreenState extends State<ProposalsScreen> {
                       onPressed: () => store.respondContact(p.id, accept: false),
                     ),
                     IconButton(
-                      tooltip: 'Share my contact',
+                      tooltip: tr('Share my contact'),
                       icon: const Icon(Icons.check_rounded),
                       onPressed: () => store.respondContact(p.id, accept: true),
                     ),
@@ -158,7 +158,7 @@ class _QuotaBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'TODAY\'S PROPOSALS',
+                  tr('TODAY\'S PROPOSALS'),
                   style: AppTheme.ts(
                     9.5,
                     FontWeight.w800,
@@ -168,7 +168,7 @@ class _QuotaBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$used of $quota sent',
+                  trArgs('{used} of {quota} sent', <String, Object>{'used': used, 'quota': quota}),
                   style: AppTheme.ts(18, FontWeight.w800, color: Colors.white),
                 ),
                 const SizedBox(height: 8),
@@ -201,7 +201,7 @@ class _QuotaBanner extends StatelessWidget {
                   style: AppTheme.ts(16, FontWeight.w800, color: Colors.white),
                 ),
                 Text(
-                  'CREDITS',
+                  tr('CREDITS'),
                   style: AppTheme.ts(
                     7.5,
                     FontWeight.w800,
@@ -396,8 +396,7 @@ class _ReceivedProposalCard extends StatelessWidget {
                     if (context.read<AppStore>().acceptProposal(profile.id)) {
                       showSuccessSnack(
                         context,
-                        'Matched with ${profile.firstName} — interest is '
-                        'mutual.',
+                        trArgs('Matched with {name} — interest is mutual.', <String, Object>{'name': profile.firstName}),
                       );
                     }
                   },

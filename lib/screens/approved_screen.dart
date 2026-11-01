@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../models/ward_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -102,8 +102,10 @@ class _ApprovedScreenState extends State<ApprovedScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'I promise to use ${AppBrand.name} with pure intentions by '
-                'maintaining community\'s dignity.',
+                trArgs(
+                  'I promise to use {brand} with pure intentions by maintaining community\'s dignity.',
+                  <String, Object>{'brand': AppBrand.name},
+                ),
                 textAlign: TextAlign.center,
                 style: AppTheme.ts(15, FontWeight.w500, color: AppTheme.slate700, height: 1.5),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Standard white card with soft border + shadow used across every screen.
@@ -71,7 +72,7 @@ class SectionLabel extends StatelessWidget {
       children: <Widget>[
         Flexible(
           child: Text(
-            text.toUpperCase(),
+            tr(text).toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTheme.overline

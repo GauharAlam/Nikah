@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/notification_item.dart';
 import '../models/wali.dart';
 import '../providers/app_store.dart';
@@ -36,7 +37,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Activities',
+          tr('Activities'),
           style: AppTheme.ts(17, FontWeight.w800, color: AppTheme.slate900),
         ),
       ),
@@ -48,12 +49,12 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               options: <SegmentedOption<_ActivityTab>>[
                 SegmentedOption<_ActivityTab>(
                   value: _ActivityTab.timeline,
-                  label: 'Timeline (${log.length})',
+                  label: trArgs('Timeline ({count})', <String, Object>{'count': log.length}),
                   icon: Icons.timeline_rounded,
                 ),
                 SegmentedOption<_ActivityTab>(
                   value: _ActivityTab.notifications,
-                  label: 'Alerts (${notifications.length})',
+                  label: trArgs('Alerts ({count})', <String, Object>{'count': notifications.length}),
                   icon: Icons.notifications_none_rounded,
                 ),
               ],
@@ -64,11 +65,11 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           Expanded(
             child: _tab == _ActivityTab.timeline
                 ? (log.isEmpty
-                    ? const EmptyState(
+                    ? EmptyState(
                         icon: Icons.timeline_rounded,
-                        title: 'Nothing yet',
-                        body: 'Proposals, chats and verifications will appear '
-                            'here as your search progresses.',
+                        title: tr('Nothing yet'),
+                        body: tr('Proposals, chats and verifications will appear '
+                            'here as your search progresses.'),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -146,7 +147,7 @@ class _TimelineTile extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        entry.title,
+                        tr(entry.title),
                         style: AppTheme.ts(
                           13.5,
                           FontWeight.w800,
@@ -210,7 +211,7 @@ class _AlertTile extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        item.title,
+                        tr(item.title),
                         style: AppTheme.ts(
                           item.isRead ? 13.5 : 13.5,
                           item.isRead ? FontWeight.w700 : FontWeight.w800,
@@ -233,7 +234,7 @@ class _AlertTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  item.body,
+                  tr(item.body),
                   style: AppTheme.ts(12, FontWeight.w500, color: AppTheme.slate500, height: 1.4),
                 ),
                 const SizedBox(height: 5),

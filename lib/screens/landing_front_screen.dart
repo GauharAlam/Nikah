@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_snacks.dart';

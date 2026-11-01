@@ -115,7 +115,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
     final Map<String, String>? theirs = _theirs;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
-      appBar: AppBar(title: Text('Journey with ${match.firstName}')),
+      appBar: AppBar(title: Text(trArgs('Journey with {name}', <String, Object>{'name': match.firstName}))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

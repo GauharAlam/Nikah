@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_buttons.dart';
@@ -53,8 +53,8 @@ class ReviewStatusScreen extends StatelessWidget {
                 Text(
                   rejected
                       ? store.rejectionReason
-                      : 'Our team reviews every profile before it goes live. '
-                            'We will notify you when it is done.',
+                      : tr('Our team reviews every profile before it goes live. '
+                            'We will notify you when it is done.'),
                   textAlign: TextAlign.center,
                   style: AppTheme.bodySmall,
                 ),

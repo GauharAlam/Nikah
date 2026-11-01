@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
+import '../l10n/app_strings.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -54,7 +54,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
     context.read<AppStore>().unmatch(profile.id);
     showAppSnack(
       context,
-      '${profile.firstName} was removed from your matches.',
+      trArgs('{name} was removed from your matches.', <String, Object>{'name': profile.firstName}),
       icon: Icons.heart_broken_outlined,
     );
     final int remaining = _mode == _MatchMode.chats
@@ -236,8 +236,8 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
             Center(
               child: Text(
                 isChats
-                    ? 'In-app matches before sharing contact details.'
-                    : 'Contact details exchanged between both families.',
+                    ? tr('In-app matches before sharing contact details.')
+                    : tr('Contact details shared between the two of you.'),
                 textAlign: TextAlign.center,
                 style: _t(12, FontWeight.w500, AppTheme.slate500),
               ),
@@ -248,18 +248,18 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                   ? (isChats
                         ? EmptyState(
                             icon: Icons.forum_outlined,
-                            title: 'No chat matches yet',
-                            body: 'Approve an introduction to open a '
-                                'chat — it will appear here.',
-                            actionLabel: 'Browse Discovery',
+                            title: tr('No chat matches yet'),
+                            body: tr('Approve an introduction to open a '
+                                'chat — it will appear here.'),
+                            actionLabel: tr('Browse Discovery'),
                             onAction: () => context.go(AppRoutes.homeDiscovery),
                           )
                         : EmptyState(
                             icon: Icons.phone_disabled_outlined,
                             title: tr('No shared contacts yet'),
-                            body: 'Contact details appear here once the other '
-                                'person accepts a request.',
-                            actionLabel: 'Review Requests',
+                            body: tr('Contact details appear here once the other '
+                                'person accepts a request.'),
+                            actionLabel: tr('Review Requests'),
                             onAction: () => context.go(AppRoutes.homeProposals),
                           ))
                   : PageView.builder(
@@ -536,7 +536,7 @@ class _MatchDeckCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        '$unread new',
+                        trArgs('{count} new', <String, Object>{'count': unread}),
                         style: _t(10, FontWeight.w800, AppTheme.emeraldDeep),
                       ),
                     ),
@@ -564,7 +564,7 @@ class _MatchDeckCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'New Profile',
+                            tr('New Profile'),
                             style: _t(10.5, FontWeight.w800, AppTheme.goldInk),
                           ),
                         ],
@@ -601,7 +601,7 @@ class _MatchDeckCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Self managed',
+                                  tr('Self managed'),
                                   style: _t(10, FontWeight.w700, Colors.white),
                                 ),
                               ],
@@ -641,7 +641,7 @@ class _MatchDeckCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                '${profile.matchPercent}% match',
+                                trArgs('{percent}% match', <String, Object>{'percent': profile.matchPercent}),
                                 style: _t(9.5, FontWeight.w800, AppTheme.green),
                               ),
                             ),

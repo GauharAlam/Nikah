@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_banners.dart';
 import '../widgets/app_card.dart';
@@ -24,7 +25,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
-      appBar: AppBar(title: const Text('About & Help')),
+      appBar: AppBar(title: Text(tr('About & Help'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 60),
         children: <Widget>[
@@ -66,7 +67,7 @@ class AboutScreen extends StatelessWidget {
           SettingsTile(
             key: const Key('about_email_support'),
             icon: Icons.mail_outline_rounded,
-            title: 'Email support',
+            title: tr('Email support'),
             subtitle: AppConfig.supportEmail,
             onTap: () => _open(
               context,
@@ -79,22 +80,22 @@ class AboutScreen extends StatelessWidget {
           SettingsTile(
             key: const Key('about_privacy'),
             icon: Icons.privacy_tip_outlined,
-            title: 'Privacy Policy',
-            subtitle: 'How your biodata is protected',
+            title: tr('Privacy Policy'),
+            subtitle: tr('How your biodata is protected'),
             onTap: () => _open(context, Uri.parse(AppConfig.privacyUrl)),
           ),
           const SizedBox(height: 10),
           SettingsTile(
             key: const Key('about_terms'),
             icon: Icons.gavel_rounded,
-            title: 'Terms',
-            subtitle: 'The rules every member agrees to',
+            title: tr('Terms'),
+            subtitle: tr('The rules every member agrees to'),
             onTap: () => _open(context, Uri.parse(AppConfig.termsUrl)),
           ),
           const SizedBox(height: 28),
           Center(
             child: Text(
-              'In sha Allah — built with adab.',
+              tr('In sha Allah — built with adab.'),
               style: AppTheme.ts(12, FontWeight.w600,
                   color: AppTheme.slate400),
             ),
@@ -143,8 +144,8 @@ class _BrandHero extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'A private, reviewed place to find a spouse, with your family '
-            'involved as far as you choose.',
+            tr('A private, reviewed place to find a spouse, with your family '
+                'involved as far as you choose.'),
             textAlign: TextAlign.center,
             style: AppTheme.ts(12.5, FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.82), height: 1.5),
@@ -188,7 +189,7 @@ class _FaqTile extends StatelessWidget {
           iconColor: AppTheme.green,
           collapsedIconColor: AppTheme.slate400,
           title: Text(
-            question,
+            tr(question),
             style:
                 AppTheme.ts(13.5, FontWeight.w700, color: AppTheme.slate900),
           ),
@@ -196,7 +197,7 @@ class _FaqTile extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                answer,
+                tr(answer),
                 style: AppTheme.ts(12.5, FontWeight.w500,
                     color: AppTheme.slate600, height: 1.55),
               ),

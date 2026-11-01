@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/notification_item.dart' show NotificationType;
 import '../theme/app_theme.dart';
 
@@ -117,7 +118,7 @@ class SettingsTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(title, style: AppTheme.ts(14, FontWeight.w700, color: fg)),
+                      Text(tr(title), style: AppTheme.ts(14, FontWeight.w700, color: fg)),
                       if (subtitle != null) ...<Widget>[
                         const SizedBox(height: 2),
                         Text(
@@ -149,7 +150,7 @@ class NotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Notifications',
+      tooltip: tr('Notifications'),
       onPressed: onTap,
       icon: Badge(
         isLabelVisible: unread > 0,

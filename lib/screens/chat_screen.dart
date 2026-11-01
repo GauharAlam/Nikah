@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../services/scam_detector.dart';
 import '../models/chat_message.dart';
 import '../models/match_profile.dart';
@@ -166,19 +167,19 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: <Widget>[
           IconButton(
             key: const Key('open_journey'),
-            tooltip: 'Nikah Journey',
+            tooltip: tr('Nikah Journey'),
             icon: const Icon(Icons.route_outlined, size: 22),
             onPressed: () => context.push(AppRoutes.journey(widget.matchId)),
           ),
           IconButton(
-            tooltip: 'View ${match.firstName}\'s profile',
+            tooltip: trArgs('View {name}\'s profile', <String, Object>{'name': match.firstName}),
             icon: const Icon(Icons.info_outline_rounded, size: 22),
             onPressed: () =>
                 context.push(AppRoutes.matchDetail(widget.matchId)),
           ),
           IconButton(
             key: const Key('report_conversation'),
-            tooltip: 'Report this conversation',
+            tooltip: tr('Report this conversation'),
             icon: const Icon(Icons.flag_outlined, size: 22),
             onPressed: _reportConversation,
           ),
@@ -202,7 +203,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     return TextButton(
                       key: const Key('load_older'),
                       onPressed: store.loadOlderMessages,
-                      child: const Text('Load earlier messages'),
+                      child: Text(tr('Load earlier messages')),
                     );
                   }
                   final ChatMessage message = messages[index - (canLoadOlder ? 1 : 0)];
@@ -231,7 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 key: const Key('chat_closed'),
                 padding: const EdgeInsets.all(18),
                 child: Text(
-                  'This conversation has ended.',
+                  tr('This conversation has ended.'),
                   textAlign: TextAlign.center,
                   style: AppTheme.bodySmall,
                 ),

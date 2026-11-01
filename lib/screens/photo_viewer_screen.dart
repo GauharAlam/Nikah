@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_strings.dart';
 import '../services/privacy_shield.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_images.dart';
@@ -61,7 +62,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen>
                 style: AppTheme.ts(15, FontWeight.w700, color: Colors.white),
               ),
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: tr('Close'),
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
         ),
@@ -120,7 +121,7 @@ class _ViewerInfoBar extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Viewed with adab. Please keep this photo private.',
+                tr('Viewed with adab. Please keep this photo private.'),
                 style: AppTheme.ts(
                   11.5,
                   FontWeight.w600,

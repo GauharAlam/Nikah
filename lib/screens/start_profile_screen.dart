@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_buttons.dart';
@@ -50,7 +50,7 @@ class StartProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Graduates only  ·  Manually reviewed profiles',
+                tr('Graduates only  ·  Manually reviewed profiles'),
                 textAlign: TextAlign.center,
                 style: AppTheme.bodySmall,
               ),

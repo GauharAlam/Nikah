@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../l10n/app_strings.dart';
 import '../models/ward_profile.dart';
 
 /// Builds a one-page biodata a member can send to families. No photo, and no
@@ -42,7 +43,7 @@ class BiodataPdf {
     bool includePhone = false,
   }) {
     const PdfColor green = PdfColor.fromInt(0xFF185A42);
-    final pw.Document doc = pw.Document(title: 'Biodata');
+    final pw.Document doc = pw.Document(title: tr('Biodata'));
     doc.addPage(pw.Page(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(40),

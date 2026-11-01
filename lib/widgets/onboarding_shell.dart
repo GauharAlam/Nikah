@@ -43,7 +43,7 @@ class OnboardingShell extends StatelessWidget {
         leading: onBack == null
             ? null
             : IconButton(
-                tooltip: 'Back',
+                tooltip: tr('Back'),
                 icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: onBack,
               ),
@@ -60,7 +60,7 @@ class OnboardingShell extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
-              '$step of $totalSteps',
+              trArgs('{step} of {total}', <String, Object>{'step': step, 'total': totalSteps}),
               style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.green),
             ),
           ),

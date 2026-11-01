@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Switch row used by wali hub / onboarding permission lists — replaces
@@ -91,7 +92,7 @@ class SwitchTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(title, style: AppTheme.ts(14, FontWeight.w700, color: AppTheme.slate800)),
+              Text(tr(title), style: AppTheme.ts(14, FontWeight.w700, color: AppTheme.slate800)),
               const SizedBox(height: 2),
               Text(
                 subtitle,

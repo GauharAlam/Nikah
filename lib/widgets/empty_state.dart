@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Friendly placeholder for empty lists (no conversations, no
@@ -40,13 +41,13 @@ class EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              title,
+              tr(title),
               textAlign: TextAlign.center,
               style: AppTheme.ts(17, FontWeight.w800, color: AppTheme.slate900),
             ),
             const SizedBox(height: 7),
             Text(
-              body,
+              tr(body),
               textAlign: TextAlign.center,
               style: AppTheme.ts(13, FontWeight.w500, color: AppTheme.slate500, height: 1.5),
             ),
@@ -55,7 +56,7 @@ class EmptyState extends StatelessWidget {
               TextButton.icon(
                 onPressed: onAction,
                 icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: Text(actionLabel!),
+                label: Text(tr(actionLabel!)),
               ),
             ],
           ],

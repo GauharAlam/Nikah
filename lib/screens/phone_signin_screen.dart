@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
 import '../data/option_lists.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_buttons.dart';
@@ -63,7 +63,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
     } on BackendException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } on Object {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = tr('Something went wrong. Please try again.'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -113,7 +113,7 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
             const SizedBox(height: 8),
             Text(
               codeStep
-                  ? 'We sent a 6-digit code to $_e164.'
+                  ? trArgs('We sent a 6-digit code to {phone}.', <String, Object>{'phone': _e164})
                   : tr('We will text you a code to confirm it is you.'),
               style: AppTheme.bodySmall,
             ),

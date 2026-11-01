@@ -7,10 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
+import '../l10n/app_strings.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -72,7 +72,10 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     } else {
       showAppSnack(
         context,
-        'Daily limit reached — ${context.read<AppStore>().dailyProposalLimit} proposals per day. Come back tomorrow.',
+        trArgs(
+          'Daily limit reached — {limit} proposals per day. Come back tomorrow.',
+          <String, Object>{'limit': context.read<AppStore>().dailyProposalLimit},
+        ),
         icon: Icons.hourglass_top_rounded,
       );
     }
@@ -81,7 +84,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   Future<void> _shareToCircle(MatchProfile match) async {
     try {
       await context.read<AppStore>().shareWithFamily(match.id);
-      if (mounted) showSuccessSnack(context, 'Shared with your Family Circle.');
+      if (mounted) showSuccessSnack(context, tr('Shared with your Family Circle.'));
     } on BackendException catch (e) {
       if (mounted) showAppSnack(context, e.message);
     }
@@ -115,13 +118,13 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             ListTile(
               key: const Key('detail_report'),
               leading: const Icon(Icons.flag_outlined),
-              title: Text('Report ${match.firstName}'),
+              title: Text(trArgs('Report {name}', <String, Object>{'name': match.firstName})),
               onTap: () => Navigator.of(ctx).pop('report'),
             ),
             ListTile(
               key: const Key('detail_block'),
               leading: const Icon(Icons.block_rounded),
-              title: Text('Block ${match.firstName}'),
+              title: Text(trArgs('Block {name}', <String, Object>{'name': match.firstName})),
               onTap: () => Navigator.of(ctx).pop('block'),
             ),
           ],
@@ -140,20 +143,20 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text('Block ${match.firstName}?'),
-        content: const Text(
-          'You will stop seeing each other in discovery, proposals, matches '
-          'and messages. Any pending requests between you are closed.',
+        title: Text(trArgs('Block {name}?', <String, Object>{'name': match.firstName})),
+        content: Text(
+          tr('You will stop seeing each other in discovery, proposals, matches '
+          'and messages. Any pending requests between you are closed.'),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel')),
           ),
           TextButton(
             key: const Key('detail_block_confirm'),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Block'),
+            child: Text(tr('Block')),
           ),
         ],
       ),
@@ -174,7 +177,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     if (ok) {
       showWaliSnack(
         context,
-        'Contact request sent · 1 gold credit used',
+        tr('Contact request sent · 1 gold credit used'),
       );
     } else {
       showAppSnack(
@@ -189,7 +192,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     context.read<AppStore>().markIncompatible(match.id);
     showAppSnack(
       context,
-      '${match.firstName} hidden from your deck.',
+      trArgs('{name} hidden from your deck.', <String, Object>{'name': match.firstName}),
       icon: Icons.do_not_disturb_on_outlined,
     );
     if (context.canPop()) {
@@ -215,7 +218,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         centerTitle: true,
         leading: IconButton(
           key: const Key('detail_back'),
-          tooltip: 'Back',
+          tooltip: tr('Back'),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -231,19 +234,19 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Share profile',
+            tooltip: tr('Share profile'),
             onPressed: () => _shareWithFamily(match),
             icon: const Icon(Icons.ios_share_rounded, size: 21),
           ),
           IconButton(
             key: const Key('share_family_circle'),
-            tooltip: 'Share with Family Circle',
+            tooltip: tr('Share with Family Circle'),
             onPressed: () => _shareToCircle(match),
             icon: const Icon(Icons.groups_outlined, size: 21),
           ),
           IconButton(
             key: const Key('detail_more'),
-            tooltip: 'More options',
+            tooltip: tr('More options'),
             onPressed: () => _showSafetyMenu(match),
             icon: const Icon(Icons.more_vert_rounded, size: 21),
           ),
@@ -262,7 +265,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               children: <Widget>[
                 Center(
                   child: Text(
-                    'TAKE THE NEXT STEP',
+                    tr('TAKE THE NEXT STEP'),
                     style: _t(
                       10.5,
                       FontWeight.w800,
@@ -286,10 +289,10 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   const SizedBox(height: 18),
                 ],
                 if (match.photosHidden) ...<Widget>[
-                  const InfoBanner(
+                  InfoBanner(
                     icon: Icons.visibility_off_outlined,
                     variant: InfoVariant.info,
-                    text: 'This member shares photos after you match.',
+                    text: tr('This member shares photos after you match.'),
                   ),
                   const SizedBox(height: 14),
                 ],
@@ -297,15 +300,15 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                 const SizedBox(height: 18),
                 SectionHeader(
                   tr('Biodata Snapshot'),
-                  subtitle: 'Key details',
+                  subtitle: tr('Key details'),
                 ),
                 const SizedBox(height: 12),
                 _demGrid(<(String, String)>[
-                  ('Age', '${match.age} years'),
+                  ('Age', trArgs('{age} years', <String, Object>{'age': match.age})),
                   (tr('Height'), match.height),
                   ('Education', match.education),
                   ('University', match.university),
-                  ('Marital Status', match.maritalStatus),
+                  (tr('Marital Status'), match.maritalStatus),
                   ('Location', match.location),
                   (tr('Profession'), match.employer),
                   ('Sect', match.sect),
@@ -314,7 +317,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                 ].where(((String, String) c) => c.$2.isNotEmpty).toList()),
                 const SizedBox(height: 22),
                 if (match.religiousPractices.isNotEmpty) ...<Widget>[
-                  const SectionLabel('Faith Practice'),
+                  SectionLabel(tr('Faith Practice')),
                   const SizedBox(height: 10),
                   _PracticeCard(practices: match.religiousPractices),
                   const SizedBox(height: 22),
@@ -325,7 +328,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   Text(match.aboutMe, style: AppTheme.bodyLarge),
                   const SizedBox(height: 22),
                 ],
-                if (match.languages.isNotEmpty) const SectionHeader('Languages & Interests'),
+                if (match.languages.isNotEmpty) SectionHeader(tr('Languages & Interests')),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -350,11 +353,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                       : Icons.privacy_tip_outlined,
                   variant: InfoVariant.info,
                   text: shared
-                      ? 'Contact details are visible to both of you. '
+                      ? tr('Contact details are visible to both of you. '
                             'Please involve your family and keep messages '
-                            'respectful.'
-                      : 'Contact details stay private until both sides '
-                            'agree.',
+                            'respectful.')
+                      : tr('Contact details stay private until both sides '
+                            'agree.'),
                 ),
               ],
             ),
@@ -450,8 +453,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 10),
-              Material(
+              if (AppConfig.guardianFeatures) const SizedBox(width: 10),
+              if (AppConfig.guardianFeatures) Material(
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
@@ -489,7 +492,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           if (match.activeDaysAgo != null) ...<Widget>[
             const SizedBox(height: 5),
             Text(
-              match.activeDaysAgo == 0 ? 'Active today' : 'Active ${match.activeDaysAgo}d ago',
+              match.activeDaysAgo == 0 ? tr('Active today') : trArgs('Active {count}d ago', <String, Object>{'count': match.activeDaysAgo!}),
               style: _t(12, FontWeight.w600, AppTheme.slate500),
             ),
           ],
@@ -517,7 +520,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             Row(
               children: <Widget>[
                 if (match.isNew) ...<Widget>[
-                  const _CoverPill('New profile', highlight: true),
+                  _CoverPill(tr('New profile'), highlight: true),
                   const SizedBox(width: 6),
                 ],
                 if (match.isSelfManaged)
@@ -553,7 +556,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             if (store.acceptProposal(match.id)) {
               showWaliSnack(
                 context,
-                'Proposal accepted — you are matched, barakallahu feekum',
+                tr('Proposal accepted — you are matched, barakallahu feekum'),
               );
             }
           },
@@ -561,7 +564,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         const SizedBox(height: 10),
         _StepButton(
           title: tr('Send Message'),
-          subtitle: 'Opens once you accept the proposal',
+          subtitle: tr('Opens once you accept the proposal'),
           icon: Icons.chat_bubble_outline_rounded,
           ghost: true,
           onTap: () => showAppSnack(
@@ -580,7 +583,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               }
             },
             child: Text(
-              'Decline proposal',
+              tr('Decline proposal'),
               style: _t(12.5, FontWeight.w700, AppTheme.slate500),
             ),
           ),
@@ -592,7 +595,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         _StepButton(
           key: const Key('detail_chat'),
           title: tr('Send Message'),
-          subtitle: 'Chat with ${match.firstName}',
+          subtitle: trArgs('Chat with {name}', <String, Object>{'name': match.firstName}),
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
         ),
@@ -639,7 +642,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Contact request pending — awaiting a reply',
+                  tr('Contact request pending — awaiting a reply'),
                   style: _t(12, FontWeight.w800, AppTheme.goldInk),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -650,7 +653,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'You will be notified when your request is answered.',
+          tr('You will be notified when your request is answered.'),
           style: AppTheme.bodySmall,
         ),
       ];
@@ -660,14 +663,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         _StepButton(
           key: const Key('detail_chat'),
           title: tr('Send Message'),
-          subtitle: 'Chat with ${match.firstName}',
+          subtitle: trArgs('Chat with {name}', <String, Object>{'name': match.firstName}),
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
         ),
         const SizedBox(height: 10),
         PositiveOutlinedButton(
           key: const Key('detail_request_contact'),
-          label: 'Request Contact · 1 credit',
+          label: tr('Request Contact · 1 credit'),
           icon: Icons.phone_in_talk_outlined,
           gold: true,
           onPressed: () => _requestContact(match),
@@ -678,8 +681,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       return <Widget>[
         _StepButton(
           key: const Key('proposal_sent_pill'),
-          title: 'Proposal Sent',
-          subtitle: 'Awaiting a reply',
+          title: tr('Proposal Sent'),
+          subtitle: tr('Awaiting a reply'),
           icon: Icons.check_circle_rounded,
           muted: true,
           chevron: false,
@@ -692,7 +695,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         const SizedBox(height: 10),
         PositiveOutlinedButton(
           key: const Key('detail_request_contact'),
-          label: 'Request Contact · 1 credit',
+          label: tr('Request Contact · 1 credit'),
           icon: Icons.phone_in_talk_outlined,
           gold: true,
           onPressed: () => _requestContact(match),
@@ -703,14 +706,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       _StepButton(
         key: const Key('detail_intro'),
         title: tr('Send Proposal'),
-        subtitle: 'Share your interest',
+        subtitle: tr('Share your interest'),
         icon: Icons.favorite_rounded,
         onTap: () => _sendProposal(match),
       ),
       const SizedBox(height: 10),
       PositiveOutlinedButton(
         key: const Key('detail_request_contact'),
-        label: 'Request Contact · 1 credit',
+        label: tr('Request Contact · 1 credit'),
         icon: Icons.phone_in_talk_outlined,
         gold: true,
         onPressed: () => _requestContact(match),
@@ -723,8 +726,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              '${store.proposalsLeft} of ${store.dailyProposalLimit} proposals left today · '
-              '${store.contactCredits} gold credits',
+              trArgs(
+                '{left} of {limit} proposals left today · {credits} gold credits',
+                <String, Object>{
+                  'left': store.proposalsLeft,
+                  'limit': store.dailyProposalLimit,
+                  'credits': store.contactCredits,
+                },
+              ),
               style: _t(10.5, FontWeight.w600, AppTheme.slate500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -738,7 +747,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           onPressed: () => _markIncompatible(match),
           icon: const Icon(Icons.close_rounded, size: 16),
           label: Text(
-            'Not a fit — hide from deck',
+            tr('Not a fit — hide from deck'),
             style: _t(12, FontWeight.w700, AppTheme.slate500),
           ),
         ),
@@ -1104,7 +1113,7 @@ class _WhatWasChecked extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      match.verifiedDocs.contains(id) ? label : '$label not yet checked',
+                      match.verifiedDocs.contains(id) ? label : trArgs('{label} not yet checked', <String, Object>{'label': label}),
                       style: _t(12.5, FontWeight.w600, AppTheme.slate700),
                     ),
                   ),
@@ -1113,8 +1122,8 @@ class _WhatWasChecked extends StatelessWidget {
             ),
           const SizedBox(height: 6),
           Text(
-            'We do not check criminal records, family background or income. '
-            'Please do your own checks.',
+            tr('We do not check criminal records, family background or income. '
+            'Please do your own checks.'),
             style: AppTheme.bodySmall,
           ),
         ],
@@ -1148,7 +1157,7 @@ class _ContactCard extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                'CONTACT SHARED',
+                tr('CONTACT SHARED'),
                 style: _t(10, FontWeight.w800, AppTheme.goldInk).copyWith(
                   letterSpacing: 1.1,
                 ),
@@ -1158,8 +1167,8 @@ class _ContactCard extends StatelessWidget {
           const SizedBox(height: 10),
           _ContactRow(
             icon: Icons.phone_outlined,
-            label: 'Phone',
-            value: phone.isEmpty ? 'Not available' : phone,
+            label: tr('Phone'),
+            value: phone.isEmpty ? tr('Not available') : phone,
           ),
           if (AppConfig.guardianFeatures) ...<Widget>[
             const SizedBox(height: 8),

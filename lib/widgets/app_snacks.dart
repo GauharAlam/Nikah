@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
 /// Themed snackbars.
@@ -21,7 +22,7 @@ void showAppSnack(
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                message,
+                tr(message),
                 style: AppTheme.ts(13, FontWeight.w600, color: Colors.white, height: 1.35),
               ),
             ),

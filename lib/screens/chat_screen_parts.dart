@@ -24,8 +24,8 @@ class _ScamWarning extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Be careful. Never send money or share codes with someone you '
-                'have not met with your family. Tap to learn more.',
+                tr('Be careful. Never send money or share codes with someone you '
+                'have not met with your family. Tap to learn more.'),
                 style: AppTheme.ts(12, FontWeight.w600, color: AppTheme.slate800, height: 1.35),
               ),
             ),
@@ -295,7 +295,7 @@ class _MessageBubble extends StatelessWidget {
             Text(
               switch (message.state) {
                 MessageState.sending => 'Sending…',
-                MessageState.failed => 'Not sent',
+                MessageState.failed => tr('Not sent'),
                 MessageState.sent => showSeen ? '${message.time} · Seen' : message.time,
               },
               style: AppTheme.ts(10, FontWeight.w500, color: Colors.white70),
@@ -305,7 +305,7 @@ class _MessageBubble extends StatelessWidget {
                 key: Key('retry_${message.id}'),
                 onTap: onRetry,
                 child: Text(
-                  'Tap to retry',
+                  tr('Tap to retry'),
                   style: AppTheme.ts(11, FontWeight.w800, color: Colors.white),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/ward_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -86,7 +87,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             relocation: _relocation,
           ),
         );
-    showSuccessSnack(context, 'Practice profile saved. MashaAllah!');
+    showSuccessSnack(context, tr('Practice profile saved. MashaAllah!'));
     context.read<AppStore>().submitEdits();
     context.pop();
   }
@@ -94,21 +95,21 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
   @override
   Widget build(BuildContext context) {
     return ProfileSectionShell(
-      title: 'Deen & Practice',
-      subtitle: 'Share your salah, Quran and halal commitments with ihsan.',
+      title: tr('Deen & Practice'),
+      subtitle: tr('Share your salah, Quran and halal commitments with ihsan.'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const InfoBanner(
+          InfoBanner(
             variant: InfoVariant.gold,
             icon: Icons.volunteer_activism_outlined,
             text:
-                'This journey is an act of worship. Describe your practice '
+                tr('This journey is an act of worship. Describe your practice '
                 'honestly — sincerity before Allah brings barakah to every '
-                'introduction.',
+                'introduction.'),
           ),
           const SizedBox(height: 24),
-          const SectionLabel('Salah frequency', requiredMark: true),
+          SectionLabel(tr('Salah frequency'), requiredMark: true),
           const SizedBox(height: 8),
           Column(
             children: PrayerFrequency.values.map<Widget>((PrayerFrequency f) {
@@ -123,7 +124,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             }).toList(),
           ),
           const SizedBox(height: 18),
-          const SectionLabel('Quran comfort', requiredMark: true),
+          SectionLabel(tr('Quran comfort'), requiredMark: true),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -137,7 +138,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             }).toList(),
           ),
           const SizedBox(height: 18),
-          const SectionLabel('Halal lifestyle & commitments'),
+          SectionLabel(tr('Halal lifestyle & commitments')),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -169,7 +170,7 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             }).toList(),
           ),
           const SizedBox(height: 18),
-          const SectionLabel('Marital timeline', requiredMark: true),
+          SectionLabel(tr('Marital timeline'), requiredMark: true),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -197,17 +198,16 @@ class _IslamicPracticeStepScreenState extends State<IslamicPracticeStepScreen> {
             }).toList(),
           ),
           const SizedBox(height: 24),
-          const InfoBanner(
+          InfoBanner(
             tight: true,
             variant: InfoVariant.info,
             icon: Icons.verified_user_outlined,
             text:
-                'Your Wali can see this starting point to guide '
-                'introductions — nothing here is public.',
+                tr('Nothing here is public until our team has reviewed your profile.'),
           ),
           const SizedBox(height: 14),
           PrimaryButton(
-            label: 'Save & Continue',
+            label: tr('Save & Continue'),
             icon: Icons.arrow_forward_rounded,
             onPressed: _submit,
           ),

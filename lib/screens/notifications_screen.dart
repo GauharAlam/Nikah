@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/notification_item.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -20,21 +21,21 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(tr('Notifications')),
         actions: <Widget>[
           if (store.unreadNotificationCount > 0)
             TextButton(
               onPressed: store.markAllNotificationsRead,
-              child: const Text('Mark all read'),
+              child: Text(tr('Mark all read')),
             ),
         ],
       ),
       body: items.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.notifications_off_outlined,
-              title: 'No notifications yet',
-              body: 'Proposals, matches and review updates will '
-                  'appear here, in sha Allah.',
+              title: tr('No notifications yet'),
+              body: tr('Proposals, matches and review updates will '
+                  'appear here, in sha Allah.'),
             )
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
@@ -66,7 +67,7 @@ class _NotificationCard extends StatelessWidget {
 
   String get _timeAgo {
     final Duration diff = DateTime.now().difference(item.createdAt);
-    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 1) return tr('Just now');
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
@@ -120,7 +121,7 @@ class _NotificationCard extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        item.title,
+                        tr(item.title),
                         style: AppTheme.ts(
                           item.isRead ? 13.5 : 14,
                           item.isRead ? FontWeight.w600 : FontWeight.w800,
@@ -138,7 +139,7 @@ class _NotificationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  item.body,
+                  tr(item.body),
                   style: AppTheme.ts(12.5, FontWeight.w500,
                       color: AppTheme.slate600, height: 1.45),
                 ),

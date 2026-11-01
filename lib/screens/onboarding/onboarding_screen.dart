@@ -6,10 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../l10n/app_strings.dart';
 import '../../app_router.dart';
 import '../../data/backend.dart';
 import '../../data/option_lists.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/verification_doc.dart';
 import '../../models/ward_profile.dart';
 import '../../providers/app_store.dart';
@@ -95,44 +95,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final AppStore store = context.read<AppStore>();
     switch (_step) {
       case 1:
-        if (d.displayName.length < 2) return 'Enter your full name.';
-        if (!d.hasGender) return 'Select your gender.';
-        if (d.dateOfBirth == null) return 'Select your date of birth.';
-        if ((d.age ?? 0) < 18) return 'You must be at least 18.';
-        if (d.maritalStatus.isEmpty) return 'Select your marital status.';
-        if (d.marriageReadiness.isEmpty) return 'Select your marriage readiness.';
+        if (d.displayName.length < 2) return tr('Enter your full name.');
+        if (!d.hasGender) return tr('Select your gender.');
+        if (d.dateOfBirth == null) return tr('Select your date of birth.');
+        if ((d.age ?? 0) < 18) return tr('You must be at least 18.');
+        if (d.maritalStatus.isEmpty) return tr('Select your marital status.');
+        if (d.marriageReadiness.isEmpty) return tr('Select your marriage readiness.');
         if (d.maritalStatus != OptionLists.maritalStatus.first && d.children.isEmpty) {
-          return 'Tell us about children.';
+          return tr('Tell us about children.');
         }
-        if (d.city.isEmpty) return 'Choose your home city.';
-        if (store.verifiedPhone.isEmpty) return 'Verify your phone number.';
+        if (d.city.isEmpty) return tr('Choose your home city.');
+        if (store.verifiedPhone.isEmpty) return tr('Verify your phone number.');
       case 2:
         if (d.managedBy == 'family' && !d.candidateConsent) {
-          return 'Confirm that the person has agreed to this profile.';
+          return tr('Confirm that the person has agreed to this profile.');
         }
         if (d.managedBy == 'family' && !RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(d.subjectPhone)) {
-          return 'Enter their phone number, starting with the country code.';
+          return tr('Enter their phone number, starting with the country code.');
         }
-        if (d.height.isEmpty) return 'Select your height.';
+        if (d.height.isEmpty) return tr('Select your height.');
       case 3:
-        if (d.almaMaters.isEmpty) return 'Select your alma mater.';
-        if (d.qualification.isEmpty) return 'Select your qualification.';
+        if (d.almaMaters.isEmpty) return tr('Select your alma mater.');
+        if (d.qualification.isEmpty) return tr('Select your qualification.');
         if (store.graduatesOnly && OptionLists.qualifications[d.qualification] == false) {
           return tr('This community is for graduates and degree students.');
         }
-        if (d.profession.isEmpty) return 'Select your profession.';
-        if (!d.workSameAsHome && d.workCity.isEmpty) return 'Choose your current city.';
+        if (d.profession.isEmpty) return tr('Select your profession.');
+        if (!d.workSameAsHome && d.workCity.isEmpty) return tr('Choose your current city.');
       case 4:
-        if (d.photos.isEmpty) return 'Add at least one photo.';
+        if (d.photos.isEmpty) return tr('Add at least one photo.');
       case 5:
         final VerificationDoc id = store.verificationDocs
             .firstWhere((VerificationDoc x) => x.id == 'name-proof');
         if (store.requireIdProof && id.status.needsUpload) {
-          return 'Upload your ID to continue.';
+          return tr('Upload your ID to continue.');
         }
       case 6:
-        if (!d.intentConfirmed) return 'Confirm that you are here for marriage.';
-        if (!d.dataConsent) return 'Agree to how your details are used.';
+        if (!d.intentConfirmed) return tr('Confirm that you are here for marriage.');
+        if (!d.dataConsent) return tr('Agree to how your details are used.');
     }
     return null;
   }
@@ -378,7 +378,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           CheckboxListTile(
             key: const Key('candidate_consent'),
             contentPadding: EdgeInsets.zero,
-            title: const Text('The person this profile is for has agreed to it and is 18 or older.'),
+            title: Text(tr('The person this profile is for has agreed to it and is 18 or older.')),
             value: _d.candidateConsent,
             onChanged: (bool? v) => _set(_d.copyWith(candidateConsent: v ?? false)),
           ),
@@ -445,7 +445,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           icon: Icons.favorite_border_rounded,
           value: _d.maritalStatus,
           hint: tr('Select marital status'),
-          onTap: () => _choose('Marital Status', OptionLists.maritalStatus,
+          onTap: () => _choose(tr('Marital Status'), OptionLists.maritalStatus,
               (String v) => _set(_d.copyWith(maritalStatus: v))),
         ),
         _label(tr('Marriage readiness'), required: true),
@@ -478,7 +478,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onTap: () async {
             final PickedLocation? p = await showLocationSheet(
               context,
-              title: 'Your home city',
+              title: tr('Your home city'),
               initial: PickedLocation(_d.country, _d.homeState, _d.city),
             );
             if (p != null) {
@@ -536,7 +536,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             hint: tr('Current city'),
             onTap: () async {
               final PickedLocation? p =
-                  await showLocationSheet(context, title: 'Your current city');
+                  await showLocationSheet(context, title: tr('Your current city'));
               if (p != null) _set(_d.copyWith(workCity: p.city));
             },
           ),
@@ -898,7 +898,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           row('Home', <String>[_d.city, _d.homeState, _d.country].where((String s) => s.isNotEmpty).join(', ')),
         ]),
         section(tr('Personal and family'), 2, <Widget>[
-          row('Managed by', _d.managedBy == 'family' ? tr('A family Member') : tr('Myself')),
+          row(tr('Managed by'), _d.managedBy == 'family' ? tr('A family Member') : tr('Myself')),
           row('Caste', _d.caste),
           row(tr('Height'), _d.height),
           row(tr('Family type'), _d.familyType),
@@ -951,9 +951,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         CheckboxListTile(
           key: const Key('confirm_consent'),
           contentPadding: EdgeInsets.zero,
-          title: const Text(
-            'I agree that my details, photos and documents are used for review and matching, '
-            'as described in the Privacy Policy.',
+          title: Text(
+            tr('I agree that my details, photos and documents are used for review and matching, '
+            'as described in the Privacy Policy.'),
           ),
           value: _d.dataConsent,
           onChanged: (bool? v) => _set(_d.copyWith(dataConsent: v ?? false)),
@@ -968,7 +968,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       1 => (tr('Basic information'), null, _basicsStep()),
       2 => (tr('Personal and family'), null, _personalFamilyStep()),
       3 => (tr('Education & profession'), null, _educationStep()),
-      4 => (tr('Add your photos'), 'A clear photo helps your profile get noticed.', _photoStep()),
+      4 => (tr('Add your photos'), tr('A clear photo helps your profile get noticed.'), _photoStep()),
       5 => (tr('Verification'), null, _verificationStep()),
       _ => (tr('Review and submit'), 'Our team reviews every profile before it goes live.', _reviewStep()),
     };

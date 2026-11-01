@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../app_router.dart';
+import '../l10n/app_strings.dart';
 import '../models/chat_message.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
@@ -28,7 +29,7 @@ class ChatTabScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: const Text('Messages'),
+        title: Text(tr('Messages')),
         actions: <Widget>[
           NotificationBell(
             unread: store.unreadNotificationCount,
@@ -38,20 +39,20 @@ class ChatTabScreen extends StatelessWidget {
         ],
       ),
       body: threadIds.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.forum_outlined,
-              title: 'No conversations yet',
+              title: tr('No conversations yet'),
               body:
-                  'Conversations with your matches will appear here.',
+                  tr('Conversations with your matches will appear here.'),
             )
           : Column(
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-                  child: const InfoBanner(
+                  child: InfoBanner(
                     icon: Icons.shield_outlined,
                     text:
-                        'Keep conversations respectful and on the app.',
+                        tr('Keep conversations respectful and on the app.'),
                   ),
                 ),
                 Expanded(

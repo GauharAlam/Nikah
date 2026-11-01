@@ -58,7 +58,7 @@ class SafetyCenterScreen extends StatelessWidget {
                         children: <Widget>[
                           Text(tr(title), style: AppTheme.ts(14.5, FontWeight.w800, color: AppTheme.slate900)),
                           const SizedBox(height: 3),
-                          Text(body, style: AppTheme.bodySmall),
+                          Text(tr(body), style: AppTheme.bodySmall),
                         ],
                       ),
                     ),
@@ -80,7 +80,7 @@ class SafetyCenterScreen extends StatelessWidget {
                 children: <Widget>[
                   const Icon(Icons.check_circle_outline_rounded, size: 18, color: AppTheme.green),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(step, style: AppTheme.bodySmall)),
+                  Expanded(child: Text(tr(step), style: AppTheme.bodySmall)),
                 ],
               ),
             ),
@@ -91,8 +91,8 @@ class SafetyCenterScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'In India, call the cybercrime helpline 1930 as soon as you can, '
-            'or report online.',
+            tr('In India, call the cybercrime helpline 1930 as soon as you can, '
+            'or report online.'),
             style: AppTheme.bodySmall,
           ),
           TextButton.icon(

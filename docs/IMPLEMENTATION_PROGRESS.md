@@ -519,6 +519,49 @@ instead of leaving the member on the last card with no message.
 
 Functions were not changed, so their tests were not run again.
 
+### Hindi and Hinglish
+
+Member-facing text now has both translations: 488 rows were added to `app_strings.dart`, which
+now holds 759. The notes had said only that "most new text" was missing. A count found 139 strings
+marked but untranslated, about 370 never marked, and more in validation messages and the Safety
+Centre, which a wider search caught after screenshots showed English left on screen.
+
+- Snackbars, settings rows, switches, empty states, buttons and section labels now translate
+  what they receive, so new text passed to them needs only a table row.
+- `trArgs` translates sentences with values in them. Hindi word order differs, so joining
+  pieces cannot work: `Block {name}` becomes `{name} को ब्लॉक करें`.
+- Notifications in the app are translated when shown. The server still writes them in English.
+- `translations_test.dart` fails if a marked string has no row, if the two languages fill
+  different values, or if the scam warnings stop following a change of language.
+- The small-screen tests now run in Hindi as well as English.
+
+**More claims corrected along the way:** "Usually reviewed within 24–48 hours" promised a time
+nobody has committed to. The bookmark on a profile said "Saved to your shortlist" but saved
+nothing, so it now stays in demo builds. "Contact details exchanged between both families" and
+"Your Wali can see this" were not true.
+
+**Reviewed by eye:** landing, Proposals, Activities, Search and Verification in Hindi on the
+emulator. Devanagari renders with no clipping. The UI suite also ran in full in Hindi with no
+layout errors.
+
+**Not translated, on purpose:** the hadith and Qur'an wording, staff tools and demo-only guardian
+screens. Picker options such as "Open to discuss" are stored values and stay in English for now.
+
+**Tests added:** 16 Flutter, counting the small-screen tests that now also run in Hindi.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 242 passed |
+| Device tests on the android-36 emulator | 11 passed |
+| UI suite in Hindi on the emulator | 1 passed |
+| `flutter build apk --release` | built, 66.5 MB |
+| APK inspection | fonts and licence bundled; no `DemoAppStore`, `Barkat`, `nikah.demo` or `GoogleFonts` |
+
+Functions were not changed, so their tests were not run again.
+
 ## Definition of Done
 
 Status is what was run. Emulator means local Firebase emulators, on an Android virtual device
@@ -562,5 +605,8 @@ where the client is involved.
 ## Known engineering gaps
 
 - ARC-03 is partial: controllers exist, but most screens still read them through `AppStore`.
-- Most new text has no Hindi translation yet.
+- Hindi and Hinglish were written by Claude and need review by a native speaker, above all the
+  consent, deletion, payment and safety text.
+- Still in English in Hindi mode: push notifications from the server, picker options, and the
+  How to Use sheet, whose sentences are split across styled pieces.
 - No performance measurement on a mid-range device.

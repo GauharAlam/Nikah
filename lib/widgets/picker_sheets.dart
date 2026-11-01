@@ -3,8 +3,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
-import '../l10n/app_strings.dart';
 import '../data/option_lists.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import 'app_snacks.dart';
@@ -26,7 +26,7 @@ class _SheetHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Close',
+            tooltip: tr('Close'),
             icon: const Icon(Icons.close_rounded),
             onPressed: () => Navigator.of(context).pop(),
           ),
@@ -143,9 +143,9 @@ class _AlmaMaterSheetState extends State<_AlmaMaterSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 key: const Key('alma_search'),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   prefixIcon: Icon(Icons.search_rounded),
-                  hintText: 'Search universities...',
+                  hintText: tr('Search universities...'),
                 ),
                 onChanged: (String v) => setState(() => _query = v),
               ),
@@ -174,13 +174,13 @@ class _AlmaMaterSheetState extends State<_AlmaMaterSheet> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
               child: Row(
                 children: <Widget>[
-                  Text('${_picked.length}/${widget.max} selected',
+                  Text(trArgs('{count}/{max} selected', <String, Object>{'count': _picked.length, 'max': widget.max}),
                       style: AppTheme.bodySmall),
                   const Spacer(),
                   FilledButton(
                     key: const Key('alma_done'),
                     onPressed: () => Navigator.of(context).pop(_picked),
-                    child: const Text('Done'),
+                    child: Text(tr('Done')),
                   ),
                 ],
               ),
@@ -317,16 +317,16 @@ class _LocationSheetState extends State<_LocationSheet> {
           TextButton.icon(
             onPressed: _locating ? null : _useCurrent,
             icon: const Icon(Icons.my_location_rounded, size: 18),
-            label: Text(_locating ? 'Finding you…' : 'Use current location'),
+            label: Text(_locating ? tr('Finding you…') : tr('Use current location')),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: <Widget>[
-                _row('Country', _country, 'Select country', () async {
+                _row('Country', _country, tr('Select country'), () async {
                   final String? v = await showOptionSheet(
                     context,
-                    title: 'Country',
+                    title: tr('Country'),
                     options: OptionLists.locations.keys.toList(),
                   );
                   if (v != null) {
@@ -340,13 +340,13 @@ class _LocationSheetState extends State<_LocationSheet> {
                 _row(
                   'State / Region',
                   _region,
-                  'Select state or region',
+                  tr('Select state or region'),
                   regions.isEmpty
                       ? null
                       : () async {
                           final String? v = await showOptionSheet(
                             context,
-                            title: 'State / Region',
+                            title: tr('State / Region'),
                             options: regions.keys.toList(),
                           );
                           if (v != null) {
@@ -360,13 +360,13 @@ class _LocationSheetState extends State<_LocationSheet> {
                 _row(
                   'City',
                   _city,
-                  'Select city',
+                  tr('Select city'),
                   cities.isEmpty
                       ? null
                       : () async {
                           final String? v = await showOptionSheet(
                             context,
-                            title: 'City',
+                            title: tr('City'),
                             options: cities,
                           );
                           if (v != null) setState(() => _city = v);
@@ -384,7 +384,7 @@ class _LocationSheetState extends State<_LocationSheet> {
                     ? null
                     : () => Navigator.of(context)
                         .pop(PickedLocation(_country, _region, _city)),
-                child: const Text('Done'),
+                child: Text(tr('Done')),
               ),
             ),
           ),
