@@ -39,7 +39,7 @@ test('age is computed against the birthday', () => {
 
 const good: r.Draft = {
   fullName: 'A', gender: 'male', maritalStatus: 'Never married', marriageReadiness: 'Ready within 1 year',
-  homeCity: 'Delhi', caste: 'Ansari', height: `5'10"`, phone: '+919999999999', almaMaters: ['AMU'],
+  homeCity: 'Delhi', caste: 'Ansari', height: `5'10"`, almaMaters: ['AMU'],
   qualification: 'B.Tech', qualificationGraduate: true, profession: 'Engineer',
   dateOfBirth: Date.UTC(1998, 0, 1), photos: ['p'], intentConfirmed: true, dataConsent: true,
 };
@@ -171,4 +171,30 @@ test('match score rises with shared details and stays bounded', () => {
   assert.ok(r.matchScore(me, same) > r.matchScore(me, { age: 45, location: 'London' }));
   assert.ok(r.matchScore(me, same) <= 98);
   assert.ok(r.matchScore(me, { country: 'India' }) >= 58);
+});
+
+test('the real type of a file comes from its bytes', () => {
+  const b = (...v: number[]) => new Uint8Array(v);
+  assert.equal(r.sniffType(b(0xff, 0xd8, 0xff, 0xe0)), 'image/jpeg');
+  assert.equal(r.sniffType(b(0x89, 0x50, 0x4e, 0x47)), 'image/png');
+  assert.equal(r.sniffType(b(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50)), 'image/webp');
+  assert.equal(r.sniffType(b(0x25, 0x50, 0x44, 0x46)), 'application/pdf');
+  assert.equal(r.sniffType(new TextEncoder().encode('<svg></svg>')), null);
+  assert.equal(r.sniffType(b()), null);
+});
+
+test('stages and document states allow only the right moves', () => {
+  assert.ok(r.canSubmit('draft') && r.canSubmit('rejected') && r.canSubmit('changes_requested'));
+  assert.ok(!r.canSubmit('approved') && !r.canSubmit('submitted'));
+  assert.ok(r.documentAwaitsReview('pending') && r.documentAwaitsReview('under_review'));
+  assert.ok(!r.documentAwaitsReview('approved') && !r.documentAwaitsReview(undefined));
+  assert.ok(!r.canUploadDocument('approved') && r.canUploadDocument('resubmission_required'));
+});
+
+test('eligibility is configurable but never below 18', () => {
+  const d = { maritalStatus: 'Divorced', dateOfBirth: Date.UTC(2006, 0, 1) };
+  const now = new Date(Date.UTC(2023, 0, 2));
+  assert.ok(r.draftProblems(d, { ...r.DEFAULT_LIMITS, minAge: 16 }, now).some((p) => p.includes('at least 18')));
+  assert.ok(r.draftProblems(d, { ...r.DEFAULT_LIMITS, firstMarriageOnly: true }, now).some((p) => p.includes('first-time')));
+  assert.ok(!r.draftProblems(d, r.DEFAULT_LIMITS, now).some((p) => p.includes('first-time')));
 });

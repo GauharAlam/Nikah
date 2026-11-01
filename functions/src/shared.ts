@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore, Timestamp, Transaction } from 'firebase-admin/firestore';
+import { getDownloadURL, getStorage } from 'firebase-admin/storage';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import * as R from './rules';
 
 initializeApp();
@@ -99,4 +100,46 @@ export async function closeMatch(a: string, b: string, status: string): Promise<
   const ref = db.doc(`matches/${R.pairId(a, b)}`);
   if ((await ref.get()).exists) await ref.update({ status });
   await db.doc(`contactShares/${R.pairId(a, b)}`).delete();
+}
+
+/** Append-only record of a privileged action. Ids and action names only. */
+export function audit(
+  writer: Transaction | FirebaseFirestore.WriteBatch, actor: string, action: string, target: string, detail: string = '',
+): void {
+  (writer as FirebaseFirestore.WriteBatch).set(db.collection('auditLogs').doc(), {
+    actor, action, target, detail, at: FieldValue.serverTimestamp(),
+  });
+}
+
+/** A long-lived link carrying its own token. Only for already-published copies. */
+export async function tokenUrl(path: string): Promise<string> {
+  const file = getStorage().bucket().file(path);
+  const token = randomUUID();
+  await file.setMetadata({ metadata: { firebaseStorageDownloadTokens: token } });
+  const host = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+  return host
+    ? `http://${host}/v0/b/${file.bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`
+    : getDownloadURL(file);
+}
+
+/** A short-lived read link. The emulator cannot sign, so it uses a token URL. */
+export async function readUrl(path: string, minutes: number): Promise<string> {
+  const file = getStorage().bucket().file(path);
+  if (process.env.FUNCTIONS_EMULATOR === 'true') return tokenUrl(path);
+  const [url] = await file.getSignedUrl({ action: 'read', expires: Date.now() + minutes * 60000 });
+  return url;
+}
+
+/** Checks a member's upload by its real bytes and size. Bad files are deleted. */
+export async function checkUpload(path: string, allowed: string[]): Promise<void> {
+  const file = getStorage().bucket().file(path);
+  const [exists] = await file.exists();
+  if (!exists) throw new HttpsError('invalid-argument', 'That file did not finish uploading.');
+  const [meta] = await file.getMetadata();
+  const [head] = await file.download({ start: 0, end: 11 });
+  const type = R.sniffType(head);
+  if (Number(meta.size) > R.MAX_UPLOAD_BYTES || type === null || !allowed.includes(type)) {
+    await file.delete().catch(() => undefined);
+    throw new HttpsError('invalid-argument', 'That file type is not supported.');
+  }
 }

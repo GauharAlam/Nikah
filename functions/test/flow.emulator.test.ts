@@ -7,12 +7,14 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, signInWithCustomToken } from 'firebase/auth';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { validDraft } from './helpers';
 
 const projectId = 'demo-nikah';
 let n = 0;
 
-async function user(uid: string, claims: object) {
+async function user(uid: string, claims: object, phoneNumber?: string) {
   await adminAuth().createUser({ uid }).catch(() => undefined);
+  if (phoneNumber) await adminAuth().updateUser(uid, { phoneNumber });
   await adminAuth().setCustomUserClaims(uid, claims);
   const token = await adminAuth().createCustomToken(uid);
   const app = initializeApp({ apiKey: 'x', projectId, appId: 'x' }, `u${n++}`);
@@ -162,13 +164,8 @@ test('three different reporters hold a profile; one reporter repeating does not'
 });
 
 test('submission needs an ID document', async () => {
-  const u = await user('sub', {});
-  await db.doc('drafts/sub').set({
-    fullName: 'S', gender: 'female', maritalStatus: 'Never married', marriageReadiness: 'Just exploring',
-    homeCity: 'Delhi', height: `5'4"`, phone: '+911', almaMaters: ['AMU'], qualification: 'MBA',
-    qualificationGraduate: true, profession: 'Doctor', dateOfBirth: Date.UTC(1998, 0, 1), photos: ['p'],
-    intentConfirmed: true, dataConsent: true,
-  });
+  const u = await user('sub', {}, '+919876500002');
+  await db.doc('drafts/sub').set(validDraft());
   assert.equal(await code(u('submitProfile')), 'functions/failed-precondition');
   await db.doc('accounts/sub/documents/name-proof').set({ status: 'pending' });
   assert.equal((await u('submitProfile')).stage, 'submitted');
@@ -234,30 +231,35 @@ test('a guardian joins once with a code, gives opinions, and can be removed', as
 
 test('an invite earns credits once, only after approval, and not for yourself', async () => {
   const a = await user('inviter', { approved: true });
-  const { code } = await a('getInviteCode');
-  assert.equal((await a('getInviteCode')).code, code);
-  await db.doc('drafts/inv1').set({ fullName: 'I', gender: 'male', dateOfBirth: Date.UTC(1998, 0, 1), photos: [], inviteCode: code });
-  await db.doc('accounts/inv1').set({ stage: 'submitted' });
-  await adminAuth().createUser({ uid: 'inv1' }).catch(() => undefined);
+  const code_value = (await a('getInviteCode')).code;
+  assert.equal((await a('getInviteCode')).code, code_value);
+  await db.doc('config/app').set({ limits: { minPhotos: 0, requireIdProof: false } });
+  await db.doc('drafts/inv1').set(validDraft({ gender: 'male', photos: [], inviteCode: code_value }));
+  const invitee = await user('inv1', {}, '+919876500003');
+  const { version } = await invitee('submitProfile');
   assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, undefined);
   const rev = await user('rev', { reviewer: true });
-  await rev('reviewProfile', { uid: 'inv1', approve: true });
+  await rev('reviewProfile', { uid: 'inv1', decision: 'approve', version });
   assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, 2);
-  await rev('reviewProfile', { uid: 'inv1', approve: true });
+  assert.equal(await code(rev('reviewProfile', { uid: 'inv1', decision: 'approve', version })), 'functions/failed-precondition');
   assert.equal((await db.doc('accounts/inviter').get()).data()?.purchasedCredits, 2);
+  await db.doc('config/app').delete();
 });
 
 test('approved edits wait for review, then publish', async () => {
   const e = await user('editor', { approved: true });
   await db.doc('accounts/editor').set({ stage: 'approved' });
   await db.doc('profiles/editor').set(profile('editor', 'male', { name: 'Old' }));
-  await db.doc('drafts/editor').set({ fullName: 'New', gender: 'male', dateOfBirth: Date.UTC(1998, 0, 1), photos: [] });
+  await db.doc('config/app').set({ limits: { minPhotos: 0 } });
+  await db.doc('drafts/editor').set(validDraft({ fullName: 'New', gender: 'male', photos: [] }));
   await e('submitEdits');
+  const version = (await db.doc('submissions/editor').get()).data()?.version;
   assert.equal((await db.doc('profiles/editor').get()).data()?.name, 'Old');
   const rev = await user('rev', { reviewer: true });
-  await rev('reviewProfile', { uid: 'editor', approve: true });
+  await rev('reviewProfile', { uid: 'editor', decision: 'approve', version });
   assert.equal((await db.doc('profiles/editor').get()).data()?.name, 'New');
   assert.equal((await db.doc('accounts/editor').get()).data()?.editsPending, false);
+  await db.doc('config/app').delete();
 });
 
 test.after(async () => { /* client apps close with the process */ void deleteApp; });

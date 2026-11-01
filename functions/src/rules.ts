@@ -21,6 +21,8 @@ export interface Limits {
   freeProfileWindow: ViewWindow;
   inviteRewardCredits: number;
   inviteRewardCap: number;
+  minAge: number;
+  firstMarriageOnly: boolean;
 }
 
 // 5 (0/5 PROPOSALS SENT), 10 decisions and 15 waiting are observed in the
@@ -43,7 +45,53 @@ export const DEFAULT_LIMITS: Limits = {
   freeProfileWindow: 'total',
   inviteRewardCredits: 2,
   inviteRewardCap: 10,
+  minAge: 18,
+  firstMarriageOnly: false,
 };
+
+/** Version of the terms and privacy policy a member accepts. Overridden by config/app. */
+export const POLICY_VERSION = '2026-11-01';
+
+export const CONSENTS: Record<string, string> = {
+  data_processing: 'Use of profile details, photos and documents for review and matching',
+  marriage_intent: 'Confirmation that this profile is for marriage and is accurate',
+  family_authorised: 'Confirmation by a family member that the person agreed to this profile',
+};
+
+/** A profile can be sent for review from these stages. */
+export const canSubmit = (stage: string): boolean =>
+  ['draft', 'rejected', 'changes_requested'].includes(stage);
+
+export type ReviewDecision = 'approve' | 'changes' | 'reject';
+export const isReviewDecision = (v: unknown): v is ReviewDecision =>
+  v === 'approve' || v === 'changes' || v === 'reject';
+
+export const DOC_TYPES = ['name-proof', 'education-proof', 'employment-proof'];
+export type DocDecision = 'approve' | 'reject' | 'resubmit';
+export const DOC_OUTCOME: Record<DocDecision, string> = {
+  approve: 'approved', reject: 'rejected', resubmit: 'resubmission_required',
+};
+
+/** Only a document waiting for a decision can receive one. */
+export const documentAwaitsReview = (status: unknown): boolean =>
+  status === 'pending' || status === 'under_review';
+
+/** An approved document stays approved until a reviewer says otherwise. */
+export const canUploadDocument = (status: unknown): boolean => status !== 'approved';
+
+export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const DOCUMENT_TYPES = [...PHOTO_TYPES, 'application/pdf'];
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/** The real type of a file from its first bytes. Client-declared types prove nothing. */
+export function sniffType(b: Uint8Array): string | null {
+  const at = (i: number, ...v: number[]) => v.every((x, j) => b[i + j] === x);
+  if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
+  if (at(0, 0x89, 0x50, 0x4e, 0x47)) return 'image/png';
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+  if (at(0, 0x25, 0x50, 0x44, 0x46)) return 'application/pdf';
+  return null;
+}
 
 const TRANSITIONS: Record<ProposalStatus, ProposalStatus[]> = {
   pending: ['accepted', 'declined', 'withdrawn', 'expired'],
@@ -154,7 +202,7 @@ export function ageOn(dobMillis: number, now: Date): number {
 export interface Draft {
   fullName?: string; gender?: string; maritalStatus?: string; marriageReadiness?: string;
   homeCity?: string; homeCountry?: string; dateOfBirth?: number; caste?: string; height?: string;
-  phone?: string; almaMaters?: string[]; qualification?: string; qualificationGraduate?: boolean;
+  almaMaters?: string[]; qualification?: string; qualificationGraduate?: boolean;
   profession?: string; photos?: string[];
   managedBy?: string; intentConfirmed?: boolean; dataConsent?: boolean; candidateConsent?: boolean;
 }
@@ -171,12 +219,16 @@ export function draftProblems(d: Draft, limits: Limits, now: Date): string[] {
   need(d.marriageReadiness, 'Marriage readiness');
   need(d.homeCity, 'Home city');
   need(d.height, 'Height');
-  need(d.phone, 'Contact number');
   need(d.qualification, 'Education');
   need(d.profession, 'Profession');
   if (!d.almaMaters || d.almaMaters.length === 0) out.push('Alma mater is required');
   if (typeof d.dateOfBirth !== 'number') out.push('Date of birth is required');
-  else if (ageOn(d.dateOfBirth, now) < 18) out.push('You must be at least 18');
+  else if (ageOn(d.dateOfBirth, now) < Math.max(18, limits.minAge)) {
+    out.push(`You must be at least ${Math.max(18, limits.minAge)}`);
+  }
+  if (limits.firstMarriageOnly && d.maritalStatus !== undefined && d.maritalStatus !== 'Never married') {
+    out.push('This community is for first-time marriages');
+  }
   if (limits.graduatesOnly && d.qualificationGraduate === false) {
     out.push('This community is for graduates and degree students');
   }
@@ -240,14 +292,19 @@ export const REPORT_REASON_MAX = 200;
 export type PhotoPrivacy = 'everyone' | 'matches';
 
 /** What a viewer may see of a stored card. Applied before any card leaves the server. */
-export function redactCard<T extends { photos?: string[]; caste?: string; photoPrivacy?: string; showCaste?: boolean }>(
+export function redactCard<T extends {
+  photos?: string[]; caste?: string; photoPrivacy?: string; showCaste?: boolean; photoPaths?: string[];
+  family?: Record<string, unknown>;
+}>(
   card: T, viewerMatched: boolean,
 ): T & { photosHidden: boolean } {
   const hide = card.photoPrivacy === 'matches' && !viewerMatched;
-  const { photoPrivacy, showCaste, ...rest } = card;
+  const { photoPrivacy, showCaste, photoPaths, family, ...rest } = card;
   return {
     ...(rest as T), photos: hide ? [] : card.photos ?? [], photosHidden: hide,
     caste: showCaste === false ? '' : card.caste ?? '',
+    // Family details are for matched members only.
+    ...(viewerMatched && family ? { family } : {}),
   };
 }
 

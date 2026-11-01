@@ -1,20 +1,27 @@
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getDownloadURL, getStorage } from 'firebase-admin/storage';
+import { getStorage } from 'firebase-admin/storage';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import * as R from './rules';
-import { accountRef, db, idArg, limits, notify, reviewerUid, stringArg } from './shared';
+import { accountRef, audit, checkUpload, db, idArg, limits, notify, readUrl, reviewerUid, stringArg, tokenUrl } from './shared';
 
-function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[]) {
+/** What members may see of a reviewed draft. */
+function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[], photoPaths: string[]) {
   const location = [d.homeCity, d.homeState].filter(Boolean).join(', ');
   const universities: string[] = d.almaMaters ?? [];
   return {
-    id: uid, name: d.fullName, gender: d.gender, dateOfBirth: d.dateOfBirth, photos: photoUrls,
+    id: uid, name: d.fullName, gender: d.gender, dateOfBirth: d.dateOfBirth, photos: photoUrls, photoPaths,
     profession: d.profession, employer: d.company ?? '', education: d.qualification,
-    university: universities.join(', '), location, country: d.homeCountry ?? '', caste: d.caste,
+    university: universities.join(', '), location, country: d.homeCountry ?? '', caste: d.caste ?? '',
     maritalStatus: d.maritalStatus, marriageReadiness: d.marriageReadiness, height: d.height,
     aboutMe: d.aboutMe ?? '', selfManaged: d.managedBy !== 'family', verified: false, live: true,
     partnerCaste: d.partnerCaste ?? '', sect: d.sect ?? '', prayer: d.prayer ?? '', practices: d.practices ?? [], children: d.children ?? '',
+    languages: d.preferredLanguage ?? '', graduationYear: d.graduationYear ?? '', educationStatus: d.educationStatus ?? '',
+    employmentStatus: d.employmentStatus ?? '', workCity: d.workCity ?? '', careerDescription: d.careerDescription ?? '',
+    family: {
+      type: d.familyType ?? '', background: d.familyBackground ?? '', values: d.familyValues ?? '',
+      location: d.familyLocation ?? '', siblings: d.siblings ?? '',
+    },
     photoPrivacy: d.photoPrivacy === 'matches' ? 'matches' : 'everyone',
     showCaste: d.showCaste !== false, allowFamilyShare: d.allowFamilyShare !== false,
     approvedAt: FieldValue.serverTimestamp(), lastActiveAt: FieldValue.serverTimestamp(),
@@ -22,76 +29,122 @@ function cardFrom(uid: string, d: Record<string, any>, photoUrls: string[]) {
 }
 
 export const listReviewQueue = onCall(async (req) => {
-  reviewerUid(req);
-  const submitted = await db.collection('accounts').where('stage', '==', 'submitted')
-    .orderBy('submittedAt').limit(50).get();
+  const reviewer = reviewerUid(req);
+  const submissions = await db.collection('submissions').orderBy('createdAt').limit(50).get();
   const held = await db.collection('profiles').where('held', '==', true).limit(50).get();
-  const edits = await db.collection('accounts').where('editsPending', '==', true).limit(50).get();
-  const queued = { docs: [...submitted.docs, ...edits.docs] };
-  const drafts = await Promise.all(queued.docs.map((d) => db.doc(`drafts/${d.id}`).get()));
-  const docs = await Promise.all(queued.docs.map((d) => d.ref.collection('documents').get()));
+  // Nobody sees their own submission in the queue.
+  const queued = submissions.docs.filter((d) => d.id !== reviewer);
+  const items = await Promise.all(queued.map(async (s) => {
+    const draft = s.data().draft ?? {};
+    const docs = await accountRef(s.id).collection('documents').get();
+    const paths: string[] = (draft.photos ?? []).filter((p: string) => p.startsWith(`photos/${s.id}/`));
+    const photoUrls = await Promise.all(paths.map((p) => readUrl(p, 15).catch(() => '')));
+    return {
+      uid: s.id, draft, version: s.data().version, isEdit: s.data().kind === 'edit',
+      photos: paths.map((path, i) => ({ path, url: photoUrls[i] })),
+      documents: docs.docs.map((x) => ({
+        type: x.id, status: x.data().status, count: (x.data().paths ?? []).length,
+      })),
+    };
+  }));
   return {
-    items: queued.docs.map((d, i) => ({
-      uid: d.id, draft: drafts[i].data() ?? {}, isEdit: d.data().editsPending === true,
-      documents: docs[i].docs.map((x) => ({ type: x.id, status: x.data().status, count: (x.data().paths ?? []).length })),
-    })),
+    items,
     held: held.docs.map((d) => ({ uid: d.id, name: d.data().name, reports: d.data().reportCount ?? 0 })),
   };
 });
 
 export const getDocumentUrl = onCall(async (req) => {
-  reviewerUid(req);
+  const reviewer = reviewerUid(req);
   const uid = idArg(req.data?.uid, 'uid');
   const type = idArg(req.data?.type, 'type');
-  const snap = await db.doc(`accounts/${uid}/documents/${type}`).get();
+  if (uid === reviewer) throw new HttpsError('permission-denied', 'You cannot review your own documents.');
+  if (!R.DOC_TYPES.includes(type)) throw new HttpsError('invalid-argument', 'Unknown document type.');
+  const ref = db.doc(`accounts/${uid}/documents/${type}`);
+  const snap = await ref.get();
   const paths: string[] = snap.data()?.paths ?? [];
-  const urls = await Promise.all(paths.map(async (p) => {
-    const [url] = await getStorage().bucket().file(p).getSignedUrl({
-      action: 'read', expires: Date.now() + 5 * 60 * 1000,
-    });
-    return url;
-  }));
+  const urls = await Promise.all(paths.map((p) => readUrl(p, 5)));
+  const batch = db.batch();
+  audit(batch, reviewer, 'document_viewed', uid, type);
+  if (snap.data()?.status === 'pending') batch.update(ref, { status: 'under_review' });
+  await batch.commit();
   return { urls };
 });
+
+/** Copies reviewed photos to a path no client can write, so approval cannot be bypassed. */
+async function publishPhotos(uid: string, paths: string[], version: number): Promise<{ urls: string[]; published: string[] }> {
+  const bucket = getStorage().bucket();
+  const published = await Promise.all(paths.map(async (path, i) => {
+    await checkUpload(path, R.PHOTO_TYPES);
+    const target = `published/${uid}/${version}-${i}.jpg`;
+    await bucket.file(path).copy(bucket.file(target));
+    return target;
+  }));
+  const urls = await Promise.all(published.map(tokenUrl));
+  return { urls, published };
+}
+
+async function removeOldPublished(uid: string, keep: string[]): Promise<void> {
+  const [files] = await getStorage().bucket().getFiles({ prefix: `published/${uid}/` });
+  await Promise.all(files.filter((f) => !keep.includes(f.name)).map((f) => f.delete().catch(() => undefined)));
+}
 
 export const reviewProfile = onCall(async (req) => {
   const reviewer = reviewerUid(req);
   const uid = idArg(req.data?.uid, 'uid');
-  const approve = req.data?.approve === true;
+  if (uid === reviewer) throw new HttpsError('permission-denied', 'You cannot review your own profile.');
+  const decision = req.data?.decision;
+  if (!R.isReviewDecision(decision)) throw new HttpsError('invalid-argument', 'Unknown decision.');
+  const approve = decision === 'approve';
   const reason = approve ? '' : stringArg(req.data?.reason, 'reason', 300);
-  const draft = (await db.doc(`drafts/${uid}`).get()).data();
-  if (!draft) throw new HttpsError('not-found', 'Draft not found.');
-  const paths: string[] = draft.photos ?? [];
-  if (!paths.every((p) => p.startsWith(`photos/${uid}/`) && !p.includes('..'))) {
-    throw new HttpsError('failed-precondition', 'Photos must belong to this member.');
-  }
-  const photoUrls = approve && paths.length > 0
-    ? await Promise.all(paths.map((p) => getDownloadURL(getStorage().bucket().file(p))))
-    : [];
+  const rejectedPhotos: string[] = Array.isArray(req.data?.rejectedPhotos)
+    ? req.data.rejectedPhotos.filter((p: unknown) => typeof p === 'string').slice(0, 6) : [];
 
-  const account = (await accountRef(uid).get()).data() ?? {};
-  const isEdit = account.editsPending === true && account.stage === 'approved';
+  const [subSnap, accSnap] = await Promise.all([db.doc(`submissions/${uid}`).get(), accountRef(uid).get()]);
+  const sub = subSnap.data();
+  const account = accSnap.data() ?? {};
+  if (!sub || (account.stage !== 'submitted' && account.editsPending !== true)) {
+    throw new HttpsError('failed-precondition', 'This profile is not waiting for review.');
+  }
+  if (req.data?.version !== sub.version) {
+    throw new HttpsError('failed-precondition', 'This profile changed. Reload the queue.');
+  }
+  const draft = sub.draft as Record<string, any>;
+  const isEdit = sub.kind === 'edit';
+  const lim = await limits();
+
   const batch = db.batch();
-  if (isEdit && !approve) {
-    batch.set(accountRef(uid), { editsPending: false, rejectionReason: reason }, { merge: true });
+  audit(batch, reviewer, `profile_${decision}`, uid, String(sub.version));
+  batch.delete(subSnap.ref);
+  if (!approve && isEdit) {
+    batch.set(accountRef(uid), { editsPending: false, rejectionReason: reason, rejectedPhotos, reviewedBy: reviewer }, { merge: true });
     notify(batch, uid, 'review', 'Your changes were not published', reason, '/profile/edit');
     await batch.commit();
     return { ok: true };
   }
   if (approve) {
-    batch.set(db.doc(`profiles/${uid}`), { ...cardFrom(uid, draft, photoUrls), held: FieldValue.delete() }, { merge: true });
+    const problems = R.draftProblems(draft as R.Draft, lim, new Date());
+    if (problems.length > 0) throw new HttpsError('failed-precondition', problems[0], { problems });
+    const paths: string[] = draft.photos ?? [];
+    if (!paths.every((p) => p.startsWith(`photos/${uid}/`) && !p.includes('..'))) {
+      throw new HttpsError('failed-precondition', 'Photos must belong to this member.');
+    }
+    const { urls, published } = await publishPhotos(uid, paths, sub.version);
+    batch.set(db.doc(`profiles/${uid}`), { ...cardFrom(uid, draft, urls, published), held: FieldValue.delete() }, { merge: true });
     batch.set(accountRef(uid), {
-      stage: 'approved', approvedAt: FieldValue.serverTimestamp(), reviewedBy: reviewer,
-      phone: draft.phone ?? '', editsPending: false,
+      stage: 'approved', approvedAt: FieldValue.serverTimestamp(), reviewedBy: reviewer, editsPending: false,
+      rejectionReason: FieldValue.delete(), rejectedPhotos: FieldValue.delete(),
     }, { merge: true });
     notify(batch, uid, 'review', isEdit ? 'Your changes are live' : 'Your profile is approved',
       isEdit ? 'Your profile was updated.' : 'Your profile is now live.', '/home/discovery');
+    await batch.commit();
+    await removeOldPublished(uid, published);
   } else {
-    batch.set(accountRef(uid), { stage: 'rejected', rejectionReason: reason, reviewedBy: reviewer }, { merge: true });
+    const stage = decision === 'changes' ? 'changes_requested' : 'rejected';
+    batch.set(accountRef(uid), { stage, rejectionReason: reason, rejectedPhotos, reviewedBy: reviewer }, { merge: true });
     if ((await db.doc(`profiles/${uid}`).get()).exists) batch.update(db.doc(`profiles/${uid}`), { live: false });
     notify(batch, uid, 'review', 'Your profile needs changes', reason, '/review/status');
+    await batch.commit();
   }
-  await batch.commit();
   // The claim opens member-only rules, so it follows the committed decision.
   const user = await getAuth().getUser(uid);
   await getAuth().setCustomUserClaims(uid, { ...(user.customClaims ?? {}), approved: approve });
@@ -124,17 +177,27 @@ export const reviewDocument = onCall(async (req) => {
   const reviewer = reviewerUid(req);
   const uid = idArg(req.data?.uid, 'uid');
   const type = idArg(req.data?.type, 'type');
-  const approve = req.data?.approve === true;
+  if (!R.DOC_TYPES.includes(type)) throw new HttpsError('invalid-argument', 'Unknown document type.');
+  if (uid === reviewer) throw new HttpsError('permission-denied', 'You cannot review your own documents.');
+  const decision = req.data?.decision as R.DocDecision;
+  const outcome = R.DOC_OUTCOME[decision];
+  if (!outcome) throw new HttpsError('invalid-argument', 'Unknown decision.');
+  const approve = decision === 'approve';
   const reason = approve ? '' : stringArg(req.data?.reason, 'reason', 300);
   const ref = db.doc(`accounts/${uid}/documents/${type}`);
 
-  const batch = db.batch();
-  batch.set(ref, approve
-    ? { status: 'approved', reviewedBy: reviewer }
-    : { status: 'rejected', rejectionReason: reason, reviewedBy: reviewer }, { merge: true });
-  notify(batch, uid, 'verification', approve ? 'Document approved' : 'Document needs attention',
-    approve ? 'Your document passed review.' : reason, '/profile/verify');
-  await batch.commit();
+  await db.runTransaction(async (tx) => {
+    if (!R.documentAwaitsReview((await tx.get(ref)).data()?.status)) {
+      throw new HttpsError('failed-precondition', 'This document is not waiting for review.');
+    }
+    tx.set(ref, {
+      status: outcome, reviewedBy: reviewer, reviewedAt: FieldValue.serverTimestamp(),
+      rejectionReason: approve ? FieldValue.delete() : reason,
+    }, { merge: true });
+    audit(tx, reviewer, `document_${decision}`, uid, type);
+    notify(tx, uid, 'verification', approve ? 'Document approved' : 'Document needs attention',
+      approve ? 'Your document passed review.' : reason, '/profile/verify');
+  });
 
   const docs = await ref.parent.get();
   const approved = new Set(docs.docs.filter((d) => d.data().status === 'approved').map((d) => d.id));

@@ -2,7 +2,7 @@ import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
-import { ref, uploadBytes, getBytes } from 'firebase/storage';
+import { deleteObject, getBytes, listAll, ref, uploadBytes } from 'firebase/storage';
 
 let env: RulesTestEnvironment;
 const member = (uid: string, approved = true) => env.authenticatedContext(uid, { approved }).firestore();
@@ -144,12 +144,42 @@ test('reports and unknown collections are closed', async () => {
 const image = new Uint8Array([1, 2, 3]);
 const store = (uid: string, approved = true) => env.authenticatedContext(uid, { approved }).storage();
 
-test('photos: owner writes images, approved members read', async () => {
+test('photos: only the owner writes and reads their originals', async () => {
   await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/1.jpg'), image, { contentType: 'image/jpeg' }));
   await assertFails(uploadBytes(ref(store('z'), 'photos/a/2.jpg'), image, { contentType: 'image/jpeg' }));
   await assertFails(uploadBytes(ref(store('a'), 'photos/a/3.exe'), image, { contentType: 'application/octet-stream' }));
-  await assertSucceeds(getBytes(ref(store('b'), 'photos/a/1.jpg')));
-  await assertFails(getBytes(ref(store('b', false), 'photos/a/1.jpg')));
+  await assertSucceeds(getBytes(ref(store('a'), 'photos/a/1.jpg')));
+});
+
+test('SEC-01: an approved stranger cannot read or list another member\'s photos', async () => {
+  await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/2.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertFails(getBytes(ref(store('b'), 'photos/a/2.jpg')));
+  await assertFails(listAll(ref(store('b'), 'photos/a')));
+  await assertFails(getBytes(ref(store('b', false), 'photos/a/2.jpg')));
+});
+
+test('SEC-02: a photo cannot be replaced after upload', async () => {
+  await assertSucceeds(uploadBytes(ref(store('a'), 'photos/a/4.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertFails(uploadBytes(ref(store('a'), 'photos/a/4.jpg'), image, { contentType: 'image/jpeg' }));
+  await assertSucceeds(deleteObject(ref(store('a'), 'photos/a/4.jpg')));
+});
+
+test('SEC-15: SVG uploads are refused', async () => {
+  await assertFails(uploadBytes(ref(store('a'), 'photos/a/5.svg'), image, { contentType: 'image/svg+xml' }));
+  await assertFails(uploadBytes(ref(store('a'), 'verification/a/name-proof/5.svg'), image, { contentType: 'image/svg+xml' }));
+});
+
+test('SEC-14: drafts accept only known fields of a sensible size', async () => {
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { fullName: 'A', invented: true }));
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { fullName: 'x'.repeat(200) }));
+  await assertFails(setDoc(doc(member('a'), 'drafts/a'), { photos: Array(20).fill('p') }));
+});
+
+test('submissions and published photos are closed to clients', async () => {
+  await assertFails(getDoc(doc(member('a'), 'submissions/a')));
+  await assertFails(setDoc(doc(member('a'), 'submissions/a'), { version: 9 }));
+  await assertFails(getBytes(ref(store('a'), 'published/a/1.jpg')));
+  await assertFails(uploadBytes(ref(store('a'), 'published/a/1.jpg'), image, { contentType: 'image/jpeg' }));
 });
 
 test('verification documents cannot be read back by anyone', async () => {
