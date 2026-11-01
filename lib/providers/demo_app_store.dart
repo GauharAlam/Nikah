@@ -230,7 +230,7 @@ class DemoAppStore extends AppStore {
   @override
   String? get introductionsError => null;
   @override
-  Future<void> refreshIntroductions() async {}
+  Future<void> refreshIntroductions({bool keepDeck = false}) async {}
   @override
   Future<void> loadMoreIntroductions() async {}
 

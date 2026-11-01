@@ -54,10 +54,10 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     super.dispose();
   }
 
-  void _openPhoto(MatchProfile match) {
+  void _openPhoto(MatchProfile match, String url) {
     context.push(
       '${AppRoutes.photo(match.id)}'
-      '?url=${Uri.encodeComponent(match.imageUrl)}'
+      '?url=${Uri.encodeComponent(url)}'
       '&name=${Uri.encodeComponent(match.firstName)}',
     );
   }
@@ -65,11 +65,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   void _sendProposal(MatchProfile match) {
     final bool ok = context.read<AppStore>().sendProposal(match.id);
     if (ok) {
-      showWaliSnack(context, 'Proposal sent to ${match.waliName}');
+      showWaliSnack(
+        context,
+        AppConfig.guardianFeatures ? 'Proposal sent to ${match.waliName}' : 'Your proposal has been sent.',
+      );
     } else {
       showAppSnack(
         context,
-        'Daily limit reached — 5 proposals per day. Come back tomorrow.',
+        'Daily limit reached — ${context.read<AppStore>().dailyProposalLimit} proposals per day. Come back tomorrow.',
         icon: Icons.hourglass_top_rounded,
       );
     }
@@ -363,6 +366,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
 
   // ─── Photo carousel (1/2 counter · quote overlay · dots) ─────────────────
   Widget _buildCarousel(MatchProfile match) {
+    final List<String> photos = match.photos.isEmpty ? <String>[match.imageUrl] : match.photos;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
       child: ClipRRect(
@@ -372,22 +376,17 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           child: Stack(
             children: <Widget>[
               Positioned.fill(
-                child: PageView(
+                child: PageView.builder(
                   controller: _photoController,
                   onPageChanged: (int i) => setState(() => _photoIndex = i),
-                  children: <Widget>[
-                    _PhotoSlide(
-                      match: match,
-                      slideKey: Key('photo_${match.id}'),
-                      showQuote: true,
-                      onOpen: () => _openPhoto(match),
-                    ),
-                    _PhotoSlide(
-                      match: match,
-                      showQuote: false,
-                      onOpen: () => _openPhoto(match),
-                    ),
-                  ],
+                  itemCount: photos.length,
+                  itemBuilder: (BuildContext context, int i) => _PhotoSlide(
+                    match: match,
+                    url: photos[i],
+                    slideKey: i == 0 ? Key('photo_${match.id}') : null,
+                    showQuote: i == 0,
+                    onOpen: () => _openPhoto(match, photos[i]),
+                  ),
                 ),
               ),
               const Positioned(top: 12, left: 12, child: _MiniCrest()),
@@ -402,7 +401,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${_photoIndex + 1}/2',
+                    '${_photoIndex + 1}/${photos.length}',
                     style: _t(10.5, FontWeight.w800, Colors.white),
                   ),
                 ),
@@ -420,9 +419,10 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      _CarouselDot(active: _photoIndex == 0),
-                      const SizedBox(width: 5),
-                      _CarouselDot(active: _photoIndex == 1),
+                      for (int i = 0; i < photos.length; i++) ...<Widget>[
+                        if (i > 0) const SizedBox(width: 5),
+                        _CarouselDot(active: _photoIndex == i),
+                      ],
                     ],
                   ),
                 ),
@@ -605,14 +605,16 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           ghost: true,
           onTap: () => context.push(AppRoutes.journey(match.id)),
         ),
-        const SizedBox(height: 10),
-        PositiveOutlinedButton(
-          key: const Key('detail_schedule'),
-          label: 'Schedule a Family Call',
-          icon: Icons.video_camera_front_outlined,
-          gold: true,
-          onPressed: () => context.push(AppRoutes.schedule(match.id)),
-        ),
+        if (AppConfig.guardianFeatures) ...<Widget>[
+          const SizedBox(height: 10),
+          PositiveOutlinedButton(
+            key: const Key('detail_schedule'),
+            label: 'Schedule a Family Call',
+            icon: Icons.video_camera_front_outlined,
+            gold: true,
+            onPressed: () => context.push(AppRoutes.schedule(match.id)),
+          ),
+        ],
       ];
     }
     if (requested) {
@@ -637,7 +639,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Contact request pending — awaiting family approval',
+                  'Contact request pending — awaiting a reply',
                   style: _t(12, FontWeight.w800, AppTheme.goldInk),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -658,7 +660,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
         _StepButton(
           key: const Key('detail_chat'),
           title: tr('Send Message'),
-          subtitle: 'Chaperoned chat with ${match.firstName}',
+          subtitle: 'Chat with ${match.firstName}',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: () => context.push(AppRoutes.chat(match.id)),
         ),
@@ -721,7 +723,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              '${store.proposalsLeft} of 5 proposals left today · '
+              '${store.proposalsLeft} of ${store.dailyProposalLimit} proposals left today · '
               '${store.contactCredits} gold credits',
               style: _t(10.5, FontWeight.w600, AppTheme.slate500),
               maxLines: 1,
@@ -780,12 +782,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
 class _PhotoSlide extends StatelessWidget {
   const _PhotoSlide({
     required this.match,
+    required this.url,
     required this.showQuote,
     required this.onOpen,
     this.slideKey,
   });
 
   final MatchProfile match;
+  final String url;
   final bool showQuote;
   final VoidCallback onOpen;
   final Key? slideKey;
@@ -798,7 +802,7 @@ class _PhotoSlide extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          AppNetworkImage(url: match.imageUrl),
+          AppNetworkImage(url: url),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -1157,18 +1161,14 @@ class _ContactCard extends StatelessWidget {
             label: 'Phone',
             value: phone.isEmpty ? 'Not available' : phone,
           ),
-          const SizedBox(height: 8),
-          _ContactRow(
-            icon: Icons.mail_outline_rounded,
-            label: 'Email',
-            value: '${match.firstName.toLowerCase()}.family@nikah.demo',
-          ),
-          const SizedBox(height: 8),
-          _ContactRow(
-            icon: Icons.shield_outlined,
-            label: 'Wali',
-            value: match.waliName,
-          ),
+          if (AppConfig.guardianFeatures) ...<Widget>[
+            const SizedBox(height: 8),
+            _ContactRow(
+              icon: Icons.shield_outlined,
+              label: 'Wali',
+              value: match.waliName,
+            ),
+          ],
         ],
       ),
     );

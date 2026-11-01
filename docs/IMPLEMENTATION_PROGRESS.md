@@ -473,6 +473,52 @@ and any iOS build.
 **Left in the binary on purpose:** a seeded name in the wali screens, which stay gated to demo
 builds under the user's earlier decision. Production redirects those routes.
 
+## After Phase 9 — Work that needs no accounts
+
+**The app never used its own font.** `AppTheme.ts` asked for `PlusJakartaSans`, but `google_fonts`
+registers `PlusJakartaSans_regular` and similar names, so most text fell back to the system font.
+The five weights in use are now bundled, checked against the hashes in `google_fonts`, with the
+OFL licence shown in the app. `google_fonts` is removed, so nothing is downloaded on first launch.
+The small-screen tests now load the real font, because the test font hid overflows.
+
+**Member-facing claims that were false, now corrected**
+
+- About: the WhatsApp, Email and Feedback buttons sent nothing, yet said the support desk replies
+  within 24 hours. There is now one Email support row that opens the mail app. It needs
+  `SUPPORT_EMAIL`, and no reply time is promised.
+- About: Privacy Policy and Community Guidelines said the document "ships with the release".
+  Privacy and Terms now open their links. Community Guidelines and the tafseer row are removed
+  until they have real content. "Guardian supervised" and the old Arabic brand name are gone.
+- Verification and Premium said verified or paying members rank higher. The server orders by
+  approval date only, so those lines are removed. A paid promise could not stand.
+- The Contact Shared card gave real members a made-up `@nikah.demo` address and a blank Wali row.
+- Sending a proposal read "Proposal sent to " with no name. Family Call opened a route that
+  production redirects, so the button now stays in demo builds.
+- "Awaiting family approval", "Chaperoned chat" and "saved on this device" were not true. The
+  daily limit was written as 5 instead of read from `config/app`.
+
+**Existing issues fixed:** the profile page showed the main photo twice, labelled 1/2 and 2/2, and
+never showed a member's other photos. It now shows each photo once.
+
+**Discover:** pull to refresh works on the full deck and keeps the cards until the new page
+arrives. A card holds the place of a page that is loading, and a failed page offers Try again
+instead of leaving the member on the last card with no message.
+
+**Files created:** `assets/fonts/*`, `test/unit/truthful_copy_test.dart`,
+`test/widget/discover_deck_test.dart`.
+
+**Tests added:** 18 Flutter. `truthful_copy_test.dart` fails if any removed claim returns.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 226 passed |
+| Device tests on the android-36 emulator | 11 passed |
+
+Functions were not changed, so their tests were not run again.
+
 ## Definition of Done
 
 Status is what was run. Emulator means local Firebase emulators, on an Android virtual device
@@ -516,7 +562,5 @@ where the client is involved.
 ## Known engineering gaps
 
 - ARC-03 is partial: controllers exist, but most screens still read them through `AppStore`.
-- Discover has no skeleton while paging, and its deck has no pull to refresh.
-- Fonts load at runtime through `google_fonts`, and should be bundled for release.
 - Most new text has no Hindi translation yet.
 - No performance measurement on a mid-range device.

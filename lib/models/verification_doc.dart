@@ -137,7 +137,7 @@ class VerificationDoc {
     VerificationDoc(
       id: 'income-proof',
       title: 'Income proof (optional)',
-      subtitle: 'Payslip or ITR — strengthens your trust score',
+      subtitle: 'Payslip or ITR',
       status: VerificationDocStatus.missing,
       isRequired: false,
     ),

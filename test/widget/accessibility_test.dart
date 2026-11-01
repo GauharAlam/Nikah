@@ -1,5 +1,8 @@
 // Small phone, large text: the layout must hold, and controls must stay tappable.
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/providers/app_store.dart';
@@ -11,12 +14,23 @@ import 'package:nikah_app/screens/review_status_screen.dart';
 import 'package:nikah_app/screens/search_screen.dart';
 import 'package:nikah_app/screens/settings_screen.dart';
 import 'package:nikah_app/screens/verification_screen.dart';
+import 'package:nikah_app/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/fake_backend.dart';
 
 void main() {
+  // The test font is narrower than the real one, which would hide overflows.
+  setUpAll(() async {
+    final FontLoader loader = FontLoader(AppTheme.fontFamily);
+    for (final String weight in <String>['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold']) {
+      final Uint8List bytes = File('assets/fonts/PlusJakartaSans-$weight.ttf').readAsBytesSync();
+      loader.addFont(Future<ByteData>.value(ByteData.sublistView(bytes)));
+    }
+    await loader.load();
+  });
+
   final Map<String, Widget> screens = <String, Widget>{
     'landing': const LandingScreen(),
     'sign-in': const PhoneSignInScreen(),
@@ -48,6 +62,7 @@ void main() {
       await tester.pumpWidget(ChangeNotifierProvider<AppStore>.value(
         value: store,
         child: MaterialApp(
+          theme: AppTheme.lightTheme,
           home: MediaQuery(
             data: const MediaQueryData(size: Size(320, 640), textScaler: TextScaler.linear(1.5)),
             child: s.value,

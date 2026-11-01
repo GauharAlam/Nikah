@@ -375,8 +375,8 @@ class ProfileScreen extends StatelessWidget {
       builder: (BuildContext ctx) => AlertDialog(
         title: const Text('Sign out?'),
         content: const Text(
-          'You can sign back in at any time. Your biodata stays saved on this '
-          'device, ready when you return.',
+          'You can sign back in at any time. Your profile stays saved, ready '
+          'when you return.',
         ),
         actions: <Widget>[
           TextButton(

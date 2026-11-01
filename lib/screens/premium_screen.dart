@@ -178,7 +178,6 @@ class PremiumScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 const _CheckRow('Limited profile proposals.'),
                 const _CheckRow('Restricted Contact Requests.'),
-                const _CheckRow('Basic profile visibility'),
                 if (!store.isPremium)
                   _CheckRow('${store.freeProfileAllowance} free profiles to view'),
                 const SizedBox(height: 14),
@@ -223,14 +222,14 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'More clarity. Better visibility.',
+            'See more. Decide sooner.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
           Text(
-            'Upgrade to lift your profile higher in search, reach serious '
-            'matches faster and take more decisions every day.',
+            'Upgrade to see every profile and send as many proposals as you '
+            'need each day.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(
               12.5,

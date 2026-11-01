@@ -47,6 +47,18 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     super.dispose();
   }
 
+  /// Refreshes behind the cards, so nothing disappears while it loads.
+  Future<void> _pullToRefresh() async {
+    final AppStore store = context.read<AppStore>();
+    await store.refreshIntroductions(keepDeck: true);
+    if (!mounted) return;
+    if (store.introductionsError != null) {
+      showAppSnack(context, store.introductionsError!, icon: Icons.wifi_off_rounded);
+    } else if (_pageController.hasClients) {
+      _pageController.jumpToPage(0);
+    }
+  }
+
   /// Slide the deck to the next card after an action removes the current one.
   void _advanceCard(int removedIndex, int remainingCount) {
     if (!mounted || remainingCount == 0 || !_pageController.hasClients) return;
@@ -111,6 +123,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
     final List<MatchProfile> profiles = store.discoveredProfiles;
+    final bool hasEndCard = store.reachedProfileLimit ||
+        store.isLoadingIntroductions ||
+        store.introductionsError != null;
     final String firstName =
         store.profile?.displayName.split(' ').firstOrNull ?? 'there';
 
@@ -245,33 +260,95 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       ],
                     ),
                   )
-                : PageView.builder(
-                    controller: _pageController,
-                    itemCount: profiles.length + (store.reachedProfileLimit ? 1 : 0),
-                    onPageChanged: (int index) {
-                      if (index < profiles.length) {
-                        store.markProfileViewed(profiles[index].id);
-                      }
-                      if (index >= profiles.length - 2) {
-                        unawaited(store.loadMoreIntroductions());
-                      }
-                    },
-                    itemBuilder: (BuildContext context, int index) => index >= profiles.length
-                        ? _UnlockMoreCard(limit: store.freeProfileAllowance)
-                        : _DeckCard(
-                      profile: profiles[index],
-                      matchPercent: profiles[index].matchPercent,
-                      onIncompatible: () =>
-                          _markIncompatible(profiles[index], index),
-                      onProposal: () => _sendProposal(profiles[index], index),
-                      onContact: () => _requestContact(profiles[index], index),
-                      onExplore: () =>
-                          context.push(AppRoutes.matchDetail(profiles[index].id)),
+                : RefreshIndicator(
+                    onRefresh: _pullToRefresh,
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) =>
+                          SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: profiles.length + (hasEndCard ? 1 : 0),
+                            onPageChanged: (int index) {
+                              if (index < profiles.length) {
+                                store.markProfileViewed(profiles[index].id);
+                              }
+                              if (index >= profiles.length - 2 && index < profiles.length) {
+                                unawaited(store.loadMoreIntroductions());
+                              }
+                            },
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index >= profiles.length) {
+                                if (store.reachedProfileLimit) {
+                                  return _UnlockMoreCard(limit: store.freeProfileAllowance);
+                                }
+                                if (store.introductionsError != null) {
+                                  return EmptyState(
+                                    icon: Icons.wifi_off_rounded,
+                                    title: 'Could not load introductions',
+                                    body: store.introductionsError!,
+                                    actionLabel: tr('Try again'),
+                                    onAction: store.loadMoreIntroductions,
+                                  );
+                                }
+                                return const _DeckSkeleton();
+                              }
+                              return _DeckCard(
+                                profile: profiles[index],
+                                matchPercent: profiles[index].matchPercent,
+                                onIncompatible: () =>
+                                    _markIncompatible(profiles[index], index),
+                                onProposal: () => _sendProposal(profiles[index], index),
+                                onContact: () => _requestContact(profiles[index], index),
+                                onExplore: () =>
+                                    context.push(AppRoutes.matchDetail(profiles[index].id)),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
           ),
           const SizedBox(height: 4),
         ],
+      ),
+    );
+  }
+}
+
+/// Stands in for the next card while a page of profiles loads.
+class _DeckSkeleton extends StatelessWidget {
+  const _DeckSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Semantics(
+        label: tr('Loading more profiles'),
+        child: Container(
+          key: const Key('deck_skeleton'),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: AppTheme.slate100,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppTheme.slate200, width: 1.6),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(height: 20, width: 170, color: AppTheme.slate200),
+              const SizedBox(height: 12),
+              Container(height: 12, width: double.infinity, color: AppTheme.slate200),
+              const SizedBox(height: 8),
+              Container(height: 12, width: 200, color: AppTheme.slate200),
+            ],
+          ),
+        ),
       ),
     );
   }

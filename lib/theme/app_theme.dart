@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Nikah design tokens.
 ///
@@ -142,10 +141,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     final base = ThemeData(
       useMaterial3: true,
-      // Touch the GoogleFonts helper once so the runtime font loader
-      // registers the Plus Jakarta Sans family, then style everything
-      // through the app tokens below.
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily ?? fontFamily,
+      fontFamily: fontFamily,
       scaffoldBackgroundColor: canvas,
       colorScheme: const ColorScheme(
         brightness: Brightness.light,

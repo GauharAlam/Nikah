@@ -285,7 +285,8 @@ class RemoteAppStore extends AppStore {
   @override
   String? get introductionsError => discovery.error;
   @override
-  Future<void> refreshIntroductions() => discovery.refresh();
+  Future<void> refreshIntroductions({bool keepDeck = false}) =>
+      discovery.refresh(keepDeck: keepDeck);
   @override
   Future<void> loadMoreIntroductions() => discovery.loadMore();
   @override

@@ -238,14 +238,9 @@ class VerificationScreen extends StatelessWidget {
             body: 'ID and education documents reviewed by our team.',
           ),
           const _BenefitRow(
-            icon: Icons.trending_up_rounded,
-            title: 'Move up in search results',
-            body: 'Verified profiles rank higher for serious seekers.',
-          ),
-          const _BenefitRow(
             icon: Icons.favorite_outline_rounded,
             title: 'Build confidence with serious seekers',
-            body: 'Members reach verified profiles first.',
+            body: 'A badge on your profile shows our team reviewed your documents.',
             last: true,
           ),
           const SizedBox(height: 20),

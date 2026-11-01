@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/models/chat_message.dart';
+import 'package:nikah_app/models/match_profile.dart';
 import 'package:nikah_app/models/verification_doc.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/screens/account_screens.dart';
 import 'package:nikah_app/screens/chat_screen.dart';
 import 'package:nikah_app/screens/family_circle_screen.dart';
 import 'package:nikah_app/screens/landing_front_screen.dart';
+import 'package:nikah_app/screens/match_detail_screen.dart';
 import 'package:nikah_app/screens/phone_signin_screen.dart';
 import 'package:nikah_app/screens/review_status_screen.dart';
 import 'package:nikah_app/screens/search_screen.dart';
@@ -66,6 +68,23 @@ void main() {
     ));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('a profile shows every photo the member added, each once', (WidgetTester tester) async {
+    await signIn(tester);
+    backend.fullProfiles['p'] = MatchProfile.fromCard(<String, dynamic>{
+      'id': 'p',
+      'name': 'Member p',
+      'age': 27,
+      'photos': <String>['https://example.com/1.jpg', 'https://example.com/2.jpg', 'https://example.com/3.jpg'],
+    });
+    await tester.runAsync(() => store.loadFullProfile('p'));
+    await show(tester, const MatchDetailScreen(matchId: 'p'));
+
+    expect(find.text('1/3'), findsOneWidget);
+    await tester.drag(find.byKey(const Key('photo_p')), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('2/3'), findsOneWidget);
+  });
 
   group('landing and sign-in', () {
     testWidgets('landing offers phone sign-in', (WidgetTester tester) async {
