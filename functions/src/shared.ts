@@ -7,7 +7,9 @@ import { randomInt, randomUUID } from 'node:crypto';
 import * as R from './rules';
 
 initializeApp();
-setGlobalOptions({ region: 'asia-south1', maxInstances: 20 });
+// App Check needs each app registered in the console, so it is switched on per
+// deployment. See docs/DEPLOYMENT.md.
+setGlobalOptions({ region: 'asia-south1', maxInstances: 20, enforceAppCheck: process.env.ENFORCE_APP_CHECK === 'true' });
 export const db = getFirestore();
 // A missing optional field must not fail a whole write.
 db.settings({ ignoreUndefinedProperties: true });

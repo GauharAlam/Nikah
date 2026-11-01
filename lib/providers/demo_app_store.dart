@@ -748,7 +748,7 @@ class DemoAppStore extends AppStore {
   /// Keeps the report on this device. Nothing reaches a reviewer until the
   /// reporting backend exists, and the UI says so.
   @override
-  Future<void> reportProfile(String matchId, String reason) async {
+  Future<void> reportProfile(String matchId, String reason, {String details = '', String context = 'profile'}) async {
     _reports = <ProfileReport>[
       ..._reports,
       ProfileReport(

@@ -149,13 +149,13 @@ test('private photos stay hidden from a viewer who is not matched', async () => 
 
 test('three different reporters hold a profile; one reporter repeating does not', async () => {
   await db.doc('profiles/bad').set(profile('bad', 'female'));
-  const r1 = await user('r1', {});
+  const r1 = await user('r1', { approved: true });
   await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
   await r1('reportProfile', { target: 'bad', reason: 'Asked for money' });
   await r1('reportProfile', { target: 'bad', reason: 'Fake profile' });
   assert.equal((await db.doc('profiles/bad').get()).data()?.live, true);
-  const r2 = await user('r2', {});
-  const r3 = await user('r3', {});
+  const r2 = await user('r2', { approved: true });
+  const r3 = await user('r3', { approved: true });
   await r2('reportProfile', { target: 'bad', reason: 'Fake profile' });
   await r3('reportProfile', { target: 'bad', reason: 'Fake profile' });
   const held = (await db.doc('profiles/bad').get()).data();

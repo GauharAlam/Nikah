@@ -13,7 +13,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 3 Authentication, onboarding, review | Done |
 | 4 Discovery, proposals, matches, chat | Done |
 | 5 Family, privacy, deletion | Done |
-| 6 Trust and safety | Next |
+| 6 Trust and safety | Done |
+| 7 Notifications and premium | Next |
 
 ## Phase 0 — Baseline
 
@@ -277,3 +278,52 @@ sides are engineering defaults that need legal review (X-4).
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 6.
+
+## Phase 6 — Trust and safety
+
+**Security findings proved first.** 10 emulator tests failed on the old code, including three
+fresh accounts able to take any profile down (SEC-09). All pass now.
+
+**Implemented**
+
+- SEC-09: only approved members can report, a member cannot report themselves, and a repeat
+  never reopens a closed report. Reasons are structured, with optional details and context.
+- Reviewers get a Reports tab, without the reporter's identity. They can dismiss, uphold and
+  release a hold, never about themselves. Every decision is audited (SEC-12).
+- A hold now takes the approved claim as well, so a held member loses messaging (SEC-13). The
+  claim reaches the device on its next token refresh, within an hour.
+- SEC-16: limits on reports, submissions and exports. App Check is wired in the app and off on
+  the server until `ENFORCE_APP_CHECK=true`.
+- Unusual message volume raises a flag for reviewers. Nothing happens to the member
+  automatically.
+- FLOW-17: notification links pass an allow-list. Report sheet shared by profile and chat.
+
+**Existing issues fixed**
+
+- **The production FAQ told members every conversation was visible to guardians and archived,
+  that every account has a Wali overseeing it, and that a scholar-supervised team answers in 24
+  hours. None of this was true, and the first contradicts the rule against sharing conversations
+  with guardians.** It now describes the real behaviour.
+- The photo viewer claimed photos were checked by both Walis, and showed disabled like buttons.
+
+**Files created:** `lib/widgets/report_sheet.dart`, `functions/test/safety.emulator.test.ts`,
+`test/unit/phase6_test.dart`, `docs/SAFETY_ESCALATION.md`.
+
+**Tests added:** 6 Flutter, 10 emulator.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 173 passed |
+| `npm run test:unit` | 31 passed |
+| `npm run test:emulator` | 98 passed |
+| `flutter build apk --release` | built |
+
+**Not verified:** App Check needs a real Firebase project. Reviewer screens have widget tests,
+but no real device run yet.
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 7.

@@ -7,8 +7,6 @@ import 'package:provider/provider.dart';
 
 import '../app_router.dart';
 import '../config/app_config.dart';
-import '../data/backend.dart';
-import '../data/option_lists.dart';
 import '../services/scam_detector.dart';
 import '../models/chat_message.dart';
 import '../models/match_profile.dart';
@@ -16,7 +14,7 @@ import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_images.dart';
-import '../widgets/app_snacks.dart';
+import '../widgets/report_sheet.dart';
 
 part 'chat_screen_parts.dart';
 
@@ -103,27 +101,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _focusNode.requestFocus();
   }
 
-  Future<void> _reportConversation() async {
-    final String? reason = await showModalBottomSheet<String>(
-      context: context,
-      builder: (BuildContext ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            for (final String r in OptionLists.reportReasons)
-              ListTile(title: Text(r), onTap: () => Navigator.of(ctx).pop(r)),
-          ],
-        ),
-      ),
-    );
-    if (reason == null || !mounted) return;
-    try {
-      await _store.reportProfile(widget.matchId, 'Conversation: $reason');
-      if (mounted) showAppSnack(context, 'Report sent. Our team will review it.', icon: Icons.flag_outlined);
-    } on BackendException catch (e) {
-      if (mounted) showAppSnack(context, e.message);
-    }
-  }
+  Future<void> _reportConversation() =>
+      showReportSheet(context, _store, widget.matchId, reportContext: 'conversation');
 
   void _sendMessage() {
     final String text = _textController.text.trim();

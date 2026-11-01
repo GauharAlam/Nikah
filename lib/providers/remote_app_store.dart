@@ -358,8 +358,8 @@ class RemoteAppStore extends AppStore {
   @override
   Future<void> blockProfile(String matchId) => discovery.block(matchId);
   @override
-  Future<void> reportProfile(String matchId, String reason) =>
-      _backend.reportProfile(matchId, reason);
+  Future<void> reportProfile(String matchId, String reason, {String details = '', String context = 'profile'}) =>
+      _backend.reportProfile(matchId, reason, details: details, context: context);
   @override
   void openThread(String matchId) => chat.openThread(matchId);
   @override

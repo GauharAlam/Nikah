@@ -159,7 +159,8 @@ class FakeBackend implements Backend {
   @override
   Future<void> blockProfile(String target) => _record('block:$target');
   @override
-  Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
+  Future<void> reportProfile(String target, String reason, {String details = '', String context = 'profile'}) =>
+      _record('report:$target:$reason:$context');
   @override
   Future<void> updatePrivacy({
     String? photoPrivacy,
@@ -267,7 +268,16 @@ class FakeBackend implements Backend {
   }) =>
       _record('purchase:$productId');
   @override
-  Future<List<Map<String, dynamic>>> listReviewQueue() async => const <Map<String, dynamic>>[];
+  Future<List<Map<String, dynamic>>> listReviewQueue() async => queue;
+  List<Map<String, dynamic>> queue = <Map<String, dynamic>>[];
+  List<ReportItem> reports = <ReportItem>[];
+  @override
+  Future<List<ReportItem>> listReports() async => reports;
+  @override
+  Future<void> resolveReport(String id, {required String decision, String note = ''}) =>
+      _record('resolveReport:$id:$decision');
+  @override
+  Future<void> releaseHold(String uid) => _record('releaseHold:$uid');
   @override
   Future<List<String>> documentUrls(String uid, String type) async => const <String>[];
   @override

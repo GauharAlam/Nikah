@@ -5,7 +5,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { dropGuardian } from './family';
 import * as R from './rules';
-import { accountRef, approvedUid, audit, db, reviewerUid, uidOf } from './shared';
+import { accountRef, approvedUid, audit, db, rateLimit, reviewerUid, uidOf } from './shared';
 
 /** Deletes everything a query matches, a page at a time. */
 async function deleteAll(query: Query): Promise<void> {
@@ -157,6 +157,7 @@ export const setAccountPaused = onCall(async (req) => {
 /** The member's own records, as a single document. Never another member's private data. */
 export const exportMyData = onCall(async (req) => {
   const uid = uidOf(req);
+  await rateLimit(uid, 'export', 3, 86400000);
   const [account, draft, profile, consents, documents, sent, received, matches] = await Promise.all([
     accountRef(uid).get(), db.doc(`drafts/${uid}`).get(), db.doc(`profiles/${uid}`).get(),
     accountRef(uid).collection('consents').get(), accountRef(uid).collection('documents').get(),

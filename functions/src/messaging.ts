@@ -1,7 +1,8 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { accountRef, db } from './shared';
+import * as R from './rules';
+import { accountRef, db, limits } from './shared';
 
 export const onMessageCreated = onDocumentCreated('matches/{pair}/messages/{id}', async (event) => {
   const message = event.data?.data();
@@ -16,7 +17,27 @@ export const onMessageCreated = onDocumentCreated('matches/{pair}/messages/{id}'
     [`unread.${other}`]: FieldValue.increment(1),
   });
   await sendPush(other, 'New message', 'You have a new message.', `/chat/${message.sender}`);
+  await watchVolume(message.sender);
 });
+
+/** Unusual volume goes to a reviewer. Nothing happens to the member automatically. */
+async function watchVolume(uid: string): Promise<void> {
+  const lim = await limits();
+  const key = R.dayKey(new Date());
+  const ref = accountRef(uid);
+  const count = await db.runTransaction(async (tx) => {
+    const acc = (await tx.get(ref)).data() ?? {};
+    const next = R.countFor(acc.messageDay, acc.messageCount, key) + 1;
+    tx.set(ref, { messageDay: key, messageCount: next }, { merge: true });
+    return next;
+  });
+  if (count === lim.suspiciousMessagesPerDay + 1) {
+    await db.doc(`reports/system_${uid}`).set({
+      reporter: 'system', target: uid, reason: 'High message volume', details: '', context: 'conversation',
+      status: 'open', createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+}
 
 export const onNotificationCreated = onDocumentCreated('accounts/{uid}/notifications/{id}', async (event) => {
   const n = event.data?.data();

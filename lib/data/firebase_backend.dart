@@ -215,7 +215,8 @@ class FirebaseBackend implements Backend {
         final String day = now.toIso8601String().substring(0, 10);
         final String month = now.toIso8601String().substring(0, 7);
         return AccountState(
-          stage: ReviewStage.fromWire(d['stage']),
+          // A held member is back under review until a reviewer decides.
+          stage: d['held'] == true ? ReviewStage.submitted : ReviewStage.fromWire(d['stage']),
           rejectionReason: d['rejectionReason'] as String? ?? '',
           rejectedPhotos: (d['rejectedPhotos'] as List?)?.cast<String>() ?? const <String>[],
           editsPending: d['editsPending'] as bool? ?? false,
@@ -534,8 +535,13 @@ class FirebaseBackend implements Backend {
       _call('blockProfile', <String, dynamic>{'target': target});
 
   @override
-  Future<void> reportProfile(String target, String reason) =>
-      _call('reportProfile', <String, dynamic>{'target': target, 'reason': reason});
+  Future<void> reportProfile(String target, String reason, {String details = '', String context = 'profile'}) =>
+      _call('reportProfile', <String, dynamic>{
+        'target': target,
+        'reason': reason,
+        if (details.isNotEmpty) 'details': details,
+        'context': context,
+      });
 
   @override
   Future<void> updatePrivacy({
@@ -907,6 +913,35 @@ class FirebaseBackend implements Backend {
         .map((dynamic i) => Map<String, dynamic>.from(i as Map))
         .toList();
   }
+
+  @override
+  Future<List<ReportItem>> listReports() async {
+    final Map<String, dynamic> res = await _call('listReports');
+    return (res['reports'] as List? ?? const <dynamic>[]).map((dynamic raw) {
+      final Map<dynamic, dynamic> r = raw as Map<dynamic, dynamic>;
+      return ReportItem(
+        id: r['id'] as String,
+        target: r['target'] as String,
+        name: r['name'] as String? ?? '',
+        reason: r['reason'] as String? ?? '',
+        details: r['details'] as String? ?? '',
+        context: r['context'] as String? ?? 'profile',
+        held: r['held'] as bool? ?? false,
+        count: (r['count'] as num?)?.toInt() ?? 0,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> resolveReport(String id, {required String decision, String note = ''}) =>
+      _call('resolveReport', <String, dynamic>{
+        'id': id,
+        'decision': decision,
+        if (note.isNotEmpty) 'note': note,
+      });
+
+  @override
+  Future<void> releaseHold(String uid) => _call('releaseHold', <String, dynamic>{'uid': uid});
 
   @override
   Future<List<String>> documentUrls(String uid, String type) async {

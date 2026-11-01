@@ -274,6 +274,28 @@ class FamilyOverview {
   final List<FamilyProposal>? proposals;
 }
 
+/// A report as a reviewer sees it. Never names the reporter.
+class ReportItem {
+  const ReportItem({
+    required this.id,
+    required this.target,
+    required this.name,
+    required this.reason,
+    this.details = '',
+    this.context = 'profile',
+    this.held = false,
+    this.count = 0,
+  });
+  final String id;
+  final String target;
+  final String name;
+  final String reason;
+  final String details;
+  final String context;
+  final bool held;
+  final int count;
+}
+
 class BlockedMember {
   const BlockedMember(this.id, this.name);
   final String id;
@@ -375,7 +397,7 @@ abstract class Backend {
   Future<void> markThreadRead(String pairId, String uid);
   Future<void> unmatch(String other);
   Future<void> blockProfile(String target);
-  Future<void> reportProfile(String target, String reason);
+  Future<void> reportProfile(String target, String reason, {String details, String context});
   Future<void> updatePrivacy({
     String? photoPrivacy,
     bool? showCaste,
@@ -439,6 +461,9 @@ abstract class Backend {
 
   // Review tools, reviewer accounts only
   Future<List<Map<String, dynamic>>> listReviewQueue();
+  Future<List<ReportItem>> listReports();
+  Future<void> resolveReport(String id, {required String decision, String note});
+  Future<void> releaseHold(String uid);
   Future<List<String>> documentUrls(String uid, String type);
 
 

@@ -90,6 +90,19 @@ class AppRoutes {
   static String photo(String id) => '/photo/$id';
 }
 
+/// The screens a notification may open. Anything else is ignored, so a
+/// malformed or forged link can never reach an arbitrary route or URL.
+String? safeDeepLink(Object? link) {
+  if (link is! String) return null;
+  const Set<String> fixed = <String>{
+    AppRoutes.homeDiscovery, AppRoutes.homeProposals, AppRoutes.homeMatches, AppRoutes.homeActivities,
+    AppRoutes.notifications, AppRoutes.reviewStatus, AppRoutes.verifyProfile, AppRoutes.editProfile,
+    AppRoutes.familyCircle, AppRoutes.familyView, AppRoutes.invite,
+  };
+  if (fixed.contains(link)) return link;
+  return RegExp(r'^/(chat|match)/[A-Za-z0-9_-]{1,128}$').hasMatch(link) ? link : null;
+}
+
 /// Where [location] should go for the member's current state, or null to stay.
 String? guardRoute(AppStore store, String location) {
   bool at(String path) => location == path;

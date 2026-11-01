@@ -22,36 +22,32 @@ class AboutScreen extends StatelessWidget {
           const SectionLabel('Frequently asked'),
           const SizedBox(height: 10),
           const _FaqTile(
-            question: 'What is a Wali?',
+            question: 'Can my family see my chats?',
             answer:
-                'The Wali is the guardian appointed by Islamic law to '
-                'safeguard a woman\'s interests in marriage (Qur\'an 4:34; '
-                'the Prophet ﷺ said: "There is no nikah without a wali"). On '
-                'Barkat Nikah, every account links to a Wali who reviews '
-                'introductions, oversees conversations and approves family '
-                'meetings.',
+                'No. Conversations are between the two of you. Family members '
+                'see only what you choose in Family Circle, and that never '
+                'includes messages, documents or your phone number.',
           ),
           const _FaqTile(
-            question: 'How is chaperoned chat supervised?',
+            question: 'What does the verified badge mean?',
             answer:
-                'Every conversation is visible to both guardians and archived '
-                'for the audit log. Messages are etiquette-checked for adab, '
-                'and no private exchange is possible before nikah — this '
-                'protects the dignity of both families.',
+                'Our team looked at the documents the member sent. It is not a '
+                'background check, and it does not guarantee who someone is or '
+                'their character. Take care when you meet anyone.',
           ),
           const _FaqTile(
-            question: 'Can I browse as a guest?',
+            question: 'Who can see my photos and number?',
             answer:
-                'Yes — guests can explore the discovery deck with modesty '
-                'blur active. Sending introductions and opening chat requires '
-                'a full account with a verified Wali.',
+                'You can show photos to everyone or only after you match. Your '
+                'number is shared only when you accept a contact request.',
           ),
           const _FaqTile(
             question: 'How do I report a concern?',
             answer:
-                'Use any contact channel below. Our scholar-supervised team '
-                'responds within 24 hours and can escalate serious matters to '
-                'the community panel immediately.',
+                'Open the profile or conversation and tap report. Our team '
+                'reviews every report, and the other person is not told who '
+                'reported. If you are in danger, contact local emergency '
+                'services first.',
           ),
           const SizedBox(height: 22),
           const SectionLabel('Reach the support desk'),

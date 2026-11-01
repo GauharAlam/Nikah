@@ -1,4 +1,4 @@
-/// Full-screen photo viewer with chaperoned-adab framing and fade-in.
+/// Full-screen photo viewer with fade-in.
 library;
 
 import 'dart:async';
@@ -10,7 +10,7 @@ import '../services/privacy_shield.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_images.dart';
 
-/// Immersive black viewer: pinch-zoom image, wali-modesty footer.
+/// Immersive black viewer: pinch-zoom image and a short reminder.
 class PhotoViewerScreen extends StatefulWidget {
   const PhotoViewerScreen({super.key, required this.imageUrl, this.personName});
 
@@ -120,8 +120,7 @@ class _ViewerInfoBar extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Viewed with adab — Photos remain modesty-checked by both '
-                'Wali',
+                'Viewed with adab. Please keep this photo private.',
                 style: AppTheme.ts(
                   11.5,
                   FontWeight.w600,
@@ -130,46 +129,9 @@ class _ViewerInfoBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 6),
-            Opacity(
-              opacity: 0.45,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const _GhostAction(
-                    icon: Icons.favorite_border_rounded,
-                    tooltip: 'Likes disabled',
-                  ),
-                  const _GhostAction(
-                    icon: Icons.emoji_emotions_outlined,
-                    tooltip: 'Reactions disabled',
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Disabled icon action (intentionally inert for chaperone control).
-class _GhostAction extends StatelessWidget {
-  const _GhostAction({required this.icon, required this.tooltip});
-
-  final IconData icon;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: null,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-      color: Colors.white,
-      icon: Icon(icon, size: 17),
     );
   }
 }

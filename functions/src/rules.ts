@@ -24,6 +24,7 @@ export interface Limits {
   inviteRewardCap: number;
   minAge: number;
   firstMarriageOnly: boolean;
+  suspiciousMessagesPerDay: number;
 }
 
 // 5 (0/5 PROPOSALS SENT), 10 decisions and 15 waiting are observed in the
@@ -48,6 +49,7 @@ export const DEFAULT_LIMITS: Limits = {
   inviteRewardCap: 10,
   minAge: 18,
   firstMarriageOnly: false,
+  suspiciousMessagesPerDay: 300,
 };
 
 /** Version of the terms and privacy policy a member accepts. Overridden by config/app. */
@@ -336,7 +338,9 @@ export function visibleInDiscovery(h: Hidden, nowMillis: number): boolean {
   return !(h.hiddenUntil !== undefined && h.hiddenUntil > nowMillis);
 }
 
-export const REPORT_REASON_MAX = 200;
+export const REPORT_REASONS = ['Asked for money', 'Pushed investment or crypto', 'Asked to leave the app quickly', 'Fake profile', 'Already married', 'Inappropriate photos or messages', 'Harassment'];
+export const REPORT_DETAILS_MAX = 500;
+export const REPORT_DECISIONS: Record<string, string> = { dismiss: 'dismissed', uphold: 'upheld' };
 
 export type PhotoPrivacy = 'everyone' | 'matches';
 

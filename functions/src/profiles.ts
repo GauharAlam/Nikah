@@ -2,7 +2,7 @@ import { FieldValue, Transaction } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { issueSubjectCode } from './family';
 import * as R from './rules';
-import { accountRef, approvedUid, checkUpload, db, limits, stringArg, uidOf } from './shared';
+import { accountRef, approvedUid, checkUpload, db, limits, rateLimit, stringArg, uidOf } from './shared';
 
 async function policyVersion(): Promise<string> {
   return (await db.doc('config/app').get()).data()?.policyVersion ?? R.POLICY_VERSION;
@@ -26,6 +26,7 @@ export const submitProfile = onCall(async (req) => {
   const uid = uidOf(req);
   const phone = req.auth?.token.phone_number as string | undefined;
   if (!phone) throw new HttpsError('failed-precondition', 'Verify your phone number first.');
+  await rateLimit(uid, 'submit', 10, 86400000);
   const [lim, version] = await Promise.all([limits(), policyVersion()]);
   const proof = lim.requireIdProof ? await db.doc(`accounts/${uid}/documents/name-proof`).get() : null;
   if (proof && !['pending', 'under_review', 'approved'].includes(proof.data()?.status)) {

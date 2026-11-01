@@ -11,7 +11,6 @@ import '../l10n/app_strings.dart';
 import '../app_router.dart';
 import '../config/app_config.dart';
 import '../data/backend.dart';
-import '../data/option_lists.dart';
 import '../models/match_profile.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
@@ -20,6 +19,7 @@ import '../widgets/app_buttons.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_images.dart';
 import '../widgets/app_snacks.dart';
+import '../widgets/report_sheet.dart';
 
 /// Local shorthand for theme text styles inside this screen.
 TextStyle _t(double size, FontWeight weight, Color color) =>
@@ -130,37 +130,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     if (action == 'block') await _block(match);
   }
 
-  Future<void> _report(MatchProfile match) async {
-    final String? reason = await showModalBottomSheet<String>(
-      context: context,
-      builder: (BuildContext ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            for (final String r in OptionLists.reportReasons)
-              ListTile(
-                title: Text(r),
-                onTap: () => Navigator.of(ctx).pop(r),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (reason == null || !mounted) return;
-    try {
-      await context.read<AppStore>().reportProfile(match.id, reason);
-      if (!mounted) return;
-      showAppSnack(
-        context,
-        AppConfig.isDemo
-            ? 'Demo build: the report stays on this device.'
-            : 'Report sent. Our team will review it. They will not be told who reported.',
-        icon: Icons.flag_outlined,
-      );
-    } on BackendException catch (e) {
-      if (mounted) showAppSnack(context, e.message);
-    }
-  }
+  Future<void> _report(MatchProfile match) =>
+      showReportSheet(context, context.read<AppStore>(), match.id);
 
   Future<void> _block(MatchProfile match) async {
     final bool? confirmed = await showDialog<bool>(

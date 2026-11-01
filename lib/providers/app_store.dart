@@ -178,7 +178,7 @@ abstract class AppStore extends ChangeNotifier {
 
   /// Both complete only once the server has accepted the action.
   Future<void> blockProfile(String matchId);
-  Future<void> reportProfile(String matchId, String reason);
+  Future<void> reportProfile(String matchId, String reason, {String details = '', String context = 'profile'});
 
   /// Conversations stream only while on screen.
   void openThread(String matchId) {}

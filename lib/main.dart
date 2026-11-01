@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -46,6 +47,8 @@ void main() async {
       runApp(const _SetupRequiredApp());
       return;
     }
+    // A failure here must not stop the app. The server decides whether to require it.
+    unawaited(FirebaseAppCheck.instance.activate().catchError((Object _) {}));
     store = RemoteAppStore(prefs, FirebaseBackend());
   }
   final GoRouter router = buildRouter(store);
@@ -73,8 +76,8 @@ const FirebaseOptions _emulatorOptions = FirebaseOptions(
 /// Opens the screen named by a tapped notification.
 Future<void> _routePushTaps(GoRouter router) async {
   void open(RemoteMessage message) {
-    final Object? link = message.data['deepLink'];
-    if (link is String && link.startsWith('/')) unawaited(router.push(link));
+    final String? link = safeDeepLink(message.data['deepLink']);
+    if (link != null) unawaited(router.push(link));
   }
 
   final RemoteMessage? initial = await FirebaseMessaging.instance.getInitialMessage();
