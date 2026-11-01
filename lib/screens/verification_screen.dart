@@ -211,9 +211,12 @@ class VerificationScreen extends StatelessWidget {
                     color: AppTheme.goldInk,
                   ),
                   const SizedBox(width: 5),
-                  Text(
-                    'Barkat Verified',
-                    style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.goldInk),
+                  Flexible(
+                    child: Text(
+                      'Verified',
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.ts(11.5, FontWeight.w800, color: AppTheme.goldInk),
+                    ),
                   ),
                 ],
               ),

@@ -407,6 +407,10 @@ Journey 8 runs in the emulator suite, because no store is reachable from here.
 **Found by the small-screen test:** overflows at 320dp and 1.5x text on review status,
 verification and search, all fixed.
 
+**Correction:** commit `af5c1ce` went out with one failing test and a blank test count. The
+machine had run out of disk, which hid the result, and the commit step did not stop on failure.
+The next commit fixed the test and the count. Commit steps now stop if tests fail.
+
 **Reviewed by eye on the device:** landing, Discover, Profile, Family Circle, Search, Delete
 Account. They render correctly with real data.
 
@@ -418,7 +422,7 @@ and 11 device tests. See `TESTING.md`.
 | Check | Result |
 |---|---|
 | `flutter analyze` | 0 issues |
-| `flutter test` |  passed |
+| `flutter test` | 206 passed |
 | `npm run test:unit` | 33 passed |
 | `npm run test:emulator` | 112 passed |
 | `tool/integration_test.sh integration_test -d emulator-5554` | 11 passed |
