@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Barkat Nikah - Sign In</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Container Queries & Forms -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#ffdf9e",
+            "surface": "#fbf9f5",
+            "surface-dim": "#dbdad6",
+            "on-tertiary-container": "#c8a149",
+            "on-primary-fixed-variant": "#274e3d",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#92f7c3",
+            "surface-container-low": "#f5f3ef",
+            "outline": "#717973",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed-dim": "#ebc165",
+            "primary-fixed-dim": "#a5d0b9",
+            "secondary-fixed-dim": "#75daa8",
+            "inverse-primary": "#a5d0b9",
+            "surface-container-lowest": "#ffffff",
+            "surface-variant": "#e4e2de",
+            "surface-tint": "#3f6653",
+            "primary": "#012d1d",
+            "surface-container": "#efeeea",
+            "error-container": "#ffdad6",
+            "on-surface": "#1b1c1a",
+            "tertiary-container": "#4d3800",
+            "background": "#fbf9f5",
+            "secondary": "#006c48",
+            "surface-container-high": "#eae8e4",
+            "primary-fixed": "#c1ecd4",
+            "error": "#ba1a1a",
+            "tertiary": "#322400",
+            "on-tertiary-fixed": "#261a00",
+            "on-primary-fixed": "#002114",
+            "slate-text": "#1E293B",
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#92f7c3",
+            "on-primary-container": "#86af99",
+            "on-error": "#ffffff",
+            "on-surface-variant": "#414844",
+            "on-background": "#1b1c1a",
+            "inverse-on-surface": "#f2f0ed",
+            "on-secondary-container": "#00734d",
+            "on-secondary-fixed": "#002113",
+            "surface-ivory": "#FDFBF7",
+            "privacy-scrim": "#1E293BCC",
+            "surface-bright": "#fbf9f5",
+            "surface-warm-container": "#F4EFE6",
+            "emerald-deep": "#0D2318",
+            "on-secondary-fixed-variant": "#005235",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#30312e",
+            "surface-container-highest": "#e4e2de",
+            "outline-variant": "#c1c8c2",
+            "gold-light": "#F7E7B4",
+            "sage-soft": "#74C69D",
+            "primary-container": "#1b4332"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.25rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400" }],
+            "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "headline-md-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400" }],
+            "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      vertical-align: middle;
+    }
+    
+    /* Touch target transitions */
+    .btn-press:active {
+      transform: scale(0.98);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col justify-between selection:bg-primary-fixed selection:text-primary">
+<!-- Mobile Screen Container -->
+<div class="w-full max-w-md mx-auto flex flex-col min-h-screen bg-surface-ivory shadow-xl relative">
+<!-- Android Status Bar Space & Top Navigation Bar -->
+<header class="w-full pt-space-md px-margin pb-space-sm flex items-center justify-between bg-surface-ivory sticky top-0 z-30">
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-surface-warm-container transition-colors active:scale-95" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<!-- Brand Mark Anchor -->
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[20px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span class="font-title-lg text-title-lg font-bold text-primary tracking-tight">Barkat Nikah</span>
+</div>
+<!-- Language / Adab Guidance Indicator -->
+<button aria-label="Language selection" class="h-9 px-space-sm rounded-full flex items-center gap-1 bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:bg-surface-warm-container transition-colors active:scale-95" type="button">
+<span class="font-label-sm text-label-sm text-primary font-semibold">عربي</span>
+<span class="material-symbols-outlined text-[16px] text-outline">translate</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-space-sm pb-space-xl flex flex-col">
+<!-- Header Typography Section -->
+<section class="mt-space-sm mb-space-lg">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-warm-container border border-tertiary-fixed-dim/40 mb-3">
+<span class="material-symbols-outlined text-[16px] text-on-tertiary-container" data-weight="fill" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-label-md text-label-md text-tertiary-container font-semibold tracking-wide">Sacred Matrimony</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold tracking-tight mb-2">Welcome Back</h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Sign in to continue your intentional journey towards Nikah with dignity and adab.
+        </p>
+</section>
+<!-- Segmented Interactive Switch (Phone / Email) -->
+<div aria-label="Sign in method" class="w-full bg-surface-container-low p-1.5 rounded-full flex items-center mb-space-lg border border-outline-variant/40" role="tablist">
+<!-- Phone Tab Button -->
+<button aria-controls="panel-phone" aria-selected="true" class="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 bg-primary-container text-surface-ivory shadow-sm" id="tab-phone" onclick="switchAuthMode('phone')" role="tab" type="button">
+<span class="material-symbols-outlined text-[18px]">phone</span>
+<span>Phone Number</span>
+</button>
+<!-- Email Tab Button -->
+<button aria-controls="panel-email" aria-selected="false" class="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 text-on-surface-variant hover:text-primary" id="tab-email" onclick="switchAuthMode('email')" role="tab" type="button">
+<span class="material-symbols-outlined text-[18px]">alternate_email</span>
+<span>Email Address</span>
+</button>
+</div>
+<!-- Dynamic Form Container -->
+<form class="space-y-space-md flex-1 flex flex-col justify-start" id="auth-form" onsubmit="event.preventDefault();">
+<!-- PHONE PANEL -->
+<div class="space-y-space-md transition-opacity duration-200" id="panel-phone" role="tabpanel">
+<div>
+<label class="block font-label-md text-label-md text-on-surface font-semibold mb-1.5" for="phone-input">
+              Verified Mobile Number
+            </label>
+<div class="flex rounded-xl bg-surface-container-lowest border border-outline/30 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all overflow-hidden">
+<!-- Country Code Selector Dropdown -->
+<div class="flex items-center pl-3 pr-2 border-r border-outline-variant/40 bg-surface-container-low text-primary cursor-pointer hover:bg-surface-warm-container transition-colors">
+<span class="text-base mr-1.5">🇬🇧</span>
+<span class="font-label-lg text-label-lg font-semibold text-primary">+44</span>
+<span class="material-symbols-outlined text-[18px] text-outline ml-1">expand_more</span>
+</div>
+<input autocomplete="tel-national" class="w-full px-3.5 py-3 bg-transparent text-on-surface placeholder:text-outline font-body-lg text-body-lg border-0 focus:ring-0 focus:outline-none" id="phone-input" placeholder="7700 900189" type="tel"/>
+</div>
+</div>
+<!-- Modesty & Security Trust Banner -->
+<div class="flex items-start gap-2.5 p-3.5 rounded-xl bg-surface-warm-container/80 border border-gold-light/60">
+<span class="material-symbols-outlined text-on-tertiary-container text-[20px] shrink-0 mt-0.5" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sms</span>
+<div class="text-left">
+<p class="font-body-sm text-body-sm text-slate-text leading-snug">
+                A secure 6-digit SMS verification code will be sent to your number. Standard carrier rates may apply.
+              </p>
+</div>
+</div>
+<!-- Secondary Choice: Login via Password instead -->
+<div class="flex justify-end">
+<button class="font-label-md text-label-md text-secondary font-semibold hover:underline flex items-center gap-1" type="button">
+<span>Use account password instead</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- EMAIL PANEL (Initially Hidden) -->
+<div class="space-y-space-md hidden transition-opacity duration-200" id="panel-email" role="tabpanel">
+<div>
+<label class="block font-label-md text-label-md text-on-surface font-semibold mb-1.5" for="email-input">
+              Matrimonial Account Email
+            </label>
+<div class="flex items-center rounded-xl bg-surface-container-lowest border border-outline/30 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all px-3.5 py-1">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">mail</span>
+<input autocomplete="email" class="w-full py-2.5 bg-transparent text-on-surface placeholder:text-outline font-body-lg text-body-lg border-0 focus:ring-0 focus:outline-none" id="email-input" placeholder="brother.zayd@example.com" type="email"/>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="password-input">
+                Password
+              </label>
+<a class="font-label-sm text-label-sm text-secondary font-semibold hover:underline" href="#">Forgot Password?</a>
+</div>
+<div class="flex items-center rounded-xl bg-surface-container-lowest border border-outline/30 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all px-3.5 py-1">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">lock</span>
+<input autocomplete="current-password" class="w-full py-2.5 bg-transparent text-on-surface placeholder:text-outline font-body-lg text-body-lg border-0 focus:ring-0 focus:outline-none" id="password-input" placeholder="••••••••••••" type="password"/>
+<button aria-label="Toggle password view" class="text-outline hover:text-primary p-1" onclick="togglePasswordVisibility()" type="button">
+<span class="material-symbols-outlined text-[20px]" id="pwd-eye-icon">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Biometric / Remember Me Toggle Switch -->
+<div class="pt-1 flex items-center justify-between p-3 rounded-xl bg-surface-container-low/70 border border-outline-variant/30">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px]">fingerprint</span>
+<div>
+<span class="block font-label-md text-label-md text-on-surface font-semibold">Biometric Sign In</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Enable Face / Fingerprint unlock</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Primary CTA Button -->
+<div class="pt-2">
+<button class="w-full min-h-[48px] py-3.5 px-6 rounded-full bg-primary-container hover:bg-primary text-surface-ivory font-label-lg text-label-lg font-semibold shadow-md active:scale-95 transition-all duration-150 flex items-center justify-center gap-2" id="submit-btn" type="submit">
+<span id="btn-text">Send Verification Code</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Alternative Sign In Divider -->
+<div class="relative my-space-lg">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/40"></div>
+</div>
+<div class="relative flex justify-center text-center">
+<span class="bg-surface-ivory px-3 font-label-sm text-label-sm text-outline tracking-wider uppercase font-semibold">
+            Or Continue With
+          </span>
+</div>
+</div>
+<!-- Social / Fast Auth Bento Options -->
+<div class="grid grid-cols-2 gap-space-sm mb-space-lg">
+<button class="btn-press flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant/50 bg-surface-container-lowest text-on-surface hover:bg-surface-warm-container/50 transition-colors shadow-sm" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
+</svg>
+<span class="font-label-md text-label-md font-semibold">Google</span>
+</button>
+<button class="btn-press flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant/50 bg-surface-container-lowest text-on-surface hover:bg-surface-warm-container/50 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px] text-primary">passkey</span>
+<span class="font-label-md text-label-md font-semibold">Passkey</span>
+</button>
+</div>
+<!-- Wali / Guardian Portal Access Callout Card -->
+<section class="mb-space-lg">
+<a class="btn-press block p-4 rounded-2xl bg-surface-warm-container border border-tertiary-fixed-dim/60 shadow-sm hover:shadow transition-all group" href="#wali-portal">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed/40 flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-[22px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-tertiary-container">Chaperone Access</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</div>
+<h2 class="font-title-sm text-title-sm text-primary font-bold">Wali &amp; Family Portal</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sign in to review matches and supervise chat with adab</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</a>
+</section>
+<!-- Bottom Account Registration Callout -->
+<div class="text-center py-2">
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Don't have an account yet? 
+          <a class="text-primary font-semibold hover:underline inline-flex items-center gap-0.5 ml-1" href="#signup">
+<span>Create Matrimonial Account</span>
+<span class="material-symbols-outlined text-[16px]">arrow_outward</span>
+</a>
+</p>
+</div>
+<!-- Dignity & Trust Footer Badge -->
+<div class="mt-4 pt-3 flex items-center justify-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-[15px] text-sage-soft">lock</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant/80 tracking-wide">
+          End-to-End Encrypted • Strict Islamic Adab Standards
+        </span>
+</div>
+</main>
+</div>
+<!-- Interactive State JavaScript -->
+<script>
+    let activeMode = 'phone';
+
+    function switchAuthMode(mode) {
+      if (activeMode === mode) return;
+      activeMode = mode;
+
+      const tabPhone = document.getElementById('tab-phone');
+      const tabEmail = document.getElementById('tab-email');
+      const panelPhone = document.getElementById('panel-phone');
+      const panelEmail = document.getElementById('panel-email');
+      const btnText = document.getElementById('btn-text');
+
+      if (mode === 'phone') {
+        // Tab styling
+        tabPhone.className = "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 bg-primary-container text-surface-ivory shadow-sm";
+        tabPhone.setAttribute('aria-selected', 'true');
+
+        tabEmail.className = "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 text-on-surface-variant hover:text-primary";
+        tabEmail.setAttribute('aria-selected', 'false');
+
+        // Panel visibility
+        panelPhone.classList.remove('hidden');
+        panelEmail.classList.add('hidden');
+
+        // Button label update
+        btnText.textContent = 'Send Verification Code';
+      } else {
+        // Tab styling
+        tabEmail.className = "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 bg-primary-container text-surface-ivory shadow-sm";
+        tabEmail.setAttribute('aria-selected', 'true');
+
+        tabPhone.className = "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-label-lg text-label-lg font-semibold transition-all duration-200 text-on-surface-variant hover:text-primary";
+        tabPhone.setAttribute('aria-selected', 'false');
+
+        // Panel visibility
+        panelPhone.classList.add('hidden');
+        panelEmail.classList.remove('hidden');
+
+        // Button label update
+        btnText.textContent = 'Sign In to Account';
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById('password-input');
+      const icon = document.getElementById('pwd-eye-icon');
+      
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        pwdInput.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+  </script>
+</body></html>

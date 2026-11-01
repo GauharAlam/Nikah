@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Barkat Nikah Guardian Portal - Confirmation</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#f2f0ed",
+            "surface-warm-container": "#F4EFE6",
+            "primary": "#012d1d",
+            "background": "#fbf9f5",
+            "primary-fixed-dim": "#a5d0b9",
+            "outline-variant": "#c1c8c2",
+            "secondary-fixed-dim": "#75daa8",
+            "on-secondary-fixed-variant": "#005235",
+            "on-primary-fixed-variant": "#274e3d",
+            "primary-container": "#1b4332",
+            "surface-bright": "#fbf9f5",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "sage-soft": "#74C69D",
+            "on-background": "#1b1c1a",
+            "surface-container-highest": "#e4e2de",
+            "on-tertiary-container": "#c8a149",
+            "on-surface-variant": "#414844",
+            "surface-variant": "#e4e2de",
+            "secondary-fixed": "#92f7c3",
+            "on-primary-container": "#86af99",
+            "inverse-primary": "#a5d0b9",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#4d3800",
+            "error": "#ba1a1a",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed": "#002113",
+            "on-error": "#ffffff",
+            "emerald-deep": "#0D2318",
+            "surface-container-low": "#f5f3ef",
+            "on-tertiary-fixed": "#261a00",
+            "surface-container": "#efeeea",
+            "privacy-scrim": "#1E293BCC",
+            "tertiary-fixed-dim": "#ebc165",
+            "on-surface": "#1b1c1a",
+            "slate-text": "#1E293B",
+            "tertiary-fixed": "#ffdf9e",
+            "tertiary": "#322400",
+            "secondary-container": "#92f7c3",
+            "on-secondary-container": "#00734d",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#c1ecd4",
+            "surface-ivory": "#FDFBF7",
+            "on-tertiary": "#ffffff",
+            "secondary": "#006c48",
+            "surface-container-lowest": "#ffffff",
+            "surface-dim": "#dbdad6",
+            "inverse-surface": "#30312e",
+            "surface": "#fbf9f5",
+            "on-primary-fixed": "#002114",
+            "outline": "#717973",
+            "surface-tint": "#3f6653",
+            "surface-container-high": "#eae8e4",
+            "on-secondary": "#ffffff",
+            "gold-light": "#F7E7B4"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "margin": "1.25rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-md-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+            "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased selection:bg-primary selection:text-surface-ivory min-h-screen flex justify-center items-start">
+<!-- Mobile Viewport Container (Linear & Task-Focused Consent Flow: Navigation Shell intentionally suppressed) -->
+<main class="w-full max-w-md bg-surface-ivory min-h-screen shadow-2xl relative pb-12 flex flex-col justify-between">
+<!-- Top Security & Trust Header -->
+<header class="sticky top-0 z-40 bg-surface-ivory/95 backdrop-blur-md px-margin py-3 border-b border-surface-container flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-gold-light flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<span class="font-title-sm text-title-sm text-primary tracking-tight block">Barkat Nikah</span>
+<div class="flex items-center space-x-1">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Guardian Portal</span>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<!-- Language Switcher Pill -->
+<button aria-label="Toggle language" class="px-2.5 py-1 rounded-full bg-surface-container-low border border-outline-variant/40 text-on-surface font-label-sm text-label-sm flex items-center space-x-1 hover:bg-surface-warm-container transition-colors">
+<span class="material-symbols-outlined text-[14px]">language</span>
+<span>العربية</span>
+</button>
+</div>
+</header>
+<!-- Sub-header Security Banner -->
+<div class="bg-surface-warm-container px-margin py-2 border-b border-surface-container-high/60 flex items-center justify-between">
+<div class="flex items-center space-x-1.5 text-primary">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="font-label-sm text-label-sm font-semibold tracking-wide text-tertiary-container">Encrypted Chaperone Access</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Auth Ref: #BN-8921</span>
+</div>
+<!-- Main Content Canvas -->
+<div class="px-margin pt-space-md space-y-space-lg flex-1">
+<!-- SMS Invitation Hero & Context -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md border border-primary/5 shadow-sm space-y-3 relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-24 h-24 bg-primary-fixed/30 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Inviter Identity -->
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-3">
+<div class="relative">
+<div class="w-12 h-12 rounded-full ring-2 ring-gold-light bg-surface-container flex items-center justify-center text-primary font-title-md text-title-md font-bold overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Warm, modest portrait illustration of a dignified young Muslim woman wearing a modern soft sage hijab with gentle rim lighting, designed with serene organic minimalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsePI2sYZ0I77Otfu5LrrCZjCoIe1mEO9882dK4lp68V0hKp1bmtt0v2pTRlGyI7RV9_-Kq_bEssg7aJuaayf1hqzgfaEJBNY8z2lBwcSVHMCG29YQ_7MrOtwmSAe-RzZ3kQqkXxDP_HMDx12RiOL76RoOoQfXtBmaVAdDPc5PubbmvoSUIt6XE9cNBG8b29LsqBorBS3UrYN33MsZf5Gvwb1b7DJRVwBHhr-bq58xnL2SUmy46kNFBA"/>
+</div>
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-secondary border-2 border-white rounded-full"></span>
+</div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="font-label-sm text-label-sm text-tertiary-container bg-gold-light/40 px-2 py-0.5 rounded-full font-semibold">SMS Invite</span>
+<span class="font-label-sm text-label-sm text-outline">10 mins ago</span>
+</div>
+<h1 class="font-title-md text-title-md text-primary mt-0.5">Amina Al-Mansoor</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Designation: Daughter (Ward)</p>
+</div>
+</div>
+</div>
+<!-- Spiritual Adab Greeting Card -->
+<div class="bg-surface-warm-container/80 rounded-xl p-3 border border-tertiary-fixed-dim/30">
+<p class="font-title-sm text-title-sm text-primary font-semibold mb-1">
+            As-salamu alaykum Tariq Al-Mansoor
+          </p>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            You have been nominated as primary Wali to safeguard Amina's matrimonial search with Islamic honor, transparency, and dignified oversight.
+          </p>
+</div>
+</section>
+<!-- 6-Digit SMS Verification Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md border border-primary/10 shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[20px] text-primary" style="font-variation-settings: 'FILL' 1;">sms</span>
+<h2 class="font-title-sm text-title-sm text-primary">SMS Passcode Verification</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full font-semibold">Active Request</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Enter the 6-digit one-time passkey delivered to <span class="font-semibold text-slate-text">+44 7700 900189</span> to confirm guardian identity.
+        </p>
+<!-- Passcode Input Slots -->
+<div class="grid grid-cols-6 gap-2 pt-2">
+<div class="h-12 rounded-xl bg-surface-container-low border-2 border-primary-container text-primary font-title-lg text-title-lg flex items-center justify-center font-bold shadow-inner">
+            5
+          </div>
+<div class="h-12 rounded-xl bg-surface-container-low border-2 border-primary-container text-primary font-title-lg text-title-lg flex items-center justify-center font-bold shadow-inner">
+            8
+          </div>
+<div class="h-12 rounded-xl bg-surface-container-low border-2 border-primary-container text-primary font-title-lg text-title-lg flex items-center justify-center font-bold shadow-inner">
+            2
+          </div>
+<div class="h-12 rounded-xl bg-surface-container border border-outline-variant text-slate-text font-title-lg text-title-lg flex items-center justify-center">
+            •
+          </div>
+<div class="h-12 rounded-xl bg-surface-container border border-outline-variant text-slate-text font-title-lg text-title-lg flex items-center justify-center">
+            •
+          </div>
+<div class="h-12 rounded-xl bg-surface-container border border-outline-variant text-slate-text font-title-lg text-title-lg flex items-center justify-center">
+            •
+          </div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<button class="font-label-sm text-label-sm text-primary font-semibold flex items-center space-x-1 hover:underline">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+<span>Edit phone number</span>
+</button>
+<div class="flex items-center space-x-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Resend in <span class="font-semibold text-primary">42s</span></span>
+</div>
+</div>
+</section>
+<!-- Wali Role & Responsibilities Bento Grid -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between px-1">
+<div>
+<h2 class="font-title-sm text-title-sm text-primary font-bold">Wali Authority &amp; Permissions</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Clear safeguards active upon your confirmation</p>
+</div>
+<span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<!-- Pillar 1: Chaperoned Dialogue -->
+<article class="bg-surface-container-lowest rounded-xl p-3.5 border border-primary/5 flex items-start space-x-3 transition-transform active:scale-[0.99]">
+<div class="w-10 h-10 rounded-lg bg-surface-warm-container text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">forum</span>
+</div>
+<div class="space-y-0.5">
+<h3 class="font-title-sm text-title-sm text-primary">Chaperoned Dialogue</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+              Read all suitor messages in real-time. Join conversations when appropriate without intruding on her dignity.
+            </p>
+<div class="pt-1 flex items-center space-x-2">
+<span class="inline-flex items-center text-[10px] font-semibold text-secondary px-2 py-0.5 rounded-full bg-secondary-fixed/20">
+                Triple-Party Room
+              </span>
+<span class="text-[11px] text-outline font-medium">No secret DMs</span>
+</div>
+</div>
+</article>
+<!-- Pillar 2: Modesty Gatekeeper -->
+<article class="bg-surface-container-lowest rounded-xl p-3.5 border border-primary/5 flex items-start space-x-3 transition-transform active:scale-[0.99]">
+<div class="w-10 h-10 rounded-lg bg-surface-warm-container text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">visibility_lock</span>
+</div>
+<div class="space-y-0.5">
+<h3 class="font-title-sm text-title-sm text-primary">Photo Modesty Gatekeeper</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+              Prospective suitors can only view Amina's unblurred photos after your explicit confirmation and mutual interest.
+            </p>
+<div class="pt-1 flex items-center space-x-2">
+<span class="inline-flex items-center text-[10px] font-semibold text-tertiary-container px-2 py-0.5 rounded-full bg-gold-light/40">
+                16px Frosted Privacy Active
+              </span>
+</div>
+</div>
+</article>
+<!-- Pillar 3: Formal Inquiries Filter -->
+<article class="bg-surface-container-lowest rounded-xl p-3.5 border border-primary/5 flex items-start space-x-3 transition-transform active:scale-[0.99]">
+<div class="w-10 h-10 rounded-lg bg-surface-warm-container text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">handshake</span>
+</div>
+<div class="space-y-0.5">
+<h3 class="font-title-sm text-title-sm text-primary">Serious Inquiries Only</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+              Instant notification whenever a candidate's family requests a formal meeting or asks for verification details.
+            </p>
+<div class="pt-1 flex items-center space-x-2">
+<span class="inline-flex items-center text-[10px] font-semibold text-primary px-2 py-0.5 rounded-full bg-primary-fixed/40">
+                Direct Family Protocol
+              </span>
+</div>
+</div>
+</article>
+<!-- Dignified Guidance Quote -->
+<div class="bg-primary/5 border-l-4 border-primary-container p-3 rounded-r-xl">
+<p class="font-body-sm text-body-sm text-primary italic leading-relaxed">
+            "Your sacred role protects her honor and ensures all prospective suitors approach with righteous intentions and transparent adab."
+          </p>
+</div>
+</section>
+<!-- Guardian Identity Confirmation Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-space-md border border-primary/10 shadow-sm space-y-3.5">
+<h2 class="font-title-sm text-title-sm text-primary font-bold">Guardian Attestation</h2>
+<!-- Checkbox 1: Legal / Religious Confirmation -->
+<label class="flex items-start space-x-3 cursor-pointer group">
+<div class="pt-0.5">
+<input checked="" class="w-5 h-5 rounded text-primary-container focus:ring-primary-container border-outline-variant bg-surface-container-low transition" type="checkbox"/>
+</div>
+<div class="flex-1">
+<p class="font-body-sm text-body-sm text-slate-text font-medium leading-snug">
+              I, <strong class="text-primary font-semibold">Tariq Al-Mansoor</strong>, confirm that I am Amina's biological father and consent to act as her designated Mahram Wali.
+            </p>
+</div>
+</label>
+<div class="border-t border-surface-container-high/60 pt-3">
+<!-- Toggle 2: Notifications -->
+<div class="flex items-center justify-between">
+<div class="space-y-0.5 pr-2">
+<p class="font-title-sm text-title-sm text-slate-text">Weekly Digest via WhatsApp</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Receive summary of new profile views and chaperone chats.</p>
+</div>
+<!-- Custom Styled Switch with Emerald Thumb & Sage Track -->
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-container after:border-outline-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage-soft"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Action Cluster -->
+<section class="space-y-3 pt-2">
+<!-- Primary Accept Button -->
+<button class="w-full h-12 bg-primary-container hover:bg-primary text-on-primary rounded-xl font-title-sm text-title-sm font-semibold flex items-center justify-center space-x-2 shadow-md shadow-primary/20 active:scale-[0.98] transition-all">
+<span>Accept Guardianship &amp; Enter Portal</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<!-- Secondary Delegation Button -->
+<button class="w-full h-11 bg-transparent border-1.5 border-primary/30 hover:border-primary text-primary rounded-xl font-label-lg text-label-lg font-semibold flex items-center justify-center space-x-1.5 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[18px]">family_restroom</span>
+<span>Delegate to Another Mahram (Uncle / Imam)</span>
+</button>
+</section>
+</div>
+<!-- Trust & Sharia Governance Footer -->
+<footer class="mt-space-xl px-margin text-center space-y-2 border-t border-surface-container pt-space-md">
+<div class="flex items-center justify-center space-x-4 text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+<span>Sharia-compliant governance</span>
+</span>
+<span class="text-outline">•</span>
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary-container">enhanced_encryption</span>
+<span>End-to-end encrypted</span>
+</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+        No app store download required • Standalone Web Portal for Chaperones
+      </p>
+<div class="pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant/70">
+          Barkat Nikah Guardian Portal © 1446 AH / 2025 CE. Built with sacred adab.
+        </span>
+</div>
+</footer>
+</main>
+</body></html>

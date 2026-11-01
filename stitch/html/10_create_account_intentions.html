@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account &amp; Sacred Pledge - Barkat Nikah</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Plus Jakarta Sans Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#ebc165",
+            "secondary-fixed": "#92f7c3",
+            "tertiary": "#322400",
+            "on-primary": "#ffffff",
+            "primary-fixed": "#c1ecd4",
+            "slate-text": "#1E293B",
+            "surface-warm-container": "#F4EFE6",
+            "sage-soft": "#74C69D",
+            "on-error": "#ffffff",
+            "surface-container": "#efeeea",
+            "outline-variant": "#c1c8c2",
+            "inverse-primary": "#a5d0b9",
+            "on-surface-variant": "#414844",
+            "tertiary-fixed": "#ffdf9e",
+            "secondary": "#006c48",
+            "on-primary-container": "#86af99",
+            "on-secondary-fixed-variant": "#005235",
+            "on-background": "#1b1c1a",
+            "inverse-on-surface": "#f2f0ed",
+            "on-tertiary-container": "#c8a149",
+            "on-error-container": "#93000a",
+            "on-surface": "#1b1c1a",
+            "surface-bright": "#fbf9f5",
+            "on-secondary-container": "#00734d",
+            "background": "#fbf9f5",
+            "surface-dim": "#dbdad6",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed": "#002114",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "gold-light": "#F7E7B4",
+            "on-primary-fixed-variant": "#274e3d",
+            "primary": "#012d1d",
+            "surface-variant": "#e4e2de",
+            "surface-container-low": "#f5f3ef",
+            "secondary-fixed-dim": "#75daa8",
+            "outline": "#717973",
+            "inverse-surface": "#30312e",
+            "emerald-deep": "#0D2318",
+            "primary-container": "#1b4332",
+            "secondary-container": "#92f7c3",
+            "surface-container-highest": "#e4e2de",
+            "primary-fixed-dim": "#a5d0b9",
+            "tertiary-container": "#4d3800",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed": "#002113",
+            "surface": "#fbf9f5",
+            "surface-ivory": "#FDFBF7",
+            "error-container": "#ffdad6",
+            "error": "#ba1a1a",
+            "privacy-scrim": "#1E293BCC",
+            "on-secondary": "#ffffff",
+            "on-tertiary-fixed": "#261a00",
+            "surface-container-high": "#eae8e4",
+            "surface-tint": "#3f6653"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "1.25rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400" }],
+            "headline-md-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+            "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-ivory text-on-surface antialiased min-h-screen flex justify-center selection:bg-secondary selection:text-on-secondary">
+<!-- Mobile Screen Container (412px wide for standard modern Android experience) -->
+<main class="w-full max-w-[430px] bg-surface-ivory min-h-screen flex flex-col relative pb-space-xl">
+<!-- Top Bar with Back Button, Step Progress, and Help Action (Semantic Shell suppressed due to linear onboarding flow) -->
+<header class="sticky top-0 z-40 bg-surface-ivory/95 backdrop-blur-md px-margin py-space-sm shadow-sm transition-all">
+<div class="flex items-center justify-between h-14">
+<!-- Back Navigation -->
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-surface-warm-container active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<!-- Step Indicator -->
+<div class="text-center">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Step 1 of 4</span>
+<p class="font-title-sm text-title-sm text-primary font-semibold">Account &amp; Sacred Intent</p>
+</div>
+<!-- Help / Support Icon -->
+<button aria-label="Help &amp; Guidance" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-warm-container active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+</div>
+<!-- Linear Stepper Progress Bar (25% for Step 1) -->
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden mt-1">
+<div class="bg-primary h-full rounded-full transition-all duration-500 ease-out" style="width: 25%;"></div>
+</div>
+</header>
+<!-- Main Scrollable Form Canvas -->
+<div class="px-margin flex-1 flex flex-col gap-space-lg pt-space-md">
+<!-- Hero Sacred Marriage Pledge Banner (Bento elevation level 1) -->
+<section class="bg-surface-container-lowest rounded-[20px] p-5 border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04),0px_1px_2px_rgba(27,67,50,0.03)] relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-28 h-28 bg-gold-light/40 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-warm-container text-tertiary-container flex items-center justify-center shrink-0 border border-gold-light/50">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+</div>
+<div>
+<h1 class="font-headline-md-mobile text-headline-md-mobile text-primary tracking-tight font-bold">
+              Begin with Bismillah
+            </h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+              Our platform is strictly dedicated to practicing Muslims seeking Nikah. Please confirm your sincere intention.
+            </p>
+</div>
+</div>
+<div class="mt-4 pt-3.5 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span class="font-label-sm text-label-sm font-semibold">Chaperone &amp; Wali Supported</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Halal Protocol</span>
+</div>
+</section>
+<!-- Section 1: Who are you creating this account for? -->
+<section class="flex flex-col gap-2.5">
+<label class="font-title-sm text-title-sm text-primary flex items-center justify-between">
+<span>Who are you creating this account for?</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span> Required
+          </span>
+</label>
+<div aria-label="Account creation identity" class="grid grid-cols-1 gap-2.5" role="radiogroup">
+<!-- Option 1: For Myself (Selected) -->
+<label class="flex items-center justify-between p-3.5 rounded-xl border-2 border-primary bg-surface-container-low cursor-pointer transition-all active:scale-[0.99] shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-on-primary">
+<div class="w-2 h-2 rounded-full bg-on-primary"></div>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-primary font-bold">For Myself</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Looking for a spouse directly with adab</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">person</span>
+</label>
+<!-- Option 2: For My Daughter / Sister -->
+<label class="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-all active:scale-[0.99]">
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border border-outline flex items-center justify-center"></div>
+<div>
+<p class="font-title-sm text-title-sm text-primary font-semibold">For My Daughter / Sister (Wali/Family)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Guardian or family managed courtship</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">family_restroom</span>
+</label>
+<!-- Option 3: For My Son / Brother -->
+<label class="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant/50 bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer transition-all active:scale-[0.99]">
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border border-outline flex items-center justify-center"></div>
+<div>
+<p class="font-title-sm text-title-sm text-primary font-semibold">For My Son / Brother</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Assisting a family member in search</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">supervisor_account</span>
+</label>
+</div>
+</section>
+<!-- Section 2: Basic Credentials -->
+<section class="flex flex-col gap-4">
+<div class="border-b border-outline-variant/30 pb-2">
+<h2 class="font-title-md text-title-md text-primary font-bold">Basic Credentials</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Accurate details safeguard our community trust.</p>
+</div>
+<!-- Full Legal Name Field -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-slate-text" for="full-name">Full Legal Name</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-[20px]">badge</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl pl-11 pr-4 py-3 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline" id="full-name" placeholder="Enter first and last name" type="text" value="Zayd Al-Mansoor"/>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5 text-secondary">
+<span class="material-symbols-outlined text-[15px]">shield</span>
+<span class="font-body-sm text-body-sm">Kept private until verified match</span>
+</div>
+</div>
+<!-- Gender Selector (Brother / Sister) -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-slate-text">Gender</label>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-primary bg-primary text-on-primary font-title-sm text-title-sm transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px]">man</span>
+<span>Brother</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low font-title-sm text-title-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">woman</span>
+<span>Sister</span>
+</button>
+</div>
+</div>
+<!-- Date of Birth with Age Verification Indicator -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-slate-text" for="dob">Date of Birth</label>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Must be 18+</span>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-[20px]">calendar_today</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl pl-11 pr-4 py-3 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" id="dob" type="date" value="1997-06-14"/>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">We calculate Islamic age &amp; ensure all members are legally adults.</p>
+</div>
+<!-- Mobile Phone Number with Country Code -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-slate-text" for="phone-number">Mobile Phone Number</label>
+<div class="flex gap-2">
+<!-- Country Selector -->
+<div class="relative shrink-0 w-28">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-xl pl-3 pr-8 py-3 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option value="+44">🇬🇧 +44</option>
+<option value="+1">🇺🇸 +1</option>
+<option value="+971">🇦🇪 +971</option>
+<option value="+966">🇸🇦 +966</option>
+<option value="+60">🇲🇾 +60</option>
+<option value="+92">🇵🇰 +92</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-3.5 text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
+</div>
+<!-- Input -->
+<div class="relative flex-1">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline" id="phone-number" placeholder="7123 456789" type="tel" value="7984 213904"/>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span> Used exclusively for secure 2FA SMS verification.
+          </span>
+</div>
+<!-- Password Field with Security Meter -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-slate-text" for="password">Create Password</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-[20px]">lock_clock</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl pl-11 pr-11 py-3 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" id="password" type="password" value="Barakah2025*Sacred"/>
+<button aria-label="Toggle password visibility" class="absolute right-3.5 text-on-surface-variant hover:text-primary" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+<!-- Security Meter -->
+<div class="flex flex-col gap-1 mt-1">
+<div class="flex gap-1.5 h-1.5 w-full">
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-outline-variant/40 rounded-full"></div>
+</div>
+<div class="flex justify-between items-center text-secondary font-label-sm text-label-sm">
+<span class="font-semibold">Strong password</span>
+<span class="text-on-surface-variant">Min. 8 characters</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Islamic Matrimonial Pledge & Honor Code -->
+<section class="bg-surface-container-lowest rounded-[20px] p-5 border border-primary/10 shadow-[0px_2px_8px_rgba(30,41,59,0.04)] flex flex-col gap-4">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-secondary text-[22px]">gavel</span>
+<h3 class="font-title-sm text-title-sm font-bold uppercase tracking-wide">Islamic Matrimonial Pledge &amp; Honor Code</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Marriage in Islam is half of one's deen. By continuing, you make an oath before Allah (SWT) and this sacred community.
+        </p>
+<div class="flex flex-col gap-3.5 pt-1">
+<!-- Checkbox 1 -->
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-primary border-outline-variant w-4 h-4 transition-all" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-slate-text leading-snug">
+              I affirm my intention is strictly for <strong>halal marriage (Nikah)</strong> in accordance with Islamic principles.
+            </span>
+</label>
+<!-- Checkbox 2 -->
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-primary border-outline-variant w-4 h-4 transition-all" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-slate-text leading-snug">
+              I commit to communicating with <strong>adab (courtesy), honesty</strong>, and respecting guardian/Wali involvement.
+            </span>
+</label>
+<!-- Checkbox 3 -->
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-primary border-outline-variant w-4 h-4 transition-all" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-slate-text leading-snug">
+              I agree to the <a class="text-secondary font-semibold underline decoration-secondary/40" href="#">Terms of Service</a> &amp; <a class="text-secondary font-semibold underline decoration-secondary/40" href="#">Privacy Covenant</a>.
+            </span>
+</label>
+</div>
+</section>
+<!-- Action Area: Primary CTA & Secondary Sign-in link -->
+<section class="flex flex-col gap-3.5 pt-2">
+<!-- Primary CTA Button -->
+<button class="w-full bg-primary-container hover:bg-primary text-on-primary font-title-sm text-title-sm font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]" type="button">
+<span>Continue to Islamic Practice &amp; Profile (Step 2)</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<!-- Secondary Sign-In Link -->
+<div class="text-center pt-1">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Already have an account? 
+            <a class="font-label-lg text-label-lg text-primary font-bold hover:underline ml-1" href="#">Sign In</a>
+</p>
+</div>
+</section>
+<!-- Footer Reassurance & Trust Badges -->
+<footer class="mt-4 pt-4 border-t border-outline-variant/30 text-center flex flex-col items-center gap-2.5">
+<div class="flex items-center justify-center gap-4 text-outline">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-[16px] text-secondary">encrypted</span>
+<span>256-bit Encryption</span>
+</div>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-[16px] text-secondary">visibility_off</span>
+<span>Modesty Guaranteed</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant/80 px-2 leading-relaxed">
+          Your data is encrypted. We never share contacts or display unblurred photos without explicit permission.
+        </p>
+</footer>
+</div>
+</main>
+</body></html>

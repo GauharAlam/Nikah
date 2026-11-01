@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Barkat Nikah - Chaperoned Match Chat</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed-dim": "#a5d0b9",
+            "on-secondary-container": "#00734d",
+            "privacy-scrim": "#1E293BCC",
+            "on-tertiary-fixed": "#261a00",
+            "primary-container": "#1b4332",
+            "inverse-on-surface": "#f2f0ed",
+            "tertiary-fixed-dim": "#ebc165",
+            "surface-container-lowest": "#ffffff",
+            "outline-variant": "#c1c8c2",
+            "surface-tint": "#3f6653",
+            "outline": "#717973",
+            "secondary-fixed-dim": "#75daa8",
+            "tertiary-fixed": "#ffdf9e",
+            "surface-warm-container": "#F4EFE6",
+            "background": "#fbf9f5",
+            "on-primary-fixed-variant": "#274e3d",
+            "tertiary-container": "#4d3800",
+            "on-error": "#ffffff",
+            "secondary-container": "#92f7c3",
+            "inverse-primary": "#a5d0b9",
+            "on-surface": "#1b1c1a",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005235",
+            "surface-container-high": "#eae8e4",
+            "surface": "#fbf9f5",
+            "on-primary-container": "#86af99",
+            "primary": "#012d1d",
+            "inverse-surface": "#30312e",
+            "gold-light": "#F7E7B4",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "slate-text": "#1E293B",
+            "surface-container": "#efeeea",
+            "tertiary": "#322400",
+            "on-background": "#1b1c1a",
+            "emerald-deep": "#0D2318",
+            "on-tertiary-container": "#c8a149",
+            "surface-dim": "#dbdad6",
+            "surface-ivory": "#FDFBF7",
+            "on-tertiary-fixed-variant": "#5b4300",
+            "surface-container-highest": "#e4e2de",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#002113",
+            "sage-soft": "#74C69D",
+            "error": "#ba1a1a",
+            "surface-bright": "#fbf9f5",
+            "on-primary": "#ffffff",
+            "surface-container-low": "#f5f3ef",
+            "secondary-fixed": "#92f7c3",
+            "on-surface-variant": "#414844",
+            "surface-variant": "#e4e2de",
+            "secondary": "#006c48",
+            "primary-fixed": "#c1ecd4",
+            "on-primary-fixed": "#002114"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "margin": "1.25rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "400" }],
+            "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "700" }],
+            "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "500" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.15px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400" }],
+            "headline-md-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.15px", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Hide scrollbar for topic cards horizontal flow */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased flex justify-center min-h-screen">
+<!-- Mobile Frame Container (Strict 4-column Android viewport layout) -->
+<div class="w-full max-w-md min-h-screen bg-surface flex flex-col relative shadow-2xl overflow-hidden pb-4">
+<!-- Android Status Bar Emulation -->
+<div class="w-full h-7 px-margin pt-1 flex justify-between items-center text-on-surface-variant z-40 bg-surface-ivory">
+<span class="font-label-sm text-label-sm font-semibold tracking-tight">09:41</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined" style="font-size: 14px;">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined" style="font-size: 14px;">wifi</span>
+<span class="material-symbols-outlined" style="font-size: 14px;">battery_full</span>
+</div>
+</div>
+<!-- Top App Bar / Dedicated Chaperoned Chat Header -->
+<header class="bg-surface-ivory text-primary shadow-sm flex flex-col z-30 sticky top-0 transition-shadow">
+<div class="flex items-center justify-between px-margin py-space-sm h-16 border-b border-surface-container">
+<!-- Back Navigation & Participant Bio snippet -->
+<div class="flex items-center gap-3">
+<button aria-label="Go back" class="p-1 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<!-- Avatar with presence badge -->
+<div class="relative">
+<div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-sage-soft/30 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A dignified portrait of a polite 30-year-old Muslim professional named Farhan with neat grooming, wearing a modest neutral linen collar shirt in soft natural lighting. The background features gentle cream and emerald hues with organic minimal ambiance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3NZKKAVDVM8N36ZtQOKkGRQADM7c6yt9RkPI5kpnVdPpCtyotKgdetS-55YGr_NL0dm4St4p2iFFCT8v6hCCsb2Odn_e2uyAM_bkmzukia7wmY8FDQbT26S8PPrZZXudDaaL875sMMraemEFkm-4gx3ThGGWY9EClafzYxFXOsb1IpFQFBheKC8qpnona_5eyESycHj9KeSn-G8E9UUjz8JX0ncys1_W_xv3NHPM8QwOzDHCWUOp8kg"/>
+</div>
+<!-- Active presence dot -->
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-secondary rounded-full ring-2 ring-surface-ivory"></span>
+</div>
+<!-- Name and Presence Status -->
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-title-sm text-title-sm text-primary font-bold">Farhan, 30</span>
+<span class="material-symbols-outlined text-secondary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+              Active now • London, UK
+            </span>
+</div>
+</div>
+<!-- Action / Details Icon -->
+<div class="flex items-center gap-1">
+<button aria-label="Conversation Settings and Wali Oversight" class="p-2 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Prominent Chaperone Banner Bar -->
+<div class="bg-surface-warm-container px-margin py-2 flex items-center justify-between border-b border-surface-container-high/60">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-size: 15px;">family_restroom</span>
+</div>
+<span class="font-label-md text-label-md text-slate-text font-semibold">
+            Wali Chaperoned Chat <span class="font-normal text-on-surface-variant">(Father added)</span>
+</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-emerald-deep/10 text-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield</span>
+          Active
+        </span>
+</div>
+</header>
+<!-- Adab Notice Callout -->
+<div class="mx-margin mt-3 mb-2 p-3 bg-surface-container-low rounded-xl border border-primary/10 flex items-start gap-2.5 shadow-sm">
+<span class="material-symbols-outlined text-secondary mt-0.5" style="font-size: 18px;">auto_stories</span>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-primary font-semibold">Adab Reminder</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 leading-relaxed">
+          Conversations are monitored by chaperones to ensure respectful, marriage-focused dialogue.
+        </p>
+</div>
+</div>
+<!-- Suggested Halal Intentions / Icebreaker Cards Strip -->
+<div class="py-1">
+<div class="px-margin flex items-center justify-between mb-1.5">
+<span class="font-label-md text-label-md text-on-surface-variant font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-tertiary-container" style="font-size: 14px;">lightbulb</span>
+          Halal Marriage Intentions
+        </span>
+<button class="font-label-sm text-label-sm text-secondary font-semibold hover:underline" type="button">Explore all</button>
+</div>
+<!-- Horizontal scrolling chips -->
+<div class="flex gap-2.5 overflow-x-auto px-margin no-scrollbar pb-1">
+<!-- Topic Card 1 -->
+<button class="shrink-0 max-w-[240px] text-left p-2.5 rounded-xl bg-surface-container-lowest border border-primary/10 hover:border-secondary transition-all shadow-sm active:scale-98" type="button">
+<div class="flex items-center gap-1.5 text-secondary font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">home</span>
+<span>Family Dynamics</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-text line-clamp-2">
+            Suggested Topic: Family expectations &amp; living arrangements
+          </p>
+</button>
+<!-- Topic Card 2 -->
+<button class="shrink-0 max-w-[240px] text-left p-2.5 rounded-xl bg-surface-container-lowest border border-primary/10 hover:border-secondary transition-all shadow-sm active:scale-98" type="button">
+<div class="flex items-center gap-1.5 text-on-tertiary-container font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">payments</span>
+<span>Financial Values</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-text line-clamp-2">
+            Suggested Topic: Financial approach to Mahr &amp; household expenses
+          </p>
+</button>
+<!-- Topic Card 3 -->
+<button class="shrink-0 max-w-[220px] text-left p-2.5 rounded-xl bg-surface-container-lowest border border-primary/10 hover:border-secondary transition-all shadow-sm active:scale-98" type="button">
+<div class="flex items-center gap-1.5 text-secondary font-label-sm text-label-sm mb-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">mosque</span>
+<span>Spiritual Goals</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-text line-clamp-2">
+            Suggested Topic: Daily prayer habits &amp; community service
+          </p>
+</button>
+</div>
+</div>
+<!-- Chat Stream Canvas -->
+<main class="flex-1 px-margin py-3 overflow-y-auto space-y-4 flex flex-col justify-end">
+<!-- Timestamp divider -->
+<div class="flex items-center justify-center my-2">
+<span class="font-label-sm text-label-sm px-3 py-1 rounded-full bg-surface-container text-on-surface-variant font-medium">
+          Today • Jummah
+        </span>
+</div>
+<!-- Candidate Message Bubble (Farhan) -->
+<div class="flex items-end gap-2 max-w-[85%] self-start">
+<div class="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-surface-container mb-1">
+<img class="w-full h-full object-cover" data-alt="Small thumbnail avatar of Farhan in gentle profile view, displaying modest composure and polite disposition with natural soft warm background tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBv6z8Nb2DYfb-kt_sNK8iF7ow_f1W4zfIVio7-CArbOnFvwheOWKmUyCFg4rVSvI7rddr5C8Fq7akchsPwDs0qX87lEqDJqtgfHfRCJv6NNRrA9WDCjxC-GudpXHy3Gl0NxVfBgQv63559CLa47AtOs19LqCP5cWpziCyOv02WQ1-hOAxCQAwCLLq_sZL2j7CrwptEF1LNb_05ahv1rgy8v1CFtk9-RyRqe97qWU6jgLlmururG79IWw"/>
+</div>
+<div class="flex flex-col items-start">
+<div class="bg-surface-container-lowest p-3.5 rounded-2xl rounded-bl-sm border border-primary/5 shadow-sm">
+<p class="font-body-md text-body-md text-slate-text leading-relaxed">
+              As-salamu alaykum! I read that you're passionate about community work. How do you balance that with career goals?
+            </p>
+</div>
+<span class="font-label-sm text-label-sm text-outline mt-1 ml-1">4:12 PM</span>
+</div>
+</div>
+<!-- Guardian Chaperone Activity Event Card -->
+<div class="w-full my-2 flex justify-center">
+<div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-warm-container/80 border border-on-tertiary-container/30 shadow-xs">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-size: 15px;">visibility</span>
+<span class="font-label-sm text-label-sm text-slate-text font-medium">
+            Wali Tariq viewed this conversation at 4:15 PM
+          </span>
+<span class="material-symbols-outlined text-secondary" style="font-size: 14px;">check</span>
+</div>
+</div>
+<!-- Current User Message Bubble -->
+<div class="flex items-end gap-2 max-w-[85%] self-end">
+<div class="flex flex-col items-end">
+<div class="bg-primary-container text-surface-ivory p-3.5 rounded-2xl rounded-br-sm shadow-sm">
+<p class="font-body-md text-body-md leading-relaxed text-surface-container-lowest">
+              Wa alaykum as-salam! It's very central to my routine. Insha'Allah I prioritize it on weekends...
+            </p>
+</div>
+<div class="flex items-center gap-1 mt-1 mr-1">
+<span class="font-label-sm text-label-sm text-outline">4:18 PM</span>
+<span class="material-symbols-outlined text-secondary" style="font-size: 14px;">done_all</span>
+</div>
+</div>
+</div>
+<!-- Live Typing or Gentle Status Indicator -->
+<div class="flex items-center gap-2 self-start pl-9 py-1">
+<div class="flex space-x-1">
+<span class="w-1.5 h-1.5 bg-outline-variant rounded-full animate-bounce"></span>
+<span class="w-1.5 h-1.5 bg-outline-variant rounded-full animate-bounce [animation-delay:0.2s]"></span>
+<span class="w-1.5 h-1.5 bg-outline-variant rounded-full animate-bounce [animation-delay:0.4s]"></span>
+</div>
+<span class="font-label-sm text-label-sm text-outline italic">Farhan is composing a response</span>
+</div>
+</main>
+<!-- Chat Input Section (Halal controls, polite audio note, icebreaker picker) -->
+<footer class="bg-surface-ivory border-t border-surface-container px-margin pt-2.5 pb-2">
+<!-- Quick Intention Helper Actions -->
+<div class="flex items-center gap-2 mb-2">
+<button class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm hover:bg-surface-warm-container transition-colors" type="button">
+<span class="material-symbols-outlined text-secondary" style="font-size: 14px;">forum</span>
+<span>Propose Icebreaker</span>
+</button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm hover:bg-surface-warm-container transition-colors" type="button">
+<span class="material-symbols-outlined text-tertiary-container" style="font-size: 14px;">volunteer_activism</span>
+<span>Schedule Wali Call</span>
+</button>
+</div>
+<!-- Main Input Bar -->
+<div class="flex items-end gap-2">
+<!-- Icebreaker & Attachment Tray Trigger -->
+<button aria-label="Open Islamic Icebreakers" class="p-2.5 rounded-full text-primary hover:bg-surface-warm-container active:scale-95 transition-transform flex items-center justify-center bg-surface-container-low border border-primary/10" type="button">
+<span class="material-symbols-outlined" style="font-size: 20px;">menu_book</span>
+</button>
+<!-- Text Input Field with floating feel -->
+<div class="flex-1 relative bg-surface-container-lowest rounded-2xl border border-outline/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all flex items-center px-3 py-1.5">
+<textarea class="w-full bg-transparent border-0 p-0 text-on-surface font-body-md text-body-md placeholder:text-outline focus:ring-0 focus:outline-none resize-none max-h-24" placeholder="Type a respectful message..." rows="1"></textarea>
+<!-- Halal Audio Note Button -->
+<button aria-label="Record polite audio note" class="p-1 rounded-full text-on-surface-variant hover:text-primary transition-colors ml-1" type="button">
+<span class="material-symbols-outlined" style="font-size: 20px;">mic</span>
+</button>
+</div>
+<!-- Send Button -->
+<button aria-label="Send message" class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-emerald-deep active:scale-95 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined" style="font-size: 20px;">send</span>
+</button>
+</div>
+<!-- Android Home Bar Pill -->
+<div class="w-full flex justify-center pt-3 pb-1">
+<div class="w-32 h-1 bg-on-surface-variant/20 rounded-full"></div>
+</div>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isUser(uid) { return signedIn() && request.auth.uid == uid; }
+    function isApproved() { return signedIn() && request.auth.token.approved == true; }
+    function isReviewer() { return signedIn() && request.auth.token.reviewer == true; }
+
+    // Limits and option lists.
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // The onboarding draft is the only member-written profile data. Nothing
+    // here reaches other members until a reviewer approves it.
+    match /drafts/{uid} {
+      allow read: if isUser(uid) || isReviewer();
+      allow create, update: if isUser(uid)
+        && request.resource.size() < 60
+        && !request.resource.data.keys().hasAny(['stage', 'approved', 'verified', 'entitlement', 'credits']);
+      allow delete: if false;
+    }
+
+    // Stage, quotas, credits and entitlement. Server only.
+    match /accounts/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
+
+      match /documents/{docType} {
+        allow read: if isUser(uid);
+        allow write: if false;
+      }
+      match /notifications/{id} {
+        allow read: if isUser(uid);
+        allow update: if isUser(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;
+      }
+      match /devices/{token} {
+        allow read, write: if isUser(uid);
+      }
+    }
+
+    // Published cards are served by getProfiles / fetchIntroductions, which
+    // apply block and gender rules. No direct reads, so nothing can be scraped.
+    match /profiles/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
+    }
+
+    match /proposals/{id} {
+      allow read: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow write: if false;
+    }
+    match /contactRequests/{id} {
+      allow read: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow write: if false;
+    }
+    match /contactShares/{pair} {
+      allow read: if signedIn() && request.auth.uid in resource.data.users;
+      allow write: if false;
+    }
+
+    match /matches/{pair} {
+      function participant() {
+        return signedIn() && request.auth.uid in get(/databases/$(database)/documents/matches/$(pair)).data.users;
+      }
+      function open() {
+        return get(/databases/$(database)/documents/matches/$(pair)).data.status == 'active';
+      }
+      allow read: if signedIn() && request.auth.uid in resource.data.users;
+      // A member may only move their own read marker.
+      allow update: if signedIn() && request.auth.uid in resource.data.users
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+        && request.resource.data.readAt.diff(resource.data.readAt).affectedKeys().hasOnly([request.auth.uid]);
+      allow create, delete: if false;
+
+      match /messages/{id} {
+        allow read: if participant();
+        allow create: if participant() && open()
+          && request.resource.data.keys().hasOnly(['sender', 'text', 'sentAt'])
+          && request.resource.data.sender == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.sentAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+
+    // Reports, blocks, hidden profiles and everything else: server only.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

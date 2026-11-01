@@ -1,0 +1,418 @@
+import 'dart:convert';
+
+import 'wali.dart';
+
+enum AccountFor { myself, daughterSister, sonBrother }
+
+extension AccountForX on AccountFor {
+  String get label => switch (this) {
+    AccountFor.myself => 'Myself',
+    AccountFor.daughterSister => 'Daughter / Sister',
+    AccountFor.sonBrother => 'Son / Brother',
+  };
+
+  String get detail => switch (this) {
+    AccountFor.myself => 'I am seeking a spouse for myself with my Wali\'s blessings.',
+    AccountFor.daughterSister =>
+      'I am supervising this search on behalf of my daughter or sister.',
+    AccountFor.sonBrother =>
+      'I am supervising this search on behalf of my son or brother.',
+  };
+}
+
+enum Gender { male, female }
+
+extension GenderX on Gender {
+  String get label => switch (this) {
+    Gender.male => 'Brother',
+    Gender.female => 'Sister',
+  };
+
+  String get title => switch (this) {
+    Gender.male => 'Male',
+    Gender.female => 'Female',
+  };
+}
+
+enum PrayerFrequency { always, mostly, growing }
+
+extension PrayerFrequencyX on PrayerFrequency {
+  String get label => switch (this) {
+    PrayerFrequency.always => 'Alhamdulillah, always',
+    PrayerFrequency.mostly => 'Most days, striving better',
+    PrayerFrequency.growing => 'Growing commitment',
+  };
+
+  String? get detail => switch (this) {
+    PrayerFrequency.always => 'Five daily salah on time, jama\'ah when able',
+    PrayerFrequency.mostly => 'Consistent effort with occasional lapses',
+    PrayerFrequency.growing => 'Recently returning to regular worship',
+  };
+}
+
+enum QuranComfort { fluentReciter, intermediate, beginner }
+
+extension QuranComfortX on QuranComfort {
+  String get label => switch (this) {
+    QuranComfort.fluentReciter => 'Fluent reciter',
+    QuranComfort.intermediate => 'Intermediate',
+    QuranComfort.beginner => 'Beginner',
+  };
+}
+
+/// The ward account — built through the 4-step onboarding and shown in
+/// profile / edit screens.
+class WardProfile {
+  final String displayName;
+  final Gender gender;
+  final DateTime? dateOfBirth;
+  final String phoneCode;
+  final String phone;
+  final String email;
+  final String city;
+  final String country;
+  final String education;
+  final String profession;
+  final PrayerFrequency prayerFrequency;
+  final List<String> extraPractices;
+  final QuranComfort quranComfort;
+  final List<String> halalLifestyle;
+  final String timeline;
+  final String relocation;
+  final String aboutMe;
+  final AccountFor mode;
+  final Guardian? guardian;
+  final bool waliVerified;
+  final DateTime? updatedAt;
+  final String managedBy;
+  final bool hasGender;
+  final String maritalStatus;
+  final String marriageReadiness;
+  final String homeState;
+  final String workCity;
+  final bool workSameAsHome;
+  final String caste;
+  final String partnerCaste;
+  final String height;
+  final List<String> almaMaters;
+  final String qualification;
+  final String incomeRange;
+  final String company;
+  final List<String> photos;
+  final int onboardingStep;
+
+  const WardProfile({
+    this.displayName = '',
+    this.gender = Gender.female,
+    this.dateOfBirth,
+    this.phoneCode = '+91',
+    this.phone = '',
+    this.email = '',
+    this.city = '',
+    this.country = '',
+    this.education = '',
+    this.profession = '',
+    this.prayerFrequency = PrayerFrequency.always,
+    this.extraPractices = const [],
+    this.quranComfort = QuranComfort.intermediate,
+    this.halalLifestyle = const [],
+    this.timeline = 'Nikah: 6-12 mos',
+    this.relocation = 'Open to discuss',
+    this.aboutMe = '',
+    this.mode = AccountFor.myself,
+    this.guardian,
+    this.waliVerified = false,
+    this.updatedAt,
+    this.managedBy = 'self',
+    this.hasGender = false,
+    this.maritalStatus = '',
+    this.marriageReadiness = '',
+    this.homeState = '',
+    this.workCity = '',
+    this.workSameAsHome = true,
+    this.caste = '',
+    this.partnerCaste = '',
+    this.height = '',
+    this.almaMaters = const <String>[],
+    this.qualification = '',
+    this.incomeRange = '',
+    this.company = '',
+    this.photos = const <String>[],
+    this.onboardingStep = 1,
+  });
+
+  WardProfile copyWith({
+    String? displayName,
+    Gender? gender,
+    DateTime? dateOfBirth,
+    String? phoneCode,
+    String? phone,
+    String? email,
+    String? city,
+    String? country,
+    String? education,
+    String? profession,
+    PrayerFrequency? prayerFrequency,
+    List<String>? extraPractices,
+    QuranComfort? quranComfort,
+    List<String>? halalLifestyle,
+    String? timeline,
+    String? relocation,
+    String? aboutMe,
+    AccountFor? mode,
+    Guardian? guardian,
+    bool? waliVerified,
+    DateTime? updatedAt,
+    String? managedBy,
+    bool? hasGender,
+    String? maritalStatus,
+    String? marriageReadiness,
+    String? homeState,
+    String? workCity,
+    bool? workSameAsHome,
+    String? caste,
+    String? partnerCaste,
+    String? height,
+    List<String>? almaMaters,
+    String? qualification,
+    String? incomeRange,
+    String? company,
+    List<String>? photos,
+    int? onboardingStep,
+  }) {
+    return WardProfile(
+      displayName: displayName ?? this.displayName,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      phoneCode: phoneCode ?? this.phoneCode,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      city: city ?? this.city,
+      country: country ?? this.country,
+      education: education ?? this.education,
+      profession: profession ?? this.profession,
+      prayerFrequency: prayerFrequency ?? this.prayerFrequency,
+      extraPractices: extraPractices ?? this.extraPractices,
+      quranComfort: quranComfort ?? this.quranComfort,
+      halalLifestyle: halalLifestyle ?? this.halalLifestyle,
+      timeline: timeline ?? this.timeline,
+      relocation: relocation ?? this.relocation,
+      aboutMe: aboutMe ?? this.aboutMe,
+      mode: mode ?? this.mode,
+      guardian: guardian ?? this.guardian,
+      waliVerified: waliVerified ?? this.waliVerified,
+      updatedAt: updatedAt ?? this.updatedAt,
+      managedBy: managedBy ?? this.managedBy,
+      hasGender: hasGender ?? this.hasGender,
+      maritalStatus: maritalStatus ?? this.maritalStatus,
+      marriageReadiness: marriageReadiness ?? this.marriageReadiness,
+      homeState: homeState ?? this.homeState,
+      workCity: workCity ?? this.workCity,
+      workSameAsHome: workSameAsHome ?? this.workSameAsHome,
+      caste: caste ?? this.caste,
+      partnerCaste: partnerCaste ?? this.partnerCaste,
+      height: height ?? this.height,
+      almaMaters: almaMaters ?? this.almaMaters,
+      qualification: qualification ?? this.qualification,
+      incomeRange: incomeRange ?? this.incomeRange,
+      company: company ?? this.company,
+      photos: photos ?? this.photos,
+      onboardingStep: onboardingStep ?? this.onboardingStep,
+    );
+  }
+
+  int? get age {
+    final dob = dateOfBirth;
+    if (dob == null) return null;
+    final now = DateTime.now();
+    var years = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      years--;
+    }
+    return years;
+  }
+
+  Map<String, dynamic> toJson() => {
+    'displayName': displayName,
+    'gender': gender.name,
+    'dateOfBirth': dateOfBirth?.millisecondsSinceEpoch,
+    'phoneCode': phoneCode,
+    'phone': phone,
+    'email': email,
+    'city': city,
+    'country': country,
+    'education': education,
+    'profession': profession,
+    'prayerFrequency': prayerFrequency.name,
+    'extraPractices': extraPractices,
+    'quranComfort': quranComfort.name,
+    'halalLifestyle': halalLifestyle,
+    'timeline': timeline,
+    'relocation': relocation,
+    'aboutMe': aboutMe,
+    'mode': mode.name,
+    'guardian': guardian?.toJson(),
+    'waliVerified': waliVerified,
+    'updatedAt': updatedAt?.millisecondsSinceEpoch,
+    'managedBy': managedBy,
+    'hasGender': hasGender,
+    'maritalStatus': maritalStatus,
+    'marriageReadiness': marriageReadiness,
+    'homeState': homeState,
+    'workCity': workCity,
+    'workSameAsHome': workSameAsHome,
+    'caste': caste,
+    'partnerCaste': partnerCaste,
+    'height': height,
+    'almaMaters': almaMaters,
+    'qualification': qualification,
+    'incomeRange': incomeRange,
+    'company': company,
+    'photos': photos,
+    'onboardingStep': onboardingStep,
+  };
+
+  static WardProfile fromJson(Map<String, dynamic> json) => WardProfile(
+    displayName: json['displayName'] as String? ?? '',
+    gender: Gender.values.asNameMap()[json['gender']] ?? Gender.female,
+    dateOfBirth: json['dateOfBirth'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(json['dateOfBirth'] as int),
+    phoneCode: json['phoneCode'] as String? ?? '+91',
+    phone: json['phone'] as String? ?? '',
+    email: json['email'] as String? ?? '',
+    city: json['city'] as String? ?? '',
+    country: json['country'] as String? ?? '',
+    education: json['education'] as String? ?? '',
+    profession: json['profession'] as String? ?? '',
+    prayerFrequency:
+        PrayerFrequency.values.asNameMap()[json['prayerFrequency']] ??
+        PrayerFrequency.always,
+    extraPractices:
+        (json['extraPractices'] as List?)?.cast<String>() ?? const [],
+    quranComfort: QuranComfort.values.asNameMap()[json['quranComfort']] ??
+        QuranComfort.intermediate,
+    halalLifestyle:
+        (json['halalLifestyle'] as List?)?.cast<String>() ?? const [],
+    timeline: json['timeline'] as String? ?? 'Nikah: 6-12 mos',
+    relocation: json['relocation'] as String? ?? 'Open to discuss',
+    aboutMe: json['aboutMe'] as String? ?? '',
+    mode: AccountFor.values.asNameMap()[json['mode']] ?? AccountFor.myself,
+    guardian: json['guardian'] == null
+        ? null
+        : Guardian.fromJson((json['guardian'] as Map).cast<String, dynamic>()),
+    waliVerified: json['waliVerified'] as bool? ?? false,
+    updatedAt: json['updatedAt'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int),
+    managedBy: json['managedBy'] as String? ?? 'self',
+    hasGender: json['hasGender'] as bool? ?? false,
+    maritalStatus: json['maritalStatus'] as String? ?? '',
+    marriageReadiness: json['marriageReadiness'] as String? ?? '',
+    homeState: json['homeState'] as String? ?? '',
+    workCity: json['workCity'] as String? ?? '',
+    workSameAsHome: json['workSameAsHome'] as bool? ?? true,
+    caste: json['caste'] as String? ?? '',
+    partnerCaste: json['partnerCaste'] as String? ?? '',
+    height: json['height'] as String? ?? '',
+    almaMaters: (json['almaMaters'] as List?)?.cast<String>() ?? const <String>[],
+    qualification: json['qualification'] as String? ?? '',
+    incomeRange: json['incomeRange'] as String? ?? '',
+    company: json['company'] as String? ?? '',
+    photos: (json['photos'] as List?)?.cast<String>() ?? const <String>[],
+    onboardingStep: json['onboardingStep'] as int? ?? 1,
+  );
+
+  /// Full E.164 number, or empty when unset.
+  String get e164Phone {
+    final String digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    return digits.isEmpty ? '' : '$phoneCode$digits';
+  }
+
+  /// The fields stored in `drafts/{uid}`. Must stay in step with `Draft` in
+  /// `functions/src/rules.ts`.
+  Map<String, dynamic> toDraft({required bool? qualificationGraduate}) =>
+      <String, dynamic>{
+        'managedBy': managedBy,
+        'fullName': displayName,
+        if (hasGender) 'gender': gender.name,
+        'maritalStatus': maritalStatus,
+        'marriageReadiness': marriageReadiness,
+        'homeCity': city,
+        'homeState': homeState,
+        'homeCountry': country,
+        'workCity': workSameAsHome ? city : workCity,
+        'workSameAsHome': workSameAsHome,
+        'dateOfBirth': dateOfBirth?.millisecondsSinceEpoch,
+        'caste': caste,
+        'partnerCaste': partnerCaste,
+        'height': height,
+        'phoneCode': phoneCode,
+        'phoneNumber': phone,
+        'phone': e164Phone,
+        'almaMaters': almaMaters,
+        'qualification': qualification,
+        'qualificationGraduate': ?qualificationGraduate,
+        'profession': profession,
+        'incomeRange': incomeRange,
+        'company': company,
+        'photos': photos,
+        'aboutMe': aboutMe,
+        'step': onboardingStep,
+      };
+
+  static WardProfile fromDraft(Map<String, dynamic> d) => WardProfile(
+        managedBy: d['managedBy'] as String? ?? 'self',
+        displayName: d['fullName'] as String? ?? '',
+        hasGender: d['gender'] != null,
+        gender: Gender.values.asNameMap()[d['gender']] ?? Gender.female,
+        maritalStatus: d['maritalStatus'] as String? ?? '',
+        marriageReadiness: d['marriageReadiness'] as String? ?? '',
+        city: d['homeCity'] as String? ?? '',
+        homeState: d['homeState'] as String? ?? '',
+        country: d['homeCountry'] as String? ?? '',
+        workCity: d['workCity'] as String? ?? '',
+        workSameAsHome: d['workSameAsHome'] as bool? ?? true,
+        dateOfBirth: d['dateOfBirth'] == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(d['dateOfBirth'] as int),
+        caste: d['caste'] as String? ?? '',
+        partnerCaste: d['partnerCaste'] as String? ?? '',
+        height: d['height'] as String? ?? '',
+        phoneCode: d['phoneCode'] as String? ?? '+91',
+        phone: d['phoneNumber'] as String? ?? '',
+        almaMaters: (d['almaMaters'] as List?)?.cast<String>() ?? const <String>[],
+        qualification: d['qualification'] as String? ?? '',
+        profession: d['profession'] as String? ?? '',
+        incomeRange: d['incomeRange'] as String? ?? '',
+        company: d['company'] as String? ?? '',
+        photos: (d['photos'] as List?)?.cast<String>() ?? const <String>[],
+        aboutMe: d['aboutMe'] as String? ?? '',
+        onboardingStep: d['step'] as int? ?? 1,
+      );
+
+  static String encode(WardProfile p) => jsonEncode(p.toJson());
+
+  static WardProfile? decode(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    final dynamic decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return null;
+    return WardProfile.fromJson(decoded);
+  }
+
+  /// Fake ward persona used across guardian-side demo screens.
+  static const WardProfile demoWard = WardProfile(
+    displayName: 'Amina Al-Mansoor',
+    gender: Gender.female,
+    phoneCode: '+44',
+    phone: '7700 900189',
+    email: 'amina@example.com',
+    city: 'London',
+    education: 'Pharmacy — King\'s College',
+    profession: 'Community Pharmacist',
+    mode: AccountFor.myself,
+    guardian: Guardian.seed,
+    waliVerified: true,
+  );
+}
