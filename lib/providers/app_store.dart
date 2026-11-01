@@ -100,7 +100,7 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> removePhoto(String stored);
   Future<void> submitProfile();
   void submitEdits();
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn});
   List<VerificationDoc> get verificationDocs;
   bool get isBarkatVerified;
   int get verificationProgress;
@@ -118,6 +118,9 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> loadMoreIntroductions();
   void markProfileViewed(String id);
   void markIncompatible(String matchId);
+
+  /// One page of Search Rishtey results.
+  Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor});
 
   // ─── Proposals and contact ────────────────────────────────────────────────
   Proposal? incomingProposal(String matchId);
@@ -150,8 +153,23 @@ abstract class AppStore extends ChangeNotifier {
   void sendMessage(String matchId, String text);
   void unmatch(String matchId);
   bool isBlocked(String matchId);
-  void blockProfile(String matchId);
-  void reportProfile(String matchId, String reason);
+
+  /// Both complete only once the server has accepted the action.
+  Future<void> blockProfile(String matchId);
+  Future<void> reportProfile(String matchId, String reason);
+
+  /// Conversations stream only while on screen.
+  void openThread(String matchId) {}
+  void closeThread() {}
+  bool isThreadOpen(String matchId) => isApproved(matchId);
+  bool isSeen(String matchId, ChatMessage message) => false;
+  void retryMessage(String matchId, String messageId) {}
+  Future<void> loadOlderMessages() async {}
+  bool get reachedChatStart => true;
+
+  /// Relationships that ended, and contact requests still waiting.
+  List<MatchProfile> get closedMatches => const <MatchProfile>[];
+  List<MatchProfile> get pendingContacts => const <MatchProfile>[];
 
   // ─── Nikah Journey ────────────────────────────────────────────────────────
   JourneyStep journeyStep(String matchId);

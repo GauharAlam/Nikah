@@ -2,6 +2,9 @@ import 'dart:convert';
 
 enum MessageSender { user, match, system, chaperone }
 
+/// Delivery of a message this member wrote. Server messages are always [sent].
+enum MessageState { sent, sending, failed }
+
 class ChatMessage {
   final String id;
   final String text;
@@ -9,6 +12,7 @@ class ChatMessage {
   final DateTime createdAt;
   final MessageSender sender;
   final String? senderName;
+  final MessageState state;
 
   const ChatMessage({
     required this.id,
@@ -17,7 +21,18 @@ class ChatMessage {
     required this.createdAt,
     required this.sender,
     this.senderName,
+    this.state = MessageState.sent,
   });
+
+  ChatMessage withState(MessageState next) => ChatMessage(
+        id: id,
+        text: text,
+        time: time,
+        createdAt: createdAt,
+        sender: sender,
+        senderName: senderName,
+        state: next,
+      );
 
   Map<String, dynamic> toJson() => {
     'id': id,

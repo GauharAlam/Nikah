@@ -109,6 +109,7 @@ class WardProfile {
   final bool dataConsent;
   final bool candidateConsent;
   final String inviteCode;
+  final bool nearbyOptIn;
   final String preferredLanguage;
   final String familyType;
   final String familyBackground;
@@ -167,6 +168,7 @@ class WardProfile {
     this.dataConsent = false,
     this.candidateConsent = false,
     this.inviteCode = '',
+    this.nearbyOptIn = false,
     this.preferredLanguage = '',
     this.familyType = '',
     this.familyBackground = '',
@@ -226,6 +228,7 @@ class WardProfile {
     bool? dataConsent,
     bool? candidateConsent,
     String? inviteCode,
+    bool? nearbyOptIn,
     String? preferredLanguage,
     String? familyType,
     String? familyBackground,
@@ -284,6 +287,7 @@ class WardProfile {
       dataConsent: dataConsent ?? this.dataConsent,
       candidateConsent: candidateConsent ?? this.candidateConsent,
       inviteCode: inviteCode ?? this.inviteCode,
+      nearbyOptIn: nearbyOptIn ?? this.nearbyOptIn,
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
       familyType: familyType ?? this.familyType,
       familyBackground: familyBackground ?? this.familyBackground,
@@ -551,6 +555,7 @@ class WardProfile {
         dataConsent: d['dataConsent'] as bool? ?? false,
         candidateConsent: d['candidateConsent'] as bool? ?? false,
         inviteCode: d['inviteCode'] as String? ?? '',
+        nearbyOptIn: d['nearbyOptIn'] as bool? ?? false,
         preferredLanguage: d['preferredLanguage'] as String? ?? '',
         familyType: d['familyType'] as String? ?? '',
         familyBackground: d['familyBackground'] as String? ?? '',

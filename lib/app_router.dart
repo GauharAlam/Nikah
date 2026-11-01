@@ -35,6 +35,7 @@ import 'screens/premium_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/proposals_screen.dart';
 import 'screens/schedule_meeting_screen.dart';
+import 'screens/search_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/verification_screen.dart';
 import 'screens/wali_hub_screen.dart';
@@ -60,6 +61,7 @@ class AppRoutes {
   static const String homeChats = '/home/chat';
   static const String homeProfile = '/home/profile';
   static const String filters = '/filters';
+  static const String search = '/search';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String about = '/about';
@@ -258,6 +260,7 @@ GoRouter buildRouter(AppStore store) {
             ScheduleMeetingScreen(matchId: state.pathParameters['id']!),
       ),
       GoRoute(path: AppRoutes.filters, builder: (_, _) => const FiltersScreen()),
+      GoRoute(path: AppRoutes.search, builder: (_, _) => const SearchScreen()),
       GoRoute(
         path: AppRoutes.notifications,
         builder: (_, _) => const NotificationsScreen(),

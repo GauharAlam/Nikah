@@ -35,8 +35,21 @@ class FakeBackend implements Backend {
   Object? failNext;
   Object? failDraft;
 
+  /// Fails only the next call whose name starts with this.
+  String? failOn;
+  Object? failSend;
+  String lastQuery = '';
+  bool lastNearby = false;
+  int messageListeners = 0;
+  List<ChatMessage> olderPage = <ChatMessage>[];
+  final List<String> sentIds = <String>[];
+
   Future<void> _record(String call) async {
     calls.add(call);
+    if (failOn != null && call.startsWith(failOn!)) {
+      failOn = null;
+      throw const BackendException('refused');
+    }
     final Object? failure = failNext;
     failNext = null;
     if (failure != null) throw failure;
@@ -87,7 +100,9 @@ class FakeBackend implements Backend {
   Future<void> deletePhoto(String storagePath) => _record('deletePhoto');
 
   @override
-  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor) async {
+  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor, {bool nearby = false}) async {
+    lastQuery = filters.query;
+    lastNearby = nearby;
     await _record('fetchIntroductions:$cursor');
     return pages.isEmpty ? const IntroductionPage(<MatchProfile>[], null) : pages.removeAt(0);
   }
@@ -121,10 +136,22 @@ class FakeBackend implements Backend {
   @override
   Stream<List<MatchThread>> watchMatches(String uid) => matches.stream;
   @override
-  Stream<List<ChatMessage>> watchMessages(String pairId, String uid) => messages.stream;
+  Stream<List<ChatMessage>> watchMessages(String pairId, String uid) {
+    messageListeners++;
+    return messages.stream;
+  }
+
   @override
-  Future<void> sendMessage(String pairId, String uid, String text) =>
-      _record('message:$pairId:$text');
+  Future<List<ChatMessage>> olderMessages(String pairId, String uid, DateTime before) async => olderPage;
+  @override
+  Future<void> sendMessage(String pairId, String uid, String text, {required String id}) async {
+    sentIds.add(id);
+    final Object? failure = failSend;
+    failSend = null;
+    if (failure != null) throw failure;
+    await _record('message:$pairId:$text');
+  }
+
   @override
   Future<void> markThreadRead(String pairId, String uid) => _record('read:$pairId');
   @override
@@ -134,7 +161,7 @@ class FakeBackend implements Backend {
   @override
   Future<void> reportProfile(String target, String reason) => _record('report:$target:$reason');
   @override
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) =>
       _record('privacy:$photoPrivacy');
   @override
   Future<void> touchActive() => _record('touchActive');

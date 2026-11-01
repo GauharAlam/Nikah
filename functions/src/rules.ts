@@ -247,7 +247,7 @@ export interface Filters {
   country?: string; query?: string;
 }
 export const ANY = 'No preference';
-export const PREMIUM_FILTERS: (keyof Filters)[] = ['education', 'profession', 'location'];
+export const PREMIUM_FILTERS: (keyof Filters)[] = ['education', 'profession', 'location', 'country'];
 
 /** Premium-gated filters are dropped server-side for free members. */
 export function allowedFilters(f: Filters, premium: boolean): Filters {

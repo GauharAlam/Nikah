@@ -84,17 +84,19 @@ class ProfileController extends FeatureController {
     if (_session.isActive) send(backend.submitEdits);
   }
 
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) {
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) {
     updateProfile((WardProfile p) => p.copyWith(
           photoPrivacy: photoPrivacy,
           showCaste: showCaste,
           allowFamilyShare: allowFamilyShare,
+          nearbyOptIn: nearbyOptIn,
         ));
     if (_session.isActive) {
       send(() => backend.updatePrivacy(
             photoPrivacy: photoPrivacy,
             showCaste: showCaste,
             allowFamilyShare: allowFamilyShare,
+            nearbyOptIn: nearbyOptIn,
           ));
     }
   }

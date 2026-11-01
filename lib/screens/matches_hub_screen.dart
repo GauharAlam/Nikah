@@ -68,6 +68,35 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
     });
   }
 
+  Future<void> _showList(String title, List<MatchProfile> people, String empty) {
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(title, style: _t(16, FontWeight.w800, AppTheme.slate900)),
+            ),
+            if (people.isEmpty)
+              Padding(padding: const EdgeInsets.all(16), child: Text(empty)),
+            for (final MatchProfile p in people)
+              ListTile(
+                title: Text(p.firstName),
+                subtitle: Text(p.location),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  context.push(AppRoutes.matchDetail(p.id));
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
@@ -119,7 +148,32 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                 style: _t(12.5, FontWeight.w600, AppTheme.slate500),
               ),
             ),
-            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: <Widget>[
+                  TextButton(
+                    key: const Key('pending_contacts'),
+                    onPressed: () => _showList(
+                      tr('Pending contact requests'),
+                      store.pendingContacts,
+                      tr('Nothing is waiting.'),
+                    ),
+                    child: Text('${tr('Pending')} (${store.pendingContacts.length})'),
+                  ),
+                  TextButton(
+                    key: const Key('closed_matches'),
+                    onPressed: () => _showList(
+                      tr('Closed matches'),
+                      store.closedMatches,
+                      tr('No closed matches.'),
+                    ),
+                    child: Text('${tr('Closed')} (${store.closedMatches.length})'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -203,8 +257,8 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
                         : EmptyState(
                             icon: Icons.phone_disabled_outlined,
                             title: tr('No shared contacts yet'),
-                            body: 'Contact details appear here once both '
-                                'families approve a request.',
+                            body: 'Contact details appear here once the other '
+                                'person accepts a request.',
                             actionLabel: 'Review Requests',
                             onAction: () => context.go(AppRoutes.homeProposals),
                           ))

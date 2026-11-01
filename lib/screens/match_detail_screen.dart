@@ -139,14 +139,19 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       ),
     );
     if (reason == null || !mounted) return;
-    context.read<AppStore>().reportProfile(match.id, reason);
-    showAppSnack(
-      context,
-      AppConfig.isDemo
-          ? 'Demo build: the report stays on this device.'
-          : 'Report sent. Our team will review it.',
-      icon: Icons.flag_outlined,
-    );
+    try {
+      await context.read<AppStore>().reportProfile(match.id, reason);
+      if (!mounted) return;
+      showAppSnack(
+        context,
+        AppConfig.isDemo
+            ? 'Demo build: the report stays on this device.'
+            : 'Report sent. Our team will review it. They will not be told who reported.',
+        icon: Icons.flag_outlined,
+      );
+    } on BackendException catch (e) {
+      if (mounted) showAppSnack(context, e.message);
+    }
   }
 
   Future<void> _block(MatchProfile match) async {
@@ -155,8 +160,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       builder: (BuildContext ctx) => AlertDialog(
         title: Text('Block ${match.firstName}?'),
         content: const Text(
-          'They will disappear from your discovery, proposals, matches and '
-          'messages on this device.',
+          'You will stop seeing each other in discovery, proposals, matches '
+          'and messages. Any pending requests between you are closed.',
         ),
         actions: <Widget>[
           TextButton(
@@ -172,7 +177,13 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    context.read<AppStore>().blockProfile(match.id);
+    try {
+      await context.read<AppStore>().blockProfile(match.id);
+    } on BackendException catch (e) {
+      if (mounted) showAppSnack(context, e.message);
+      return;
+    }
+    if (!mounted) return;
     context.go(AppRoutes.homeDiscovery);
   }
 

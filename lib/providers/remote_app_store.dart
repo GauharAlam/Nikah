@@ -18,6 +18,7 @@ import '../models/nikah_journey.dart';
 import '../models/notification_item.dart';
 import '../models/proposal.dart';
 import '../models/verification_doc.dart';
+import '../models/wali.dart';
 import '../models/ward_profile.dart';
 import 'app_store.dart';
 
@@ -29,7 +30,7 @@ class RemoteAppStore extends AppStore {
     session = SessionController(_backend, _report, prefs);
     drafts = ProfileController(_backend, _report, session);
     discovery = DiscoveryController(_backend, _report, session, prefs);
-    chat = ChatController(_backend, _report, session, discovery, prefs);
+    chat = ChatController(_backend, _report, session, discovery);
     connections = ConnectionsController(_backend, _report, session, discovery, chat);
     circle = FamilyController(_backend, _report, session);
     inbox = NotificationsController(_backend, _report, session);
@@ -221,11 +222,12 @@ class RemoteAppStore extends AppStore {
   @override
   void submitEdits() => drafts.submitEdits();
   @override
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) =>
       drafts.updatePrivacy(
         photoPrivacy: photoPrivacy,
         showCaste: showCaste,
         allowFamilyShare: allowFamilyShare,
+        nearbyOptIn: nearbyOptIn,
       );
   @override
   List<VerificationDoc> get verificationDocs => drafts.documents;
@@ -260,6 +262,9 @@ class RemoteAppStore extends AppStore {
   void markProfileViewed(String id) {}
   @override
   void markIncompatible(String matchId) => discovery.markIncompatible(matchId);
+  @override
+  Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor}) =>
+      discovery.search(query: query, nearby: nearby, cursor: cursor);
 
   // ─── Proposals and contact ────────────────────────────────────────────────
   @override
@@ -322,10 +327,29 @@ class RemoteAppStore extends AppStore {
   @override
   bool isBlocked(String matchId) => discovery.isBlocked(matchId);
   @override
-  void blockProfile(String matchId) => discovery.block(matchId);
+  Future<void> blockProfile(String matchId) => discovery.block(matchId);
   @override
-  void reportProfile(String matchId, String reason) =>
-      _send(() => _backend.reportProfile(matchId, reason));
+  Future<void> reportProfile(String matchId, String reason) =>
+      _backend.reportProfile(matchId, reason);
+  @override
+  void openThread(String matchId) => chat.openThread(matchId);
+  @override
+  void closeThread() => chat.closeThread();
+  @override
+  bool isThreadOpen(String matchId) => chat.isMatched(matchId);
+  @override
+  bool isSeen(String matchId, ChatMessage message) => chat.isSeen(matchId, message);
+  @override
+  void retryMessage(String matchId, String messageId) => chat.retry(matchId, messageId);
+  @override
+  Future<void> loadOlderMessages() => chat.loadOlder();
+  @override
+  bool get reachedChatStart => chat.reachedStart;
+  @override
+  List<MatchProfile> get closedMatches =>
+      chat.closedIds.map(discovery.profileById).toList();
+  @override
+  List<MatchProfile> get pendingContacts => connections.pendingContacts;
 
   // ─── Nikah Journey ────────────────────────────────────────────────────────
   @override
@@ -372,6 +396,22 @@ class RemoteAppStore extends AppStore {
   void markNotificationRead(String id) => inbox.markRead(id);
   @override
   void markAllNotificationsRead() => inbox.markAllRead();
+
+  /// The timeline is the member's real server notifications.
+  @override
+  List<ActivityLogEntry> get activityLog => inbox.items
+      .map((NotificationItem n) => ActivityLogEntry(
+            id: n.id,
+            kind: switch (n.type) {
+              NotificationType.chat => ActivityKind.chat,
+              NotificationType.intro || NotificationType.match => ActivityKind.intro,
+              _ => ActivityKind.general,
+            },
+            title: n.title,
+            detail: n.body,
+            createdAt: n.createdAt,
+          ))
+      .toList();
   @override
   bool get showArabic => settings.showArabic;
   @override

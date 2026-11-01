@@ -196,16 +196,19 @@ void main() {
 
   test('matches and messages arrive from the server', () async {
     await signIn();
-    backend.matches.add(const <MatchThread>[MatchThread(pairId: 'p', otherId: 'a', isOpen: true)]);
+    backend.matches.add(<MatchThread>[
+      MatchThread(pairId: 'p', otherId: 'a', isOpen: true, lastMessageAt: DateTime(2026)),
+    ]);
     await settle();
     expect(store.isApproved('a'), isTrue);
+    expect(store.chatThreadIds, contains('a'));
 
+    store.openThread('a');
     backend.messages.add(<ChatMessage>[
       ChatMessage(id: '1', text: 'Salam', time: '', createdAt: DateTime(2026), sender: MessageSender.match),
     ]);
     await settle();
     expect(store.messages('a').single.text, 'Salam');
-    expect(store.chatThreadIds, contains('a'));
 
     store.sendMessage('a', 'Wa alaikum salam');
     await settle();

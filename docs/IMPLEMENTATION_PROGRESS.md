@@ -11,7 +11,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 1 Audit and architecture | Done |
 | 2 Architecture refactor | Done |
 | 3 Authentication, onboarding, review | Done |
-| 4 Discovery, proposals, matches, chat | Next |
+| 4 Discovery, proposals, matches, chat | Done |
+| 5 Family, privacy, deletion | Next |
 
 ## Phase 0 — Baseline
 
@@ -172,3 +173,57 @@ files, which made `git status` and `tsc` hang. Work continues in a clone outside
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 4.
+
+## Phase 4 — Discovery, proposals, matches and chat
+
+**Security findings proved first.** 14 emulator and rules tests failed on the old code,
+including a blocked pair still able to exchange phone numbers (SEC-05), held profiles served
+to anyone who had viewed them (SEC-10), and messaging after losing approval (SEC-13). All pass.
+
+**Implemented**
+
+- SEC-05: blocks close pending contact requests with a refund, and `respondContact` checks
+  blocks in its transaction.
+- SEC-10: one `canViewProfile` rule for every read.
+- SEC-13: messages need an active match and approval, for reading and writing.
+- SEC-20: discovery cards carry a first name. Full name, employer and family details are for
+  active matches.
+- SEC-21: expiry runs per document in a draining loop. SEC-25: a decline stays declined.
+- ARC-05: refused proposals and contact requests restore the card and report why. Report and
+  block complete only on server success.
+- ARC-07: reads and listeners are bounded. Messages stream only while a chat is open.
+- FLOW-07: Search Rishtey with text search, Suggestions and Nearby. Nearby is opt-in on both
+  sides, compares home city only, and never uses GPS. It is reached from Filters for now,
+  because `discovery_screen.dart` has uncommitted work from another session.
+- FLOW-08: removed the fake online dot and fake "seen". Seen now follows the other member's
+  real read time, and unread counts live on the match document.
+- FLOW-09: sending, failed and retry states with client-chosen ids, older-message paging,
+  an ended-conversation state, and report from the conversation.
+- FLOW-10: Pending and Closed views. FLOW-11: the timeline shows real notifications.
+- FLOW-14: block copy no longer says "on this device".
+
+**Existing issues fixed:** the Location filter offered countries but the server compared them
+with city strings, so it could never match. Unread counts only ever rose, and a reinstall
+marked every message unread.
+
+**Files created:** `lib/screens/search_screen.dart`, `functions/src/expiry.ts`,
+`functions/test/connections.emulator.test.ts`, `test/unit/phase4_test.dart`.
+
+**Tests added:** 16 Flutter, 3 logic, 17 emulator and rules.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 154 passed |
+| `npm run test:unit` | 28 passed |
+| `npm run test:emulator` | 69 passed |
+
+**Not done here:** skeleton loaders and pull-to-refresh on the Discover deck, and Filters
+copy for premium rows, all in `discovery_screen.dart` or Phase 8. Photos are still token URLs
+until Phase 5.
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 5.

@@ -78,6 +78,15 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 20),
                 SwitchTile(
+                  key: const Key('nearby_setting'),
+                  icon: Icons.near_me_outlined,
+                  title: tr('Nearby discovery'),
+                  subtitle: tr('People who turn this on can find you by home city. Never GPS.'),
+                  value: store.profile?.nearbyOptIn ?? false,
+                  onChanged: (bool v) => store.updatePrivacy(nearbyOptIn: v),
+                ),
+                const Divider(height: 20),
+                SwitchTile(
                   icon: Icons.groups_outlined,
                   title: tr('Show my caste'),
                   subtitle: tr('Turn off to keep it private'),

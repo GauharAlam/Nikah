@@ -126,6 +126,7 @@ class MatchThread {
     this.unread = 0,
     this.myStep,
     this.theirStep,
+    this.theirReadAt,
   });
 
   final String pairId;
@@ -136,6 +137,9 @@ class MatchThread {
   final int unread;
   final String? myStep;
   final String? theirStep;
+
+  /// When the other member last read this conversation.
+  final DateTime? theirReadAt;
 }
 
 class ContactRequestRecord {
@@ -239,7 +243,7 @@ abstract class Backend {
   Future<void> deletePhoto(String storagePath);
 
   // Discovery
-  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor);
+  Future<IntroductionPage> fetchIntroductions(MatchFilters filters, int? cursor, {bool nearby = false});
   Future<List<MatchProfile>> getProfiles(List<String> ids);
   Future<void> hideProfile(String target);
 
@@ -255,13 +259,19 @@ abstract class Backend {
 
   // Matches and chat
   Stream<List<MatchThread>> watchMatches(String uid);
+  /// The newest messages of one conversation, live.
   Stream<List<ChatMessage>> watchMessages(String pairId, String uid);
-  Future<void> sendMessage(String pairId, String uid, String text);
+
+  /// A page of messages older than [before], oldest first.
+  Future<List<ChatMessage>> olderMessages(String pairId, String uid, DateTime before);
+
+  /// [id] is chosen by the sender, so a retry can never send a message twice.
+  Future<void> sendMessage(String pairId, String uid, String text, {required String id});
   Future<void> markThreadRead(String pairId, String uid);
   Future<void> unmatch(String other);
   Future<void> blockProfile(String target);
   Future<void> reportProfile(String target, String reason);
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare});
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn});
   Future<void> touchActive();
 
   // Invites and edits

@@ -265,11 +265,12 @@ class DemoAppStore extends AppStore {
 
   // ─── Privacy ──────────────────────────────────────────────────────────────
   @override
-  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) {
+  void updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) {
     updateProfile((WardProfile p) => p.copyWith(
           photoPrivacy: photoPrivacy,
           showCaste: showCaste,
           allowFamilyShare: allowFamilyShare,
+          nearbyOptIn: nearbyOptIn,
         ));
   }
 
@@ -458,6 +459,15 @@ class DemoAppStore extends AppStore {
           return true;
         })
         .toList();
+  }
+
+  @override
+  Future<IntroductionPage> searchProfiles({required String query, required bool nearby, int? cursor}) async {
+    final String q = query.toLowerCase();
+    final List<MatchProfile> hits = discoveredProfiles
+        .where((MatchProfile p) => q.isEmpty || '${p.university} ${p.profession} ${p.location}'.toLowerCase().contains(q))
+        .toList();
+    return IntroductionPage(hits, null);
   }
 
   List<MatchProfile> get introRequests =>
@@ -714,7 +724,7 @@ class DemoAppStore extends AppStore {
   /// Hides [matchId] from every list on this device and closes the
   /// conversation. A pending proposal from them is declined.
   @override
-  void blockProfile(String matchId) {
+  Future<void> blockProfile(String matchId) async {
     if (_blocked.contains(matchId)) return;
     _blocked = <String>{..._blocked, matchId};
     _transition(matchId, ProposalDirection.incoming, ProposalStatus.declined);
@@ -725,7 +735,7 @@ class DemoAppStore extends AppStore {
   /// Keeps the report on this device. Nothing reaches a reviewer until the
   /// reporting backend exists, and the UI says so.
   @override
-  void reportProfile(String matchId, String reason) {
+  Future<void> reportProfile(String matchId, String reason) async {
     _reports = <ProfileReport>[
       ..._reports,
       ProfileReport(

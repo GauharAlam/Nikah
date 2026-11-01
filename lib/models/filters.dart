@@ -15,6 +15,7 @@ class MatchFilters {
   final String profession;
   final String location;
   final String sect;
+  final String query;
   final String contactSharing;
 
   /// Legacy fields kept while older screens migrate to the Barkat set.
@@ -36,6 +37,7 @@ class MatchFilters {
     this.profession = anyValue,
     this.location = anyValue,
     this.sect = anyValue,
+    this.query = '',
     this.contactSharing = manualApproval,
     this.cities = const <String>[],
     this.waliVerifiedOnly = false,
@@ -121,6 +123,7 @@ class MatchFilters {
     String? profession,
     String? location,
     String? sect,
+    String? query,
     String? contactSharing,
     List<String>? cities,
     bool? waliVerifiedOnly,
@@ -137,6 +140,7 @@ class MatchFilters {
       profession: profession ?? this.profession,
       location: location ?? this.location,
       sect: sect ?? this.sect,
+      query: query ?? this.query,
       contactSharing: contactSharing ?? this.contactSharing,
       cities: cities ?? this.cities,
       waliVerifiedOnly: waliVerifiedOnly ?? this.waliVerifiedOnly,

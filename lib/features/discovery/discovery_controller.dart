@@ -128,11 +128,42 @@ class DiscoveryController extends FeatureController {
     send(() => backend.hideProfile(id));
   }
 
-  void block(String id) {
+  /// Hides the profile at once, and puts it back if the server refuses.
+  Future<void> block(String id) async {
+    final MatchProfile? card = _cache[id];
     _blocked = <String>{..._blocked, id};
     drop(id);
     notifyListeners();
-    send(() => backend.blockProfile(id));
+    try {
+      await backend.blockProfile(id);
+    } on Object {
+      _blocked = <String>{..._blocked}..remove(id);
+      if (card != null) restore(card);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Puts a card back after a failed action.
+  void restore(MatchProfile card) {
+    if (_introductions.any((MatchProfile p) => p.id == card.id)) return;
+    _introductions = <MatchProfile>[card, ..._introductions];
+    notifyListeners();
+  }
+
+  MatchProfile? cached(String id) => _cache[id];
+
+  /// One page of search results. Leaves the deck untouched.
+  Future<IntroductionPage> search({required String query, required bool nearby, int? cursor}) async {
+    final IntroductionPage page = await backend.fetchIntroductions(
+      _filters.copyWith(query: query),
+      cursor,
+      nearby: nearby,
+    );
+    for (final MatchProfile p in page.profiles) {
+      _cache[p.id] = p;
+    }
+    return page;
   }
 
   @override

@@ -115,6 +115,7 @@ test('search finds by text and country, and a bad page size is refused', async (
   assert.ok(hit.profiles.some((p: any) => p.id === 's2'));
   const miss = await a('fetchIntroductions', { filters: { query: 'no such place' } });
   assert.ok(!miss.profiles.some((p: any) => p.id === 's2'));
+  await db.doc('accounts/s1').set({ premiumUntil: Timestamp.fromMillis(Date.now() + hour) }, { merge: true });
   const other = await a('fetchIntroductions', { filters: { country: 'Canada' } });
   assert.ok(!other.profiles.some((p: any) => p.id === 's2'));
   assert.equal(await code(a('fetchIntroductions', { limit: 'lots' })), 'functions/invalid-argument');

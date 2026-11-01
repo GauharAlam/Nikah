@@ -284,8 +284,9 @@ class FirebaseBackend implements Backend {
   // ─── Discovery ─────────────────────────────────────────────────────────────
 
   @override
-  Future<IntroductionPage> fetchIntroductions(MatchFilters f, int? cursor) async {
+  Future<IntroductionPage> fetchIntroductions(MatchFilters f, int? cursor, {bool nearby = false}) async {
     final Map<String, dynamic> res = await _call('fetchIntroductions', <String, dynamic>{
+      if (nearby) 'mode': 'nearby',
       'filters': <String, dynamic>{
         'minAge': f.minAge,
         'maxAge': f.maxAge,
@@ -294,8 +295,10 @@ class FirebaseBackend implements Backend {
         'almaMater': f.almaMater,
         'education': f.education,
         'profession': f.profession,
-        'location': f.location,
+        // The Location row offers countries.
+        'country': f.location,
         'sect': f.sect,
+        'query': f.query,
       },
       'cursor': cursor,
     });
@@ -346,8 +349,8 @@ class FirebaseBackend implements Backend {
 
     final CollectionReference<Map<String, dynamic>> c = _db.collection('proposals');
     return _merge(
-      c.where('from', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
-      c.where('to', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('from', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('to', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
     );
   }
 
@@ -403,8 +406,8 @@ class FirebaseBackend implements Backend {
 
     final CollectionReference<Map<String, dynamic>> c = _db.collection('contactRequests');
     return _merge(
-      c.where('from', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
-      c.where('to', isEqualTo: uid).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('from', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
+      c.where('to', isEqualTo: uid).limit(300).snapshots().map((q) => q.docs.map(map).toList()),
     );
   }
 
@@ -436,53 +439,79 @@ class FirebaseBackend implements Backend {
   Stream<List<MatchThread>> watchMatches(String uid) => _db
       .collection('matches')
       .where('users', arrayContains: uid)
+      .limit(200)
       .snapshots()
       .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.map((s) {
             final Map<String, dynamic> d = s.data();
+            final String other = (d['users'] as List).cast<String>().firstWhere((String u) => u != uid);
             return MatchThread(
               pairId: s.id,
-              otherId: (d['users'] as List).cast<String>().firstWhere((String u) => u != uid),
+              otherId: other,
+              theirReadAt: ((d['readAt'] as Map?)?[other] as Timestamp?)?.toDate(),
               isOpen: d['status'] == 'active',
               lastMessage: d['lastMessage'] as String? ?? '',
               lastMessageAt: (d['lastMessageAt'] as Timestamp?)?.toDate(),
               unread: ((d['unread'] as Map?)?[uid] as int?) ?? 0,
               myStep: (d['journey'] as Map?)?[uid] as String?,
-              theirStep: (d['journey'] as Map?)?[
-                  (d['users'] as List).cast<String>().firstWhere((String u) => u != uid)] as String?,
+              theirStep: (d['journey'] as Map?)?[other] as String?,
             );
           }).toList());
+
+  static ChatMessage _message(QueryDocumentSnapshot<Map<String, dynamic>> s, String uid) {
+    final Map<String, dynamic> d = s.data();
+    final DateTime at = (d['sentAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    return ChatMessage(
+      id: s.id,
+      text: d['text'] as String? ?? '',
+      time: DateFormat.jm().format(at),
+      createdAt: at,
+      sender: d['sender'] == uid ? MessageSender.user : MessageSender.match,
+    );
+  }
 
   @override
   Stream<List<ChatMessage>> watchMessages(String pairId, String uid) => _db
       .collection('matches/$pairId/messages')
       .orderBy('sentAt', descending: true)
-      .limit(200)
+      .limit(50)
       .snapshots()
-      .map((QuerySnapshot<Map<String, dynamic>> q) => q.docs.reversed.map((s) {
-            final Map<String, dynamic> d = s.data();
-            final DateTime at = (d['sentAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-            return ChatMessage(
-              id: s.id,
-              text: d['text'] as String? ?? '',
-              time: DateFormat.jm().format(at),
-              createdAt: at,
-              sender: d['sender'] == uid ? MessageSender.user : MessageSender.match,
-            );
-          }).toList());
+      .map((QuerySnapshot<Map<String, dynamic>> q) =>
+          q.docs.reversed.map((s) => _message(s, uid)).toList());
 
   @override
-  Future<void> sendMessage(String pairId, String uid, String text) => _guard(() async {
-        await _db.collection('matches/$pairId/messages').add(<String, dynamic>{
-          'sender': uid,
-          'text': text,
-          'sentAt': FieldValue.serverTimestamp(),
-        });
+  Future<List<ChatMessage>> olderMessages(String pairId, String uid, DateTime before) =>
+      _guard(() async {
+        final QuerySnapshot<Map<String, dynamic>> q = await _db
+            .collection('matches/$pairId/messages')
+            .orderBy('sentAt', descending: true)
+            .startAfter(<Object>[Timestamp.fromDate(before)])
+            .limit(30)
+            .get();
+        return q.docs.reversed.map((s) => _message(s, uid)).toList();
+      });
+
+  @override
+  Future<void> sendMessage(String pairId, String uid, String text, {required String id}) =>
+      _guard(() async {
+        final DocumentReference<Map<String, dynamic>> ref =
+            _db.doc('matches/$pairId/messages/$id');
+        try {
+          await ref.set(<String, dynamic>{
+            'sender': uid,
+            'text': text,
+            'sentAt': FieldValue.serverTimestamp(),
+          });
+        } on FirebaseException catch (e) {
+          // A retry of a message that did arrive hits the no-update rule.
+          if (e.code != 'permission-denied' || !(await ref.get()).exists) rethrow;
+        }
       });
 
   @override
   Future<void> markThreadRead(String pairId, String uid) => _guard(() async {
         await _db.doc('matches/$pairId').update(<String, dynamic>{
           'readAt.$uid': FieldValue.serverTimestamp(),
+          'unread.$uid': 0,
         });
       });
 
@@ -499,11 +528,12 @@ class FirebaseBackend implements Backend {
       _call('reportProfile', <String, dynamic>{'target': target, 'reason': reason});
 
   @override
-  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare}) =>
+  Future<void> updatePrivacy({String? photoPrivacy, bool? showCaste, bool? allowFamilyShare, bool? nearbyOptIn}) =>
       _call('updatePrivacy', <String, dynamic>{
         'photoPrivacy': ?photoPrivacy,
         'showCaste': ?showCaste,
         'allowFamilyShare': ?allowFamilyShare,
+        'nearbyOptIn': ?nearbyOptIn,
       });
 
   @override
