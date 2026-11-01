@@ -59,7 +59,7 @@ void main() async {
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AppStore>.value(value: store),
       ],
-      child: BarkatNikahApp(router: router),
+      child: NikahApp(router: router),
     ),
   );
 }
@@ -86,16 +86,16 @@ Future<void> _routePushTaps(GoRouter router) async {
   FirebaseMessaging.onMessageOpenedApp.listen(open);
 }
 
-class BarkatNikahApp extends StatefulWidget {
-  const BarkatNikahApp({super.key, required this.router});
+class NikahApp extends StatefulWidget {
+  const NikahApp({super.key, required this.router});
 
   final GoRouter router;
 
   @override
-  State<BarkatNikahApp> createState() => _BarkatNikahAppState();
+  State<NikahApp> createState() => _NikahAppState();
 }
 
-class _BarkatNikahAppState extends State<BarkatNikahApp> {
+class _NikahAppState extends State<NikahApp> {
   final GlobalKey<ScaffoldMessengerState> _messenger =
       GlobalKey<ScaffoldMessengerState>();
   late final AppStore _store = context.read<AppStore>();

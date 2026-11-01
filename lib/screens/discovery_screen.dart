@@ -1,4 +1,4 @@
-// Discovery tab — Barkat-style "Introductions for you" deck with the
+// Discovery tab — "Introductions for you" deck with the
 // Incompatible / Send Proposal / Request Contact action row.
 import 'dart:async';
 
@@ -17,6 +17,7 @@ import '../widgets/app_brand.dart';
 import '../widgets/app_images.dart';
 import '../widgets/app_snacks.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/load_states.dart';
 
 /// Discovery deck tab of the home shell.
 class DiscoveryScreen extends StatefulWidget {
@@ -121,7 +122,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const BarkatLogoMark(size: 30),
+            const NikahLogoMark(size: 30),
             const SizedBox(width: 9),
             Flexible(
               child: Text(
@@ -134,6 +135,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ],
         ),
         actions: <Widget>[
+          IconButton(
+            key: const Key('discovery_open_search'),
+            tooltip: 'Search Rishtey',
+            onPressed: () => context.push(AppRoutes.search),
+            icon: const Icon(Icons.search_rounded),
+          ),
           NotificationBell(
             unread: store.unreadNotificationCount,
             onTap: () => context.push(AppRoutes.notifications),
@@ -211,7 +218,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ),
           Expanded(
             child: profiles.isEmpty && store.isLoadingIntroductions
-                ? const Center(child: CircularProgressIndicator())
+                ? const AppSkeleton()
                 : profiles.isEmpty && store.reachedProfileLimit
                 ? _UnlockMoreCard(limit: store.freeProfileAllowance)
                 : profiles.isEmpty && store.introductionsError != null
@@ -223,13 +230,20 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     onAction: store.refreshIntroductions,
                   )
                 : profiles.isEmpty
-                ? EmptyState(
+                ? RefreshIndicator(
+                    onRefresh: store.refreshIntroductions,
+                    child: ListView(
+                      children: <Widget>[
+                        EmptyState(
                     icon: Icons.explore_off_rounded,
                     title: tr('All reviewed'),
                     body: 'Every profile matching your preferences has been '
                         'considered. Broaden your search to keep browsing.',
                     actionLabel: tr('Adjust Filters'),
                     onAction: () => context.push(AppRoutes.filters),
+                        ),
+                      ],
+                    ),
                   )
                 : PageView.builder(
                     controller: _pageController,
@@ -362,7 +376,7 @@ class _ProposalsPill extends StatelessWidget {
   }
 }
 
-/// One full-bleed introduction card with the three Barkat actions.
+/// One full-bleed introduction card with the three actions.
 class _DeckCard extends StatelessWidget {
   const _DeckCard({
     required this.profile,
@@ -424,7 +438,11 @@ class _DeckCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Positioned(top: 14, left: 14, child: _CrestBadge()),
+              Positioned(
+                top: 14,
+                left: 14,
+                child: profile.isSelfManaged ? const _SelfManagedPill() : const _CrestBadge(),
+              ),
               if (profile.isNew)
                 const Positioned(top: 14, right: 14, child: _NewProfilePill()),
               Positioned(
@@ -436,10 +454,6 @@ class _DeckCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if (profile.isSelfManaged) ...<Widget>[
-                        const _SelfManagedPill(),
-                        const SizedBox(height: 8),
-                      ],
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: <Widget>[

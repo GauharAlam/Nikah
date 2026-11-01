@@ -211,7 +211,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 10),
           SettingsTile(
             icon: Icons.info_outline_rounded,
-            title: 'About Barkat Nikah',
+            title: 'About Nikah',
             subtitle: 'FAQs, guidelines & support',
             onTap: () => context.push(AppRoutes.about),
           ),
@@ -252,7 +252,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Barkat Nikah · v1.0.0+1',
+                  'Nikah · v1.0.0+1',
                   style: AppTheme.ts(11.5, FontWeight.w600,
                       color: AppTheme.slate400),
                 ),

@@ -39,7 +39,7 @@ class ProfileScreen extends StatelessWidget {
             name: name,
             city: profile.city.isEmpty ? 'Set your city' : profile.city,
             age: profile.age,
-            verified: store.isBarkatVerified,
+            verified: store.isVerifiedMember,
             initials: _initials(name),
             unread: store.unreadNotificationCount,
             onSettings: () => context.push(AppRoutes.settings),

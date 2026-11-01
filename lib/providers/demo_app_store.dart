@@ -550,7 +550,7 @@ class DemoAppStore extends AppStore {
     notifyListeners();
   }
 
-  // ─── Barkat mechanics: proposals · contact requests · credits ─────────────
+  // ─── Proposals · contact requests · credits ─────────────
   /// Daily heart («Send Proposal») quota shown as `x/5 PROPOSALS SENT`.
   static const int proposalQuota = 5;
 
@@ -675,7 +675,7 @@ class DemoAppStore extends AppStore {
       List<VerificationDoc>.unmodifiable(_docs);
 
   @override
-  bool get isBarkatVerified =>
+  bool get isVerifiedMember =>
       _docs.where((d) => d.isRequired).every(
             (d) => d.status == VerificationDocStatus.approved,
           );
@@ -691,7 +691,7 @@ class DemoAppStore extends AppStore {
     return (done * 100 / required.length).round();
   }
 
-  void _saveBarkatState() {
+  void _saveState() {
     unawaited(_prefs.setString(
         _kSkipped, _skipped.toList(growable: false).join(',')));
     unawaited(_prefs.setString(
@@ -717,7 +717,7 @@ class DemoAppStore extends AppStore {
   void unmatch(String matchId) {
     if (_unmatched.contains(matchId)) return;
     _unmatched = <String>{..._unmatched, matchId};
-    _saveBarkatState();
+    _saveState();
     final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
@@ -740,7 +740,7 @@ class DemoAppStore extends AppStore {
     if (_blocked.contains(matchId)) return;
     _blocked = <String>{..._blocked, matchId};
     _transition(matchId, ProposalDirection.incoming, ProposalStatus.declined);
-    _saveBarkatState();
+    _saveState();
     notifyListeners();
   }
 
@@ -756,7 +756,7 @@ class DemoAppStore extends AppStore {
         createdAt: DateTime.now(),
       ),
     ];
-    _saveBarkatState();
+    _saveState();
     notifyListeners();
   }
 
@@ -765,7 +765,7 @@ class DemoAppStore extends AppStore {
   void markIncompatible(String matchId) {
     if (_skipped.contains(matchId)) return;
     _skipped = <String>{..._skipped, matchId};
-    _saveBarkatState();
+    _saveState();
     notifyListeners();
   }
 
@@ -799,7 +799,7 @@ class DemoAppStore extends AppStore {
       ),
     ];
     _skipped = <String>{..._skipped..remove(matchId)};
-    _saveBarkatState();
+    _saveState();
     final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
@@ -831,7 +831,7 @@ class DemoAppStore extends AppStore {
     if (_contactCredits <= 0) return false;
     _contactCredits--;
     _contactRequestsOut = <String>{..._contactRequestsOut, matchId};
-    _saveBarkatState();
+    _saveState();
     final MatchProfile match = profileById(matchId);
     _addLog(ActivityLogEntry(
       id: _nextId('log'),
@@ -852,7 +852,7 @@ class DemoAppStore extends AppStore {
   bool acceptContact(String matchId) {
     if (!_approved.contains(matchId)) return false;
     _sharedContacts = <String>{..._sharedContacts, matchId};
-    _saveBarkatState();
+    _saveState();
     notifyListeners();
     return true;
   }
@@ -876,7 +876,7 @@ class DemoAppStore extends AppStore {
     _proposalRecords = _proposalRecords
         .map((Proposal p) => p.id == updated.id ? updated : p)
         .toList();
-    _saveBarkatState();
+    _saveState();
     return updated;
   }
 
@@ -967,7 +967,7 @@ class DemoAppStore extends AppStore {
             ? d.copyWith(status: VerificationDocStatus.pending)
             : d)
         .toList();
-    _saveBarkatState();
+    _saveState();
     _addNotification(NotificationItem(
       id: _nextId('ntf'),
       type: NotificationType.system,
@@ -1423,7 +1423,7 @@ class DemoAppStore extends AppStore {
       _seedNotifications();
       _seedMeeting();
       _saveChats();
-      _saveBarkatState();
+      _saveState();
     }
     if (!_onboarded && _stage != AuthStage.active) return;
     if (_chats.isEmpty) {
@@ -1685,7 +1685,7 @@ class DemoAppStore extends AppStore {
       NotificationItem(
         id: _nextId('ntf'),
         type: NotificationType.system,
-        title: 'Welcome to Barkat Nikah',
+        title: 'Welcome to Nikah',
         body: 'Your guardianship-supervised space for sincere intentions. '
             'May Allah grant you a blessed union.',
         createdAt: DateTime.now().subtract(const Duration(days: 2)),

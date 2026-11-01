@@ -260,7 +260,7 @@ class RemoteAppStore extends AppStore {
   @override
   List<VerificationDoc> get verificationDocs => drafts.documents;
   @override
-  bool get isBarkatVerified => drafts.isVerified;
+  bool get isVerifiedMember => drafts.isVerified;
   @override
   int get verificationProgress => drafts.verificationProgress;
   @override

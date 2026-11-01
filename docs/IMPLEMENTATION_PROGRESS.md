@@ -3,6 +3,12 @@
 Each phase records what actually ran. Older stage-by-stage notes are in
 `docs/history/PROGRESS_TO_2026-11-01.md`.
 
+## Where the project stands
+
+Every phase is complete. **The app is not ready for real members yet**, because nothing has run on
+a real Firebase project, a physical phone, iOS or real store billing. See Definition of Done at
+the end of this file.
+
 ## Status
 
 | Phase | State |
@@ -16,7 +22,7 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 6 Trust and safety | Done |
 | 7 Notifications and premium | Done |
 | 8 Quality assurance | Done |
-| 9 Release preparation | Next |
+| 9 Release preparation | Done, up to what needs accounts |
 
 ## Phase 0 — Baseline
 
@@ -427,14 +433,91 @@ and 11 device tests. See `TESTING.md`.
 | `npm run test:emulator` | 112 passed |
 | `tool/integration_test.sh integration_test -d emulator-5554` | 11 passed |
 
-**Known defects left open, in files held by another session**
-
-- `landing_front_screen.dart` overflows at 320dp with 1.5x text, so it is left out of the test.
-- The "Self managed" pill overlaps the avatar on the Discover card (`discovery_screen.dart`).
-- `profile_screen.dart` still falls back to `WardProfile.demoWard`.
-- Discover has no entry point to Search, skeleton or pull to refresh.
+Four defects were left here because another session held the files. All were closed in Phase 9.
 
 **Not verified:** performance on a mid-range device, a real SMS, real FCM, real store purchases,
 and any iOS build.
 
 **Next priority:** Phase 9.
+
+## Phase 9 — Release preparation
+
+**Implemented**
+
+- SEC-23: the product is now Nikah, with app id `com.gauharalam.nikah` on every platform. The
+  built APK reports that id and label, and holds no reference-app name. A test keeps it that way.
+- Release signing from a `key.properties` that git ignores. `tool/build_release.sh` refuses
+  placeholder links, or a missing key or Firebase file.
+- The landing page scrolls on small screens and gained a How it works sheet.
+- Discover gained a Search entry, a skeleton and pull to refresh on its empty state. The
+  self-managed label no longer overlaps the avatar. The landing page is back in the small-screen test.
+- The seven files from `41bdf8f` were brought in under their original author, without that
+  commit's older test copies.
+- ARC-11: `README.md` rewritten. `DEPLOYMENT.md` covers environments, secrets, configuration,
+  signing, iOS, privacy disclosures, permissions, a release checklist and rollback.
+
+**Files created:** `docs/DEPLOYMENT.md`, `tool/build_release.sh`.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 208 passed |
+| `npm run test:unit` | 33 passed |
+| `npm run test:emulator` | 112 passed |
+| Device tests on the android-36 emulator | 11 passed |
+| `flutter build apk --release` | built, 66.2 MB |
+| APK inspection | id `com.gauharalam.nikah`, label `Nikah`, no `DemoAppStore`, no `Barkat` |
+
+**Left in the binary on purpose:** a seeded name in the wali screens, which stay gated to demo
+builds under the user's earlier decision. Production redirects those routes.
+
+## Definition of Done
+
+Status is what was run. Emulator means local Firebase emulators, on an Android virtual device
+where the client is involved.
+
+| Requirement | Status |
+|---|---|
+| A real account can be created | Logic verified on emulator. Real SMS not run |
+| Real Firebase Authentication | Not run on a real project |
+| Full onboarding works, and data persists | Verified on emulator |
+| Photos and documents upload securely | Verified on emulator, rules and byte checks included |
+| Approval is server-controlled | Verified on emulator |
+| Only approved profiles in discovery | Verified on emulator |
+| Search and filters on real data | Verified on emulator |
+| Proposals reliable, and only mutual acceptance matches | Verified on emulator |
+| Chat for authorised matches | Verified on emulator |
+| Contact sharing needs consent | Verified on emulator |
+| Family invitations, permissions, revocation | Verified on emulator |
+| Blocking and reporting | Verified on emulator |
+| Push notifications | Written and unit tested. Never delivered |
+| Privacy settings enforced by the backend | Verified on emulator |
+| Purchase verification | Logic verified with a simulated store. Real stores never called |
+| Deletion complete and retryable | Verified on emulator |
+| Rules pass security tests | Yes |
+| Flutter tests pass; functions compile and pass | Yes |
+| Android build | Yes, unsigned for stores |
+| iOS build | Not possible here: never compiled |
+| No fake backend in production | Yes, proved from the built APK |
+| Documentation reflects the implementation | Yes |
+
+## Open items that need a person
+
+| Id | Item |
+|---|---|
+| X-1 | Firebase project and config files |
+| X-2 | Full Xcode and CocoaPods |
+| X-3 | Apple and Google store accounts and products |
+| X-4 | Legal review: terms, privacy, retention, safety procedure |
+| X-5 | Confirm the name and app id before first publish |
+| X-6 | Real institution data, quota decisions, app icon and artwork |
+
+## Known engineering gaps
+
+- ARC-03 is partial: controllers exist, but most screens still read them through `AppStore`.
+- Discover has no skeleton while paging, and its deck has no pull to refresh.
+- Fonts load at runtime through `google_fonts`, and should be bundled for release.
+- Most new text has no Hindi translation yet.
+- No performance measurement on a mid-range device.

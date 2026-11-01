@@ -30,7 +30,7 @@ void main() {
       }
     });
     final GoRouter router = buildRouter(store);
-    await tester.pumpWidget(ChangeNotifierProvider<AppStore>.value(value: store, child: BarkatNikahApp(router: router)));
+    await tester.pumpWidget(ChangeNotifierProvider<AppStore>.value(value: store, child: NikahApp(router: router)));
     await tester.pump();
 
     backend.auth.add(null);

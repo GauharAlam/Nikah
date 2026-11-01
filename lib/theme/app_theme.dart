@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Barkat Nikah design tokens — reverse-engineered from the Barkat app
-/// (Play Store screenshots, pixel-sampled). Re-checked against the App Store
-/// screenshots for v5.0.5: canvas reads #F1FBF3, primary buttons about #1A5E45.
+/// Nikah design tokens.
 ///
 /// All screens must read colors from this file instead of hardcoding hex
 /// values inline. [canvas] is the mint app background, [green] the brand
@@ -189,7 +187,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: slate800),
       ),
-      // Barkat bottom nav: active item is near-black ink, inactive gray.
+      // Bottom nav: active item is near-black ink, inactive gray.
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: ink,

@@ -1,4 +1,4 @@
-// Matches tab — Barkat-style deck: Match Mode toggle, Shared Contacts /
+// Matches tab — deck: Match Mode toggle, Shared Contacts /
 // Chat Matches pills, swipeable match cards with Message / Unmatch actions.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -310,7 +310,7 @@ class _MatchesHubScreenState extends State<MatchesHubScreen> {
   }
 }
 
-/// Two-icon capsule switch mirroring the Barkat "Match Mode" toggle.
+/// Two-icon capsule switch for Match Mode.
 class _ModeToggle extends StatelessWidget {
   const _ModeToggle({required this.mode, required this.onChanged});
 

@@ -5,6 +5,7 @@ import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/screens/account_screens.dart';
 import 'package:nikah_app/screens/family_circle_screen.dart';
+import 'package:nikah_app/screens/landing_front_screen.dart';
 import 'package:nikah_app/screens/phone_signin_screen.dart';
 import 'package:nikah_app/screens/review_status_screen.dart';
 import 'package:nikah_app/screens/search_screen.dart';
@@ -17,6 +18,7 @@ import '../helpers/fake_backend.dart';
 
 void main() {
   final Map<String, Widget> screens = <String, Widget>{
+    'landing': const LandingScreen(),
     'sign-in': const PhoneSignInScreen(),
     'review status': const ReviewStatusScreen(),
     'verification': const VerificationScreen(),
@@ -27,8 +29,6 @@ void main() {
     'blocked': const BlockedMembersScreen(),
   };
 
-  // The landing page overflows at this size. Its file has uncommitted work from
-  // another session, so it is tracked in IMPLEMENTATION_PROGRESS.md.
   for (final MapEntry<String, Widget> s in screens.entries) {
     testWidgets('${s.key} holds at 320dp with large text', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(320, 640);

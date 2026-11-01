@@ -164,7 +164,7 @@ class _BrandHero extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Barkat Nikah',
+            'Nikah',
             style: AppTheme.ts(21, FontWeight.w800, color: Colors.white),
           ),
           const SizedBox(height: 4),

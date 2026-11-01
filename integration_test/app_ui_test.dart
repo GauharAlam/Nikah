@@ -34,7 +34,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final RemoteAppStore store = RemoteAppStore(await SharedPreferences.getInstance(), b);
     final GoRouter router = buildRouter(store);
-    await tester.pumpWidget(ChangeNotifierProvider<AppStore>.value(value: store, child: BarkatNikahApp(router: router)));
+    await tester.pumpWidget(ChangeNotifierProvider<AppStore>.value(value: store, child: NikahApp(router: router)));
 
     Future<void> settle() async {
       for (int i = 0; i < 12; i++) {

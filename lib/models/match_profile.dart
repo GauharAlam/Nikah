@@ -27,7 +27,7 @@ class MatchProfile {
   final String languages;
   final List<String> hobbies;
 
-  // Barkat-style card extras.
+  // card extras.
   final String university;
   final String employer;
   final String caste;

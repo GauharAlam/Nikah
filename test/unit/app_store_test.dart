@@ -512,7 +512,7 @@ void main() {
       final DemoAppStore store = DemoAppStore(await SharedPreferences.getInstance());
       addTearDown(store.dispose);
 
-      expect(store.isBarkatVerified, isTrue);
+      expect(store.isVerifiedMember, isTrue);
       expect(store.verificationProgress, 100);
     });
 
@@ -521,7 +521,7 @@ void main() {
 
       store.submitVerificationDoc('education-proof');
 
-      expect(store.isBarkatVerified, isFalse);
+      expect(store.isVerifiedMember, isFalse);
       expect(
         store.verificationDocs
             .firstWhere((VerificationDoc d) => d.id == 'education-proof')

@@ -123,7 +123,7 @@ abstract class AppStore extends ChangeNotifier {
   Future<void> confirmSubject(String code, {required bool agree}) async {}
   Future<void> withdrawSubject() async {}
   List<VerificationDoc> get verificationDocs;
-  bool get isBarkatVerified;
+  bool get isVerifiedMember;
   int get verificationProgress;
   Future<void> uploadVerificationDoc(String docId, List<String> localPaths);
 

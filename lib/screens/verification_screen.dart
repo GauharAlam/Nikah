@@ -171,16 +171,16 @@ class VerificationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Get the Barkat Verified Badge',
+            'Get the Nikah Verified Badge',
             textAlign: TextAlign.center,
             style: AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
           ),
           const SizedBox(height: 8),
           Text(
-            store.isBarkatVerified
+            store.isVerifiedMember
                 ? 'MashaAllah — every required document is approved. Your '
                       'badge is live on your profile.'
-                : 'Verify your profile to earn the Barkat Verified badge — '
+                : 'Verify your profile to earn the Nikah Verified badge — '
                       'a mark of trust that members recognise instantly.',
             textAlign: TextAlign.center,
             style: AppTheme.ts(

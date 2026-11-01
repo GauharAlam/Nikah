@@ -8,7 +8,7 @@
 PRODUCT_NAME = nikah_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.barkat.nikah.nikahApp
+PRODUCT_BUNDLE_IDENTIFIER = com.gauharalam.nikah
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.barkat.nikah. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.gauharalam.nikah. All rights reserved.

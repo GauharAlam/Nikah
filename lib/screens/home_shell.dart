@@ -6,7 +6,7 @@ import '../l10n/app_strings.dart';
 import '../providers/app_store.dart';
 import '../theme/app_theme.dart';
 
-/// Bottom-navigation shell hosting the six Barkat tabs:
+/// Bottom-navigation shell hosting the six tabs:
 /// Discover · Proposals · Matches · Activities · Premium · Profile.
 ///
 /// The Proposals tab carries a red badge with the pending contact-request
@@ -97,7 +97,7 @@ class HomeShell extends StatelessWidget {
   }
 }
 
-/// Initials avatar for the Profile tab, mirroring Barkat's photo avatar.
+/// Initials avatar for the Profile tab, in place of a photo.
 class _ProfileAvatar extends StatelessWidget {
   const _ProfileAvatar({required this.name, required this.active});
 

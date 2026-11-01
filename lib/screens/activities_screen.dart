@@ -1,5 +1,5 @@
 // Activities tab — the trust timeline of everything that happened on the
-// account (Barkat style).
+// account.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

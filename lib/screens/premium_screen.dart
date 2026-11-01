@@ -1,4 +1,4 @@
-// Premium tab — Barkat-style white plan card with the AVAILABLE credits
+// Premium tab — white plan card with the AVAILABLE credits
 // panel, WHAT'S INCLUDED checklist and WHY UPGRADE section.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -77,7 +77,7 @@ class PremiumScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  store.isPremium ? 'Barkat Premium' : tr('Free plan'),
+                  store.isPremium ? 'Nikah Premium' : tr('Free plan'),
                   style:
                       AppTheme.ts(21, FontWeight.w800, color: AppTheme.slate900),
                 ),

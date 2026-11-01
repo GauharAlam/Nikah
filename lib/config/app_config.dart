@@ -61,5 +61,5 @@ class AppConfig {
 /// The product's name. Rename here, then update the platform labels.
 class AppBrand {
   AppBrand._();
-  static const String name = 'Barkat Nikah';
+  static const String name = 'Nikah';
 }

@@ -67,7 +67,7 @@ class PositiveOutlinedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
 
-  /// Light-surface gold variant (Barkat contact actions).
+  /// Light-surface gold variant (contact actions).
   final bool gold;
 
   @override

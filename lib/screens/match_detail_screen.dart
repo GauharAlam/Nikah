@@ -1,4 +1,4 @@
-// Match detail — Barkat-style profile sheet: photo carousel with quote
+// Match detail — profile sheet: photo carousel with quote
 // overlay, "TAKE THE NEXT STEP" stacked context actions, then the biodata.
 import 'dart:async';
 

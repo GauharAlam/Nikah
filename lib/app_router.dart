@@ -217,7 +217,7 @@ GoRouter buildRouter(AppStore store) {
         builder: (_, _) => const ReviewQueueScreen(),
       ),
 
-      // ── Main tabs shell (Barkat 6-tab layout) ─────────────────────────────
+      // ── Main tabs shell (six tabs) ─────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (_, _, StatefulNavigationShell shell) => HomeShell(shell: shell),
         branches: <StatefulShellBranch>[
