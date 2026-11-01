@@ -154,7 +154,7 @@ abstract class AppStore extends ChangeNotifier {
   bool sendProposal(String matchId);
   bool acceptProposal(String matchId);
   bool declineProposal(String matchId);
-  bool withdrawProposal(String matchId);
+  Future<bool> withdrawProposal(String matchId);
   bool contactRequested(String matchId);
   bool isContactShared(String matchId);
   bool requestContact(String matchId);

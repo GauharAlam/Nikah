@@ -56,7 +56,7 @@ void main() {
 
     final (AppStore store, _) = await pumpApp(tester);
 
-    expect(find.text('Continue with Phone'), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
     await tap(tester, find.byKey(const Key('continue_phone')));
     await tester.enterText(find.byKey(const Key('phone_input')), '9876543210');
     await tester.pump();
@@ -168,7 +168,7 @@ void main() {
     final (_, GoRouter router) = await pumpApp(tester);
     router.go(AppRoutes.homeDiscovery);
     await tester.pumpAndSettle();
-    expect(find.text('Continue with Phone'), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
     await drain(tester);
   });
 
@@ -358,8 +358,8 @@ void main() {
     await pumpApp(tester);
     await tap(tester, find.byKey(const Key('landing_language')));
     await tap(tester, find.text('हिन्दी'));
-    expect(find.text('फ़ोन से जारी रखें'), findsOneWidget);
-    expect(find.text('Continue with Phone'), findsNothing);
+    expect(find.text('खाता बनाएँ'), findsOneWidget);
+    expect(find.text('Create Account'), findsNothing);
     await drain(tester);
   });
 

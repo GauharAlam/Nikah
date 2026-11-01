@@ -229,7 +229,7 @@ void main() {
       store.sendProposal('imran-3');
       final int leftAfterSend = store.proposalsLeft;
 
-      expect(store.withdrawProposal('imran-3'), isTrue);
+      expect(await store.withdrawProposal('imran-3'), isTrue);
 
       expect(store.hasProposed('imran-3'), isFalse);
       expect(store.proposalsLeft, leftAfterSend);
@@ -243,7 +243,7 @@ void main() {
     test('an incoming proposal cannot be withdrawn by the recipient',
         () async {
       final DemoAppStore store = await _activeStore();
-      expect(store.withdrawProposal('farhan-2'), isFalse);
+      expect(await store.withdrawProposal('farhan-2'), isFalse);
       expect(store.incomingProposal('farhan-2')!.status,
           ProposalStatus.pending);
     });

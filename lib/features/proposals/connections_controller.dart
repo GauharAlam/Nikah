@@ -114,9 +114,10 @@ class ConnectionsController extends FeatureController {
     return true;
   }
 
-  bool withdraw(String id) {
+  /// Waits for the server, so a refusal is never shown as done.
+  Future<bool> withdraw(String id) async {
     if (!(outgoing(id)?.isPending ?? false)) return false;
-    send(() => backend.withdrawProposal(id));
+    await backend.withdrawProposal(id);
     return true;
   }
 

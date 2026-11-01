@@ -7,6 +7,7 @@ import 'package:nikah_app/app_router.dart';
 import 'package:nikah_app/data/backend.dart';
 import 'package:nikah_app/models/chat_message.dart';
 import 'package:nikah_app/models/match_profile.dart';
+import 'package:nikah_app/models/proposal.dart';
 import 'package:nikah_app/models/verification_doc.dart';
 import 'package:nikah_app/providers/app_store.dart';
 import 'package:nikah_app/screens/account_screens.dart';
@@ -15,6 +16,7 @@ import 'package:nikah_app/screens/family_circle_screen.dart';
 import 'package:nikah_app/screens/landing_front_screen.dart';
 import 'package:nikah_app/screens/match_detail_screen.dart';
 import 'package:nikah_app/screens/phone_signin_screen.dart';
+import 'package:nikah_app/screens/proposals_screen.dart';
 import 'package:nikah_app/screens/review_status_screen.dart';
 import 'package:nikah_app/screens/search_screen.dart';
 import 'package:nikah_app/screens/verification_screen.dart';
@@ -69,6 +71,53 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  group('withdrawing a proposal', () {
+    Proposal sent(ProposalStatus status) => Proposal(
+          id: 'p1',
+          profileId: 'p',
+          direction: ProposalDirection.outgoing,
+          status: status,
+          createdAt: DateTime(2026),
+        );
+
+    Future<void> open(WidgetTester tester, ProposalStatus status) async {
+      await signIn(tester);
+      await tester.runAsync(() async {
+        backend.proposals.add(<Proposal>[sent(status)]);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      });
+      await show(tester, const Scaffold(body: ProposalsScreen()));
+    }
+
+    testWidgets('it reaches the server only after confirming', (WidgetTester tester) async {
+      await open(tester, ProposalStatus.pending);
+      await tester.tap(find.byKey(const Key('withdraw_proposal_p')));
+      await tester.pumpAndSettle();
+      expect(backend.calls, isNot(contains('withdraw:p')));
+
+      await tester.tap(find.byKey(const Key('confirm_withdraw')));
+      await tester.pumpAndSettle();
+      expect(backend.calls, contains('withdraw:p'));
+      expect(find.text('Proposal withdrawn.'), findsOneWidget);
+    });
+
+    testWidgets('a refusal is not shown as done', (WidgetTester tester) async {
+      await open(tester, ProposalStatus.pending);
+      backend.failOn = 'withdraw';
+      await tester.tap(find.byKey(const Key('withdraw_proposal_p')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_withdraw')));
+      await tester.pumpAndSettle();
+      expect(find.text('Proposal withdrawn.'), findsNothing);
+      expect(find.text('Could not withdraw. Please try again.'), findsOneWidget);
+    });
+
+    testWidgets('an answered proposal cannot be withdrawn', (WidgetTester tester) async {
+      await open(tester, ProposalStatus.accepted);
+      expect(find.byKey(const Key('withdraw_proposal_p')), findsNothing);
+    });
+  });
+
   testWidgets('a profile shows every photo the member added, each once', (WidgetTester tester) async {
     await signIn(tester);
     backend.fullProfiles['p'] = MatchProfile.fromCard(<String, dynamic>{
@@ -91,6 +140,13 @@ void main() {
       await signIn(tester);
       await show(tester, const LandingScreen());
       expect(find.byKey(const Key('continue_phone')), findsOneWidget);
+    });
+
+    testWidgets('landing offers an account and a way back in', (WidgetTester tester) async {
+      await signIn(tester);
+      await show(tester, const LandingScreen());
+      expect(find.text('Create Account'), findsOneWidget);
+      expect(find.byKey(const Key('landing_sign_in')), findsOneWidget);
     });
 
     testWidgets('a code is sent only for a valid number, and a wrong code shows why', (WidgetTester tester) async {

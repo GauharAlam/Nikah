@@ -190,7 +190,7 @@ class _LandingScreenState extends State<LandingScreen> {
                             _authButton(
                               key: const Key('continue_phone'),
                               icon: Icons.phone_outlined,
-                              label: tr('Continue with Phone'),
+                              label: tr('Create Account'),
                               onPressed: _busy
                                   ? null
                                   : () => context.push(AppRoutes.signIn),
@@ -204,7 +204,18 @@ class _LandingScreenState extends State<LandingScreen> {
                                   : tr('Continue with Google'),
                               onPressed: _busy ? null : _google,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 4),
+                            TextButton(
+                              key: const Key('landing_sign_in'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: _busy
+                                  ? null
+                                  : () => context.push(AppRoutes.signIn),
+                              child: Text(tr('Already have an account? Sign in')),
+                            ),
+                            const SizedBox(height: 6),
                             Wrap(
                               alignment: WrapAlignment.center,
                               children: <Widget>[

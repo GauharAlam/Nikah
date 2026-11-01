@@ -778,6 +778,17 @@ class AppStrings {
     'Your profile is being reviewed': <String>['आपकी प्रोफ़ाइल की जाँच हो रही है', 'Aapki profile ka review ho raha hai'],
     'Your profile is live again': <String>['आपकी प्रोफ़ाइल फिर से लाइव है', 'Aapki profile phir se live hai'],
     'Our review is finished.': <String>['हमारी जाँच पूरी हुई।', 'Hamara review poora hua.'],
+    'Create Account': <String>['खाता बनाएँ', 'Account banayein'],
+    'Already have an account? Sign in': <String>['पहले से खाता है? साइन इन करें', 'Pehle se account hai? Sign in karein'],
+    'Withdraw': <String>['वापस लें', 'Wapas lein'],
+    'Withdraw this proposal?': <String>['यह प्रस्ताव वापस लें?', 'Ye proposal wapas lein?'],
+    'They will no longer be able to answer it.': <String>['वे अब इसका जवाब नहीं दे पाएँगे।', 'Wo ab iska jawab nahi de payenge.'],
+    'Proposal withdrawn.': <String>['प्रस्ताव वापस लिया गया।', 'Proposal wapas le liya gaya.'],
+    'Could not withdraw. Please try again.': <String>['वापस नहीं लिया जा सका। कृपया फिर कोशिश करें।', 'Wapas nahi liya ja saka. Kripya phir koshish karein.'],
+    'Accepted — you are matched': <String>['स्वीकार हुआ — आपका मैच हो गया', 'Accept hua — aapka match ho gaya'],
+    'Not taken forward': <String>['आगे नहीं बढ़ाया गया', 'Aage nahi badhaya gaya'],
+    'Expired without a reply': <String>['बिना जवाब के समाप्त', 'Bina jawab ke khatam'],
+    'You withdrew this proposal': <String>['आपने यह प्रस्ताव वापस लिया', 'Aapne ye proposal wapas liya'],
   };
 }
 

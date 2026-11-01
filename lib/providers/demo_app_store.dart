@@ -933,7 +933,7 @@ class DemoAppStore extends AppStore {
   ///
   /// The spent daily slot is not refunded — the proposal was delivered.
   @override
-  bool withdrawProposal(String matchId) {
+  Future<bool> withdrawProposal(String matchId) async {
     final Proposal? updated = _transition(
       matchId,
       ProposalDirection.outgoing,

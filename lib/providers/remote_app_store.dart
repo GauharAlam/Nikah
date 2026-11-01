@@ -317,7 +317,7 @@ class RemoteAppStore extends AppStore {
   @override
   bool declineProposal(String matchId) => connections.decline(matchId);
   @override
-  bool withdrawProposal(String matchId) => connections.withdraw(matchId);
+  Future<bool> withdrawProposal(String matchId) => connections.withdraw(matchId);
   @override
   bool contactRequested(String matchId) => connections.contactRequested(matchId);
   @override

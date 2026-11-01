@@ -243,6 +243,35 @@ class _SentProposalCard extends StatelessWidget {
   final Proposal proposal;
 
   /// Colour and icon follow the proposal's own status, not contact sharing.
+  Future<void> _withdraw(BuildContext context) async {
+    final AppStore store = context.read<AppStore>();
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(tr('Withdraw this proposal?')),
+        content: Text(tr('They will no longer be able to answer it.')),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('Cancel')),
+          ),
+          TextButton(
+            key: const Key('confirm_withdraw'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('Withdraw')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      final bool done = await store.withdrawProposal(profile.id);
+      if (context.mounted && done) showSuccessSnack(context, 'Proposal withdrawn.');
+    } on Object {
+      if (context.mounted) showAppSnack(context, 'Could not withdraw. Please try again.');
+    }
+  }
+
   (IconData, Color) get _statusStyle => switch (proposal.status) {
         ProposalStatus.accepted => (
             Icons.check_circle_rounded,
@@ -288,7 +317,7 @@ class _SentProposalCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
-                        proposal.detail,
+                        tr(proposal.detail),
                         style: AppTheme.ts(11.5, FontWeight.w700, color: color),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -299,6 +328,12 @@ class _SentProposalCard extends StatelessWidget {
               ],
             ),
           ),
+          if (proposal.isPending)
+            TextButton(
+              key: Key('withdraw_proposal_${profile.id}'),
+              onPressed: () => _withdraw(context),
+              child: Text(tr('Withdraw')),
+            ),
           IconButton(
             onPressed: () => context.push(AppRoutes.matchDetail(profile.id)),
             icon: const Icon(
