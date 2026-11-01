@@ -83,7 +83,7 @@ void main() {
   });
 
   test('a saved draft restores the member to their step', () async {
-    backend.draft = <String, dynamic>{'fullName': 'Sara', 'step': 4, 'gender': 'female'};
+    backend.draft = <String, dynamic>{'fullName': 'Sara', 'step': 4, 'stepVersion': 2, 'gender': 'female'};
     await signIn(approved: false);
     expect(store.profile!.displayName, 'Sara');
     expect(store.profile!.onboardingStep, 4);

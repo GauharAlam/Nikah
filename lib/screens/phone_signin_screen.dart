@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_strings.dart';
@@ -15,7 +16,10 @@ import '../widgets/app_snacks.dart';
 
 /// Phone number entry, then the SMS code. The router moves on once signed in.
 class PhoneSignInScreen extends StatefulWidget {
-  const PhoneSignInScreen({super.key});
+  const PhoneSignInScreen({super.key, this.linking = false});
+
+  /// Adds a number to the signed-in account, then returns.
+  final bool linking;
 
   @override
   State<PhoneSignInScreen> createState() => _PhoneSignInScreenState();
@@ -66,8 +70,13 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
   }
 
   Future<void> _send() => _run(() async {
-        final String id = await context.read<AppStore>().sendOtp(_e164);
+        final String? id = await context.read<AppStore>().sendOtp(_e164);
         if (!mounted) return;
+        if (id == null) {
+          // The device verified the number by itself.
+          if (widget.linking) context.pop();
+          return;
+        }
         setState(() {
           _verificationId = id;
           _cooldown = _resendSeconds;
@@ -82,8 +91,10 @@ class _PhoneSignInScreenState extends State<PhoneSignInScreen> {
         }
       });
 
-  Future<void> _verify() => _run(() =>
-      context.read<AppStore>().confirmOtp(_verificationId!, _code.text.trim()));
+  Future<void> _verify() => _run(() async {
+        await context.read<AppStore>().confirmOtp(_verificationId!, _code.text.trim());
+        if (widget.linking && mounted) context.pop();
+      });
 
   @override
   Widget build(BuildContext context) {

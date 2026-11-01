@@ -31,14 +31,17 @@ class ProfileController extends FeatureController {
     return (done * 100 / required.length).round();
   }
 
-  Future<void> loadDraft(AuthUser user) async {
+  /// Returns false when the draft could not be read, so the caller can offer a
+  /// retry instead of carrying on with an empty profile.
+  Future<bool> loadDraft(AuthUser user) async {
     try {
       final Map<String, dynamic>? draft = await backend.loadDraft(user.uid);
       _profile = draft == null
           ? WardProfile(email: user.email, phoneCode: '+91', country: '')
           : WardProfile.fromDraft(draft);
-    } on Object catch (e) {
-      report(e);
+      return true;
+    } on Object {
+      return false;
     }
   }
 
@@ -66,9 +69,9 @@ class ProfileController extends FeatureController {
     if (_session.user != null) await backend.saveDraft(_session.uid, _draftOf(next));
   }
 
-  Future<String> uploadPhoto(String localPath) {
+  Future<String> uploadPhoto(String localPath, {void Function(double)? onProgress}) {
     if (_session.user == null) throw const BackendException('Please sign in again.');
-    return backend.uploadPhoto(_session.uid, localPath);
+    return backend.uploadPhoto(_session.uid, localPath, onProgress: onProgress);
   }
 
   Future<void> removePhoto(String stored) async {

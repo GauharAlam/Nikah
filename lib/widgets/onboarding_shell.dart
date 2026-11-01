@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 
-/// Header for the seven profile steps, with one progress segment per step.
+/// Header for the six profile steps, with one progress segment per step.
 class OnboardingShell extends StatelessWidget {
   const OnboardingShell({
     super.key,
@@ -15,14 +15,13 @@ class OnboardingShell extends StatelessWidget {
     this.onBack,
   });
 
-  static const int totalSteps = 7;
+  static const int totalSteps = 6;
   static const List<String> _cheers = <String>[
     'Great start',
     'Keep going',
     'Looking good',
     'Halfway there',
     'Almost there',
-    'Ready to review',
     'Last step',
   ];
 
@@ -108,6 +107,8 @@ class OnboardingShell extends StatelessWidget {
             ),
             Expanded(
               child: ListView(
+                // A new step starts at the top, not at the last scroll position.
+                key: ValueKey<int>(step),
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                 children: <Widget>[
                   Text(
@@ -134,7 +135,7 @@ class OnboardingShell extends StatelessWidget {
   }
 }
 
-/// Plain form page for optional sections outside the seven steps.
+/// Plain form page for optional sections outside the six steps.
 class ProfileSectionShell extends StatelessWidget {
   const ProfileSectionShell({
     super.key,

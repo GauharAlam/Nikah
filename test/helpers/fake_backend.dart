@@ -33,6 +33,7 @@ class FakeBackend implements Backend {
   Map<String, dynamic>? savedDraft;
   List<IntroductionPage> pages = <IntroductionPage>[];
   Object? failNext;
+  Object? failDraft;
 
   Future<void> _record(String call) async {
     calls.add(call);
@@ -44,7 +45,7 @@ class FakeBackend implements Backend {
   @override
   Stream<AuthUser?> get authChanges => auth.stream;
   @override
-  Future<String> sendOtp(String e164Phone) async => 'verification';
+  Future<String?> sendOtp(String e164Phone) async => 'verification';
   @override
   Future<void> confirmOtp(String verificationId, String code) => _record('confirmOtp');
   @override
@@ -60,7 +61,12 @@ class FakeBackend implements Backend {
   @override
   Stream<AppLimits> watchLimits() => limits.stream;
   @override
-  Future<Map<String, dynamic>?> loadDraft(String uid) async => draft;
+  Future<Map<String, dynamic>?> loadDraft(String uid) async {
+    final Object? failure = failDraft;
+    failDraft = null;
+    if (failure != null) throw failure;
+    return draft;
+  }
   @override
   Future<void> saveDraft(String uid, Map<String, dynamic> d) async {
     savedDraft = d;
@@ -70,7 +76,11 @@ class FakeBackend implements Backend {
   @override
   Future<void> submitProfile() => _record('submitProfile');
   @override
-  Future<String> uploadPhoto(String uid, String localPath) async => 'photos/$uid/1.jpg';
+  Future<String> uploadPhoto(String uid, String localPath, {void Function(double)? onProgress}) async {
+    onProgress?.call(1);
+    return 'photos/$uid/1.jpg';
+  }
+
   @override
   Future<String> photoUrl(String storagePath) async => 'https://example.com/p.jpg';
   @override
@@ -181,9 +191,15 @@ class FakeBackend implements Backend {
   @override
   Future<List<String>> documentUrls(String uid, String type) async => const <String>[];
   @override
-  Future<void> reviewProfile(String uid, {required bool approve, String reason = ''}) =>
-      _record('review:$uid');
+  Future<void> reviewProfile(
+    String uid, {
+    required String decision,
+    required int version,
+    String reason = '',
+    List<String> rejectedPhotos = const <String>[],
+  }) =>
+      _record('reviewProfile:$uid:$decision:$version');
   @override
-  Future<void> reviewDocument(String uid, String type, {required bool approve, String reason = ''}) =>
-      _record('reviewDoc:$uid');
+  Future<void> reviewDocument(String uid, String type, {required String decision, String reason = ''}) =>
+      _record('reviewDocument:$uid:$type:$decision');
 }

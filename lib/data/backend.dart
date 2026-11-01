@@ -6,7 +6,21 @@ import '../models/proposal.dart';
 import '../models/verification_doc.dart';
 
 /// Review progress of a member's profile. Owned by the server.
-enum ReviewStage { draft, submitted, approved, rejected }
+enum ReviewStage {
+  draft,
+  submitted,
+  approved,
+  changesRequested,
+  rejected;
+
+  static ReviewStage fromWire(Object? value) => switch (value) {
+        'submitted' => submitted,
+        'approved' => approved,
+        'changes_requested' => changesRequested,
+        'rejected' => rejected,
+        _ => draft,
+      };
+}
 
 class AuthUser {
   const AuthUser({
@@ -29,6 +43,8 @@ class AccountState {
   const AccountState({
     this.stage = ReviewStage.draft,
     this.rejectionReason = '',
+    this.rejectedPhotos = const <String>[],
+    this.editsPending = false,
     this.proposalsSentToday = 0,
     this.decisionsToday = 0,
     this.contactCreditsLeft = 0,
@@ -39,6 +55,12 @@ class AccountState {
 
   final ReviewStage stage;
   final String rejectionReason;
+
+  /// Photos a reviewer asked the member to replace.
+  final List<String> rejectedPhotos;
+
+  /// Published-profile edits waiting for review.
+  final bool editsPending;
   final int proposalsSentToday;
   final int decisionsToday;
 
@@ -195,8 +217,11 @@ abstract class Backend {
   // Auth
   Stream<AuthUser?> get authChanges;
 
-  /// Sends a code. Resolves to a verification id.
-  Future<String> sendOtp(String e164Phone);
+  /// Sends a code. Resolves to a verification id, or null when the device
+  /// verified the number by itself and no code is needed.
+  Future<String?> sendOtp(String e164Phone);
+
+  /// Signs in, or links the number when already signed in another way.
   Future<void> confirmOtp(String verificationId, String code);
   Future<void> signInWithGoogle();
   Future<void> refreshClaims();
@@ -209,7 +234,7 @@ abstract class Backend {
   Future<Map<String, dynamic>?> loadDraft(String uid);
   Future<void> saveDraft(String uid, Map<String, dynamic> draft);
   Future<void> submitProfile();
-  Future<String> uploadPhoto(String uid, String localPath);
+  Future<String> uploadPhoto(String uid, String localPath, {void Function(double)? onProgress});
   Future<String> photoUrl(String storagePath);
   Future<void> deletePhoto(String storagePath);
 
@@ -276,11 +301,23 @@ abstract class Backend {
   // Review tools, reviewer accounts only
   Future<List<Map<String, dynamic>>> listReviewQueue();
   Future<List<String>> documentUrls(String uid, String type);
-  Future<void> reviewProfile(String uid, {required bool approve, String reason});
+
+
+  /// [decision] is `approve`, `changes` or `reject`. [version] is the
+  /// submission the reviewer actually saw.
+  Future<void> reviewProfile(
+    String uid, {
+    required String decision,
+    required int version,
+    String reason,
+    List<String> rejectedPhotos,
+  });
+
+  /// [decision] is `approve`, `reject` or `resubmit`.
   Future<void> reviewDocument(
     String uid,
     String type, {
-    required bool approve,
+    required String decision,
     String reason,
   });
 }

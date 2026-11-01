@@ -76,23 +76,18 @@ void main() {
     await tap(tester, find.byKey(const Key('start_profile')));
     final Finder next = find.byKey(const Key('onboarding_next'));
 
-    // 1 — who
-    await tap(tester, find.byKey(const Key('who_self')));
+    // 1 — basic information: empty fields are refused.
     await tap(tester, next);
-
-    // 2 — basics: empty fields are refused.
-    await tap(tester, next);
-    expect(find.text('Let\'s start with the basics'), findsOneWidget);
+    expect(find.text('Basic information'), findsOneWidget);
     await tester.enterText(find.byKey(const Key('full_name')), 'Sara Khan');
     await tap(tester, find.byKey(const Key('pick_gender')));
     await tap(tester, find.text('Female'));
+    await tap(tester, find.byKey(const Key('pick_dob')));
+    await tap(tester, find.text('OK'));
     await tap(tester, find.byKey(const Key('pick_marital')));
     await tap(tester, find.text('Never married'));
     await tap(tester, find.byKey(const Key('pick_readiness')));
     await tap(tester, find.text('Ready within 1 year'));
-    await tap(tester, next);
-
-    // 3 — cities
     await tap(tester, find.byKey(const Key('pick_home')));
     await tap(tester, find.text('Select country'));
     await tap(tester, find.text('India'));
@@ -101,39 +96,40 @@ void main() {
     await tap(tester, find.text('Select city'));
     await tap(tester, find.text('Rohini'));
     await tap(tester, find.widgetWithText(FilledButton, 'Done'));
+    expect(find.byKey(const Key('phone_verified')), findsOneWidget);
     await tap(tester, next);
 
-    // 4 — personal
-    await tap(tester, find.byKey(const Key('pick_dob')));
-    await tap(tester, find.text('OK'));
-    // Caste is optional, so it is skipped here.
+    // 2 — personal and family: caste and family details are optional.
+    await tap(tester, find.byKey(const Key('who_self')));
     await tap(tester, find.byKey(const Key('pick_height')));
     await sheetTap(tester, find.text('5\'4"'));
-    await tester.enterText(find.byKey(const Key('contact_number')), '9876543210');
     await tap(tester, next);
 
-    // 5 — education: non-graduates cannot continue.
+    // 3 — education: non-graduates cannot continue.
     await tap(tester, find.byKey(const Key('pick_alma')));
     await tap(tester, find.text('Aligarh Muslim University'));
     await tap(tester, find.byKey(const Key('alma_done')));
     await tap(tester, find.byKey(const Key('pick_qualification')));
     await sheetTap(tester, find.text('Diploma'));
     await tap(tester, next);
-    expect(find.text('Education & profession'), findsOneWidget);
+    expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
     await tap(tester, find.byKey(const Key('pick_qualification')));
     await sheetTap(tester, find.text('MBA'));
     await tap(tester, find.byKey(const Key('pick_profession')));
     await sheetTap(tester, find.text('Doctor'));
     await tap(tester, next);
 
-    // 6 — photos
+    // 4 — photos
     await tap(tester, next);
     expect(store.profile!.photos, <String>[photo]);
     await tap(tester, next);
 
-    // 7 — review
-    expect(find.text('Review and submit'), findsOneWidget);
+    // 5 — verification
+    expect(find.byKey(const Key('step_doc_name-proof')), findsOneWidget);
     await tap(tester, next);
+
+    // 6 — review
+    expect(find.text('Review and submit'), findsOneWidget);
     expect(store.isLoggedIn, isFalse, reason: 'intent and consent are required');
     await tap(tester, find.byKey(const Key('confirm_intent')));
     await tap(tester, find.byKey(const Key('confirm_consent')));
@@ -162,7 +158,7 @@ void main() {
     expect(store.isSignedIn, isTrue);
     router.go(AppRoutes.onboarding);
     await tester.pumpAndSettle();
-    expect(find.text('Personal details'), findsOneWidget);
+    expect(find.text('Add your photos'), findsOneWidget);
     await drain(tester);
   });
 
@@ -398,16 +394,19 @@ void main() {
   testWidgets('a family profile needs the person\'s agreement', (WidgetTester tester) async {
     final (_, GoRouter router) = await pumpApp(
       tester,
-      prefs: <String, Object>{'bk_stage': 'onboarding'},
+      prefs: <String, Object>{
+        'bk_stage': 'onboarding',
+        'bk_profile': WardProfile.encode(const WardProfile(onboardingStep: 2, height: '5\'4"')),
+      },
     );
     router.go(AppRoutes.onboarding);
     await tester.pumpAndSettle();
     await tap(tester, find.byKey(const Key('who_family')));
     await tap(tester, find.byKey(const Key('onboarding_next')));
-    expect(find.text('Who is looking for a Nikah match?'), findsOneWidget);
+    expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
     await tap(tester, find.byKey(const Key('candidate_consent')));
     await tap(tester, find.byKey(const Key('onboarding_next')));
-    expect(find.text('Let\'s start with the basics'), findsOneWidget);
+    expect(find.text('Education & profession'), findsOneWidget);
     await drain(tester);
   });
 

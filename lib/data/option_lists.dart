@@ -17,6 +17,27 @@ class OptionLists {
     'Just exploring',
   ];
 
+  static const List<String> familyTypes = <String>['Joint family', 'Nuclear family', 'Other'];
+
+  static const List<String> familyValues = <String>[
+    'Religious', 'Practising', 'Moderate', 'Liberal',
+  ];
+
+  static const List<String> siblingCounts = <String>[
+    'None', '1', '2', '3', '4', '5 or more', 'Prefer not to say',
+  ];
+
+  static const List<String> educationStatuses = <String>['Completed', 'Currently studying'];
+
+  static const List<String> employmentStatuses = <String>[
+    'Employed', 'Self-employed', 'Business owner', 'Student', 'Not working',
+  ];
+
+  static const List<String> languages = <String>[
+    'English', 'Hindi', 'Urdu', 'Arabic', 'Bengali', 'Malayalam', 'Tamil', 'Telugu',
+    'Marathi', 'Gujarati', 'Kannada', 'Punjabi', 'Kashmiri', 'Other',
+  ];
+
   static const String beyondCaste = 'Beyond Caste';
   static const String noCaste = 'Prefer not to say';
 

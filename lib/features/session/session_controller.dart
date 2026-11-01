@@ -19,6 +19,7 @@ class SessionController extends FeatureController {
   AppLimits _limits = const AppLimits();
   AuthStage _stage = AuthStage.guest;
   bool _restoring = true;
+  String? _startupError;
 
   /// Runs when the account says this member belongs to a family circle.
   void Function(String? member)? onFamilyLink;
@@ -26,6 +27,7 @@ class SessionController extends FeatureController {
   AuthUser? get user => _user;
   String get uid => _user?.uid ?? '';
   bool get isRestoring => _restoring;
+  String? get startupError => _startupError;
   bool get isSignedIn => _stage != AuthStage.guest;
   bool get isActive => _stage == AuthStage.active;
   bool get isReviewer => _user?.isReviewer ?? false;
@@ -69,6 +71,16 @@ class SessionController extends FeatureController {
       _limits = l;
       notifyListeners();
     });
+  }
+
+  void failStart(String message) {
+    _startupError = message;
+    notifyListeners();
+  }
+
+  void clearStartupError() {
+    _startupError = null;
+    notifyListeners();
   }
 
   void restored() {

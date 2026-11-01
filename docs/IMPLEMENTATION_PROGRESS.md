@@ -10,7 +10,8 @@ Each phase records what actually ran. Older stage-by-stage notes are in
 | 0 Baseline | Done |
 | 1 Audit and architecture | Done |
 | 2 Architecture refactor | Done |
-| 3 Authentication, onboarding, review | Next |
+| 3 Authentication, onboarding, review | Done |
+| 4 Discovery, proposals, matches, chat | Next |
 
 ## Phase 0 — Baseline
 
@@ -111,3 +112,63 @@ uncommitted work from another session.
 **Outstanding blockers:** X-1 to X-6.
 
 **Next priority:** Phase 3.
+
+## Phase 3 — Authentication, onboarding and review
+
+**Security findings proved first.** 17 emulator tests were written before any fix and all
+failed on the old code, including a reviewer approving themselves (SEC-03), a post-review
+swap to an under-18 birth date being published (SEC-04), an unverified phone being stored
+(SEC-06), and an approved stranger reading and listing private photos (SEC-01). All pass now.
+
+**Implemented**
+
+- SEC-03: no self-review, and only waiting submissions or documents can be decided.
+- SEC-04: submission freezes a versioned snapshot in `submissions/{uid}`. Approval publishes
+  that snapshot, re-validates it, and refuses a stale version.
+- SEC-06: submission needs a verified phone on the auth token. Only that number can be shared.
+- SEC-01, SEC-02: originals are owner-only and cannot be replaced. Approval copies them to
+  `published/`, which no client can reach. Members still receive token URLs until Phase 5.
+- SEC-14, SEC-15: draft field allow-list with sizes, no SVG, and uploads checked by real bytes.
+- SEC-17, SEC-18: consent records with policy version, and the six document states. Viewing a
+  document moves it to under review. Badge copy no longer implies more than a document review.
+- Request-changes decision, with photos the reviewer flags. `auditLogs` for review actions.
+- Eligibility is configurable (`minAge`, never below 18, and `firstMarriageOnly`).
+- FLOW-01, FLOW-02: six steps with family, language, education and employment fields. Saved
+  seven-step drafts resume at the matching step.
+- FLOW-03: shared `PhotoManager` with primary photo, reorder, camera, upload progress and
+  reviewer flags. Used in onboarding; Edit Profile has no photo editing yet.
+- FLOW-04: camera, gallery and PDF picker, preview, size check, reason and resubmit.
+- FLOW-05: reviewer console with full preview, photos, and approve, ask for changes, reject.
+  Reports and held profiles follow in Phase 6.
+- FLOW-06: one verified number per account. Google users link a phone through the same OTP
+  screen. `sendOtp` handles auto-verification, a timeout and resend tokens.
+- FLOW-16: branded splash with retry when the draft or auth stream fails.
+
+**Existing issues fixed:** `publishPhotos` relied on a download token that server-copied
+files do not have. The onboarding form kept its scroll position between steps, so Next landed
+mid-page.
+
+**Files created:** `lib/widgets/photo_manager.dart`, `test/unit/phase3_test.dart`,
+`functions/test/helpers.ts`, `functions/test/review.emulator.test.ts`.
+
+**Tests added:** 9 Flutter, 3 logic, 18 emulator.
+
+**Commands and results**
+
+| Check | Result |
+|---|---|
+| `flutter analyze` | 0 issues |
+| `flutter test` | 138 passed |
+| `npm run test:unit` | 25 passed |
+| `npm run test:emulator` | 52 passed |
+
+**Not verified:** real SMS, Google linking and the picker on a device. `readUrl` signed URLs
+need the runtime service account to hold Service Account Token Creator; the emulator cannot
+sign, so that path has not run.
+
+**Environment note:** the project folder sits in iCloud-synced Documents, and iCloud evicted
+files, which made `git status` and `tsc` hang. Work continues in a clone outside iCloud.
+
+**Outstanding blockers:** X-1 to X-6.
+
+**Next priority:** Phase 4.

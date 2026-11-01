@@ -16,7 +16,8 @@ class ReviewStatusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppStore store = context.watch<AppStore>();
-    final bool rejected = store.reviewStage == ReviewStage.rejected;
+    final bool changes = store.reviewStage == ReviewStage.changesRequested;
+    final bool rejected = changes || store.reviewStage == ReviewStage.rejected;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       body: SafeArea(
@@ -33,7 +34,11 @@ class ReviewStatusScreen extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                rejected ? tr('Your profile needs changes') : tr('Your profile is under review'),
+                changes
+                    ? tr('Please update your profile')
+                    : rejected
+                        ? tr('Your profile was not approved')
+                        : tr('Your profile is under review'),
                 textAlign: TextAlign.center,
                 style: AppTheme.ts(22, FontWeight.w800, color: AppTheme.slate900),
               ),

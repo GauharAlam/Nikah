@@ -66,7 +66,10 @@ class DemoAppStore extends AppStore {
   static const String demoOtp = AppConfig.demoOtp;
 
   @override
-  Future<String> sendOtp(String e164Phone) async => e164Phone;
+  String get verifiedPhone => _profile?.phone ?? '';
+
+  @override
+  Future<String?> sendOtp(String e164Phone) async => e164Phone;
 
   @override
   Future<void> confirmOtp(String verificationId, String code) async {
@@ -105,7 +108,7 @@ class DemoAppStore extends AppStore {
   // ─── Photos and profile submission ────────────────────────────────────────
   /// Returns what to store in the draft for a picked photo.
   @override
-  Future<String> uploadPhoto(String localPath) async => localPath;
+  Future<String> uploadPhoto(String localPath, {void Function(double)? onProgress}) async => localPath;
 
   /// Display location for a draft photo: a URL, or a local path in demo builds.
   @override

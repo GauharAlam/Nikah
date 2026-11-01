@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'config/app_config.dart';
 import 'data/backend.dart';
@@ -39,6 +40,7 @@ import 'screens/verification_screen.dart';
 import 'screens/wali_hub_screen.dart';
 import 'screens/wali_onboarding_screen.dart';
 import 'screens/wali_sms_portal_screen.dart';
+import 'theme/app_theme.dart';
 
 /// Central table of routes. Replaces the old boolean-flag router and
 /// restores system back-gesture behaviour on every sub-page.
@@ -70,6 +72,7 @@ class AppRoutes {
   static const String familyCircle = '/family/circle';
   static const String familyView = '/family/view';
   static const String contactDetails = '/profile/contact';
+  static const String verifyPhone = '/profile/phone';
   static const String reviewQueue = '/admin/review';
   static const String waliHub = '/wali/hub';
   static const String waliOnboarding = '/wali/onboarding';
@@ -116,6 +119,7 @@ String? guardRoute(AppStore store, String location) {
 
   // Signed in, not approved.
   if (at(AppRoutes.verifyProfile) ||
+      at(AppRoutes.verifyPhone) ||
       at(AppRoutes.practice) ||
       at(AppRoutes.safety) ||
       at(AppRoutes.familyView)) {
@@ -128,7 +132,7 @@ String? guardRoute(AppStore store, String location) {
   return switch (store.reviewStage) {
     ReviewStage.submitted =>
       at(AppRoutes.reviewStatus) ? null : AppRoutes.reviewStatus,
-    ReviewStage.rejected =>
+    ReviewStage.rejected || ReviewStage.changesRequested =>
       at(AppRoutes.reviewStatus) || at(AppRoutes.onboarding)
           ? null
           : AppRoutes.reviewStatus,
@@ -149,6 +153,10 @@ GoRouter buildRouter(AppStore store) {
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const _SplashScreen()),
       GoRoute(path: AppRoutes.landing, builder: (_, _) => const LandingScreen()),
       GoRoute(path: AppRoutes.signIn, builder: (_, _) => const PhoneSignInScreen()),
+      GoRoute(
+        path: AppRoutes.verifyPhone,
+        builder: (_, _) => const PhoneSignInScreen(linking: true),
+      ),
       GoRoute(
         path: AppRoutes.startProfile,
         builder: (_, _) => const StartProfileScreen(),
@@ -301,12 +309,48 @@ GoRouter buildRouter(AppStore store) {
   );
 }
 
+/// Shown until the session is known. Never shows member content, and offers a
+/// retry when start-up fails instead of spinning forever.
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final AppStore store = context.watch<AppStore>();
+    final String? error = store.startupError;
+    return Scaffold(
+      backgroundColor: AppTheme.emeraldDeep,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.mosque, size: 48, color: AppTheme.gold),
+              const SizedBox(height: 14),
+              Text(AppBrand.name, style: AppTheme.ts(24, FontWeight.w800, color: Colors.white)),
+              const SizedBox(height: 26),
+              if (error == null)
+                const CircularProgressIndicator(color: AppTheme.gold)
+              else ...<Widget>[
+                Text(
+                  error,
+                  key: const Key('startup_error'),
+                  textAlign: TextAlign.center,
+                  style: AppTheme.ts(14, FontWeight.w500, color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  key: const Key('startup_retry'),
+                  onPressed: store.retryStartup,
+                  child: const Text('Try again'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

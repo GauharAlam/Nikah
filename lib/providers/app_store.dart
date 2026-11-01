@@ -58,7 +58,14 @@ abstract class AppStore extends ChangeNotifier {
   String get rejectionReason;
   bool get pledgeAccepted;
   void acceptPledge();
-  Future<String> sendOtp(String e164Phone);
+
+  /// The number proved by SMS. Empty until the member has verified one.
+  String get verifiedPhone;
+
+  /// Why start-up could not finish, if it could not.
+  String? get startupError => null;
+  void retryStartup() {}
+  Future<String?> sendOtp(String e164Phone);
   Future<void> confirmOtp(String verificationId, String code);
   Future<void> signInWithGoogle();
   void signOut();
@@ -87,7 +94,8 @@ abstract class AppStore extends ChangeNotifier {
   WardProfile? get profile;
   void updateProfile(WardProfile Function(WardProfile) mutate);
   Future<void> saveDraft(WardProfile next);
-  Future<String> uploadPhoto(String localPath);
+  Future<String> uploadPhoto(String localPath, {void Function(double)? onProgress});
+  List<String> get rejectedPhotos => const <String>[];
   Future<String> photoSource(String stored);
   Future<void> removePhoto(String stored);
   Future<void> submitProfile();

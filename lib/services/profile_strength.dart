@@ -13,8 +13,7 @@ class ProfileStrength {
 ProfileStrength profileStrength(WardProfile p, List<VerificationDoc> docs) {
   bool submitted(String id) => docs.any((VerificationDoc d) =>
       d.id == id &&
-      (d.status == VerificationDocStatus.pending ||
-          d.status == VerificationDocStatus.approved));
+      (d.status.isWaiting || d.status == VerificationDocStatus.approved));
 
   final List<(bool, int, String)> checks = <(bool, int, String)>[
     (p.displayName.isNotEmpty, 15, 'Add your basic details'),

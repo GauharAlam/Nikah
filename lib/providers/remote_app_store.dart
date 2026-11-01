@@ -40,7 +40,9 @@ class RemoteAppStore extends AppStore {
     ]) {
       c.addListener(notifyListeners);
     }
-    _authSub = _backend.authChanges.listen(_onAuth, onError: _report);
+    _authSub = _backend.authChanges.listen(_onAuth, onError: (Object _) {
+      session.failStart('We could not check your sign-in. Please try again.');
+    });
   }
 
   final Backend _backend;
@@ -93,7 +95,14 @@ class RemoteAppStore extends AppStore {
       return;
     }
     session.begin(user);
-    await drafts.loadDraft(user);
+    await _startSession(user);
+  }
+
+  Future<void> _startSession(AuthUser user) async {
+    if (!await drafts.loadDraft(user)) {
+      session.failStart('We could not load your profile. Check your connection and try again.');
+      return;
+    }
     final String uid = user.uid;
     session.start(uid);
     circle.start(uid);
@@ -129,7 +138,19 @@ class RemoteAppStore extends AppStore {
   @override
   void acceptPledge() => session.acceptPledge();
   @override
-  Future<String> sendOtp(String e164Phone) => _backend.sendOtp(e164Phone);
+  String get verifiedPhone => session.user?.phone ?? '';
+  @override
+  String? get startupError => session.startupError;
+  @override
+  void retryStartup() {
+    final AuthUser? user = session.user;
+    if (user == null) return;
+    session.clearStartupError();
+    unawaited(_startSession(user));
+  }
+
+  @override
+  Future<String?> sendOtp(String e164Phone) => _backend.sendOtp(e164Phone);
   @override
   Future<void> confirmOtp(String verificationId, String code) =>
       _backend.confirmOtp(verificationId, code);
@@ -187,7 +208,10 @@ class RemoteAppStore extends AppStore {
   @override
   Future<void> saveDraft(WardProfile next) => drafts.saveDraft(next);
   @override
-  Future<String> uploadPhoto(String localPath) => drafts.uploadPhoto(localPath);
+  Future<String> uploadPhoto(String localPath, {void Function(double)? onProgress}) =>
+      drafts.uploadPhoto(localPath, onProgress: onProgress);
+  @override
+  List<String> get rejectedPhotos => session.account.rejectedPhotos;
   @override
   Future<String> photoSource(String stored) => _backend.photoUrl(stored);
   @override
